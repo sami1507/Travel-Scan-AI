@@ -57,6 +57,7 @@ export interface FeedbackContext {
 
 export class AIFeedbackAnalyzer {
   private openai: OpenAI
+  private static instance: AIFeedbackAnalyzer | null = null
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY
@@ -68,6 +69,13 @@ export class AIFeedbackAnalyzer {
     this.openai = new OpenAI({
       apiKey,
     })
+  }
+
+  static getInstance(): AIFeedbackAnalyzer {
+    if (!this.instance) {
+      this.instance = new AIFeedbackAnalyzer()
+    }
+    return this.instance
   }
 
   /**

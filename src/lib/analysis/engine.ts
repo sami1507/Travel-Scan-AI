@@ -57,6 +57,15 @@ export class TravelAnalysisEngine {
     this.hotelsProvider = new HotelbedsHotelsProvider()
   }
 
+  private static instance: TravelAnalysisEngine | null = null
+
+  static getInstance(): TravelAnalysisEngine {
+    if (!this.instance) {
+      this.instance = new TravelAnalysisEngine()
+    }
+    return this.instance
+  }
+
   /**
    * Analyze travel request and return structured recommendations
    */
@@ -680,4 +689,6 @@ Be helpful, honest, and precise.`
   }
 }
 
-export const travelAnalysisEngine = new TravelAnalysisEngine()
+export const travelAnalysisEngine = {
+  analyze: (request: any) => TravelAnalysisEngine.getInstance().analyze(request),
+}

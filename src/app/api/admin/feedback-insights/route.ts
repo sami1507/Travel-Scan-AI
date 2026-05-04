@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     let commonThemes = { negativeThemes: new Map(), positiveThemes: new Map(), affectedDimensions: new Map(), productIssues: new Map() }
     
     if (analyzedFeedback && analyzedFeedback.length > 0) {
-      const analyzer = new AIFeedbackAnalyzer()
+      const analyzer = AIFeedbackAnalyzer.getInstance()
       const analyses = analyzedFeedback.map(fb => fb.ai_analysis)
       commonThemes = analyzer.extractCommonThemes(analyses)
     }

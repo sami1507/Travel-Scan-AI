@@ -87,7 +87,7 @@ async function analyzeFeedbackAsync(
   context: any,
   userId: string
 ): Promise<void> {
-  const analyzer = new AIFeedbackAnalyzer()
+  const analyzer = AIFeedbackAnalyzer.getInstance()
   const improvementLoop = new FeedbackImprovementLoop()
   const supabase = await createServerSupabaseClient()
 

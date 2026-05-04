@@ -73,3 +73,6 @@ yarn.lock
 # Logs
 logs
 *.log
+
+.vercel
+.env*.local

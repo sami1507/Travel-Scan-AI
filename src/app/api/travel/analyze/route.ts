@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { travelAnalysisEngine } from '@/lib/analysis/engine'
 import { logger } from '@/lib/utils'
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,8 +21,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse request body
+    // Rate limiting
+    const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.ANALYSIS)
+    if (rateLimitResponse) {
+      return rateLimitResponse
+    }
+
+    // Parse and validate request body
     const body = await request.json()
+    const validation = validateRequest(schemas.analysisRequest, body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: (validation as { success: false; error: string }).error },
+        { status: 400 }
+      )
+    }
+
     const {
       query,
       destination,
@@ -29,14 +46,7 @@ export async function POST(request: NextRequest) {
       interests,
       travelStyle,
       pace,
-    } = body
-
-    if (!query) {
-      return NextResponse.json(
-        { error: 'Query is required' },
-        { status: 400 }
-      )
-    }
+    } = validation.data
 
     logger.info('Travel analysis requested', {
       userId: user.id,

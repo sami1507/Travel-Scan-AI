@@ -573,23 +573,32 @@ Be helpful, honest, and precise.`
       const dest = topDestinations[i]
 
       try {
-        // Real flight data from Duffel API
-        const flights = await this.flightsProvider.searchFlights(
-          'NYC',
-          dest.destinationName,
-          new Date().toISOString().split('T')[0]
-        )
-        
-        if (i === 0) {
-          data.flights = flights // Store for first destination
+        // Real flight data from Duffel API (with error handling)
+        try {
+          const flights = await this.flightsProvider.searchFlights(
+            'NYC',
+            dest.destinationName,
+            new Date().toISOString().split('T')[0]
+          )
+          
+          if (i === 0) {
+            data.flights = flights // Store for first destination
+          }
+
+          // Calculate flight value score
+          const flightValueScore = this.flightsProvider.getFlightValueScore(flights, budget)
+          
+          data.providerScores.set(dest.destinationId, {
+            flightValue: flightValueScore,
+          })
+        } catch (flightError) {
+          logger.error(`Flight provider failed for ${dest.destinationName}`, flightError)
+          // Continue without flight data
         }
 
-        // Calculate flight value score
-        const flightValueScore = this.flightsProvider.getFlightValueScore(flights, budget)
-
         // Real hotel data from Hotelbeds API (cities only)
-        let hotelValueScore: number | undefined
         if (dest.destinationType === 'city') {
+          try {
           const hotels = await this.hotelsProvider.searchHotels(
             dest.destinationName,
             new Date().toISOString().split('T')[0],
@@ -600,15 +609,20 @@ Be helpful, honest, and precise.`
             data.hotels = hotels // Store for first destination
           }
 
-          // Calculate hotel value score
-          hotelValueScore = this.hotelsProvider.getHotelValueScore(hotels, budget)
+            // Calculate hotel value score
+            const hotelValueScore = this.hotelsProvider.getHotelValueScore(hotels, budget)
+            
+            // Update provider scores with hotel data
+            const existing = data.providerScores.get(dest.destinationId) || {}
+            data.providerScores.set(dest.destinationId, {
+              ...existing,
+              hotelValue: hotelValueScore,
+            })
+          } catch (hotelError) {
+            logger.error(`Hotel provider failed for ${dest.destinationName}`, hotelError)
+            // Continue without hotel data
+          }
         }
-
-        // Store provider scores for this destination
-        data.providerScores.set(dest.destinationId, {
-          flightValue: flightValueScore,
-          hotelValue: hotelValueScore,
-        })
 
         // Real weather data (structured seasonal patterns) - first destination only
         if (i === 0) {

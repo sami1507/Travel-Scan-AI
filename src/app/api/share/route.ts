@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { ShareService } from '@/lib/services/alerts'
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +17,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Rate limiting
+    const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.SHARE)
+    if (rateLimitResponse) {
+      return rateLimitResponse
+    }
+
     const body = await request.json()
-    const { contentType, contentData, isPublic, expiresInDays } = body
+    const validation = validateRequest(schemas.shareContent, body)
+    
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+
+    const { contentType, contentData, isPublic, expiresInDays } = validation.data
 
     const sharedContent = await ShareService.createShare(
       user.id,

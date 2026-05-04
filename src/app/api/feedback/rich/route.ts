@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { AIFeedbackAnalyzer } from '@/lib/services/ai-feedback-analyzer'
 import { FeedbackImprovementLoop } from '@/lib/services/feedback-improvement-loop'
 import type { RichFeedbackData } from '@/components/travel/rich-feedback-dialog'
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { sanitizeText } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +17,12 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting
+    const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.FEEDBACK)
+    if (rateLimitResponse) {
+      return rateLimitResponse
     }
 
     const body = await request.json()
@@ -34,14 +42,14 @@ export async function POST(request: NextRequest) {
       routeData?: any
     }
 
-    // Store feedback
+    // Store feedback (sanitize comment)
     const { data: feedback, error: insertError } = await supabase
       .from('rich_feedback')
       .insert({
         user_id: user.id,
         feedback_type: feedbackData.feedbackType,
         selected_reasons: feedbackData.selectedReasons,
-        comment: feedbackData.comment,
+        comment: feedbackData.comment ? sanitizeText(feedbackData.comment) : null,
         destination_id: destination.destinationId,
         destination_name: destination.destinationName,
         destination_rank: destinationRank,

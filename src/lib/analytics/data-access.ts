@@ -88,7 +88,7 @@ export class AnalyticsDataAccess {
       // Aggregate by destination
       const destMap = new Map<string, DestinationStats>()
 
-      data.forEach((row: any) => {
+      ;(data as any[]).forEach((row: any) => {
         const key = row.destination_id!
         if (!destMap.has(key)) {
           destMap.set(key, {
@@ -137,7 +137,7 @@ export class AnalyticsDataAccess {
         stats.positiveRate = total > 0 ? positive / total : 0
 
         // Calculate average score from feedback with scores
-        const scoresData = data.filter(
+        const scoresData = (data as any[]).filter(
           (d: any) => d.destination_id === stats.destinationId && d.total_score
         )
         stats.avgScore = scoresData.length > 0
@@ -183,20 +183,20 @@ export class AnalyticsDataAccess {
         }
       }
 
-      const saved = data.filter((d: any) => d.feedback_type === 'save-trip')
-      const dismissed = data.filter((d: any) => d.feedback_type === 'dismiss-recommendation')
-      const thumbsUp = data.filter((d: any) => d.feedback_type === 'thumbs-up')
-      const thumbsDown = data.filter((d: any) => d.feedback_type === 'thumbs-down')
+      const saved = (data as any[]).filter((d: any) => d.feedback_type === 'save-trip')
+      const dismissed = (data as any[]).filter((d: any) => d.feedback_type === 'dismiss-recommendation')
+      const thumbsUp = (data as any[]).filter((d: any) => d.feedback_type === 'thumbs-up')
+      const thumbsDown = (data as any[]).filter((d: any) => d.feedback_type === 'thumbs-down')
 
       const avgScore = (arr: any[]) =>
         arr.length > 0 ? arr.reduce((sum, d: any) => sum + (d.total_score || 0), 0) / arr.length : 0
 
       // Top rank selection rate
-      const topRankSelections = data.filter(
+      const topRankSelections = (data as any[]).filter(
         (d: any) => (d.feedback_type === 'save-trip' || d.feedback_type === 'select-destination') &&
              d.recommendation_rank === 1
       ).length
-      const totalSelections = data.filter(
+      const totalSelections = (data as any[]).filter(
         (d: any) => d.feedback_type === 'save-trip' || d.feedback_type === 'select-destination'
       ).length
 
@@ -237,7 +237,7 @@ export class AnalyticsDataAccess {
       }
 
       const total = data.length
-      const counts = data.reduce(
+      const counts = (data as any[]).reduce(
         (acc, row: any) => {
           acc[row.feedback_type] = (acc[row.feedback_type] || 0) + 1
           return acc
@@ -245,7 +245,7 @@ export class AnalyticsDataAccess {
         {} as Record<string, number>
       )
 
-      const selections = data.filter(
+      const selections = (data as any[]).filter(
         (d: any) => d.feedback_type === 'select-destination' && d.recommendation_rank
       )
       const avgRankSelected = selections.length > 0
@@ -292,7 +292,7 @@ export class AnalyticsDataAccess {
       const months: number[] = []
       const interests: string[] = []
 
-      data.forEach((row: any) => {
+      ;(data as any[]).forEach((row: any) => {
         const ctx = row.query_context as any
         if (ctx?.query) queries.push(ctx.query)
         if (ctx?.budget) budgets.push(ctx.budget)

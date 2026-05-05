@@ -76,6 +76,7 @@ export class TravelAnalysisEngine {
       // Step 0: Load user preferences for personalization (if userId provided)
       let userPreferenceProfile: UserPreferenceProfile | null = null
       let isPersonalized = false
+      let feedbackHistory: any[] = []
 
       if (request.userId) {
         try {
@@ -83,7 +84,7 @@ export class TravelAnalysisEngine {
           userPreferenceProfile = await getUserPreferences(request.userId)
 
           // Update inferred preferences from latest feedback
-          const feedbackHistory = await getUserFeedback(request.userId, 100)
+          feedbackHistory = await getUserFeedback(request.userId, 100)
           if (feedbackHistory.length >= 3) {
             const inferred = preferenceInferenceService.inferPreferences(feedbackHistory)
             const confidence = preferenceInferenceService.calculateConfidence(feedbackHistory)
@@ -281,6 +282,59 @@ export class TravelAnalysisEngine {
         analysis.recommendedRoutes = [routeAnalysis.recommendedRoute]
       }
 
+      // Step 8: Apply ML inference for improved ranking (with fallback)
+      try {
+        const { mlInferenceEngine } = await import('../ml/models/ml-inference')
+        
+        const mlResult = await mlInferenceEngine.infer(
+          analysis.rankedDestinations,
+          userPreferenceProfile,
+          feedbackHistory,
+          {
+            query: request.query,
+            budget: request.budget,
+            travelMonths: request.travelMonths,
+            interests: request.interests,
+            travelStyle: request.travelStyle,
+            pace: request.pace,
+          }
+        )
+
+        // Update ranked destinations with ML-improved ranking
+        analysis.rankedDestinations = mlResult.top3Recommendations
+
+        // Update top recommendations to exactly 3
+        analysis.topRecommendations = mlResult.top3Recommendations.map(d => d.destinationName)
+
+        // Add accommodation recommendations to metadata
+        if (mlResult.accommodationRecommendations.size > 0) {
+          // Store accommodation recommendations in analysis metadata
+          for (const [destId, accomRec] of mlResult.accommodationRecommendations) {
+            const dest = analysis.rankedDestinations.find(d => d.destinationId === destId)
+            if (dest) {
+              // Add accommodation info to destination reasons
+              dest.whyRecommended.push(
+                `Recommended accommodation: ${accomRec.primaryType.replace(/-/g, ' ')} (${Math.round(accomRec.confidence * 100)}% confidence)`
+              )
+              if (accomRec.reasons.length > 0) {
+                dest.whyRecommended.push(...accomRec.reasons.slice(0, 2))
+              }
+            }
+          }
+        }
+
+        logger.info('Travel Analysis Engine: ML inference applied', {
+          mlUsed: mlResult.mlUsed,
+          top3Count: mlResult.top3Recommendations.length,
+          accommodationCount: mlResult.accommodationRecommendations.size,
+        })
+      } catch (mlError) {
+        logger.error('Travel Analysis Engine: ML inference failed, using baseline', mlError)
+        // Fallback: Keep original AI-generated ranking but limit to top 3
+        analysis.rankedDestinations = analysis.rankedDestinations.slice(0, 3)
+        analysis.topRecommendations = analysis.rankedDestinations.map(d => d.destinationName)
+      }
+
       logger.info('Travel Analysis Engine: Analysis complete', {
         recommendations: analysis.topRecommendations.length,
         rankedDestinations: analysis.rankedDestinations.length,
@@ -310,17 +364,23 @@ CORE PRINCIPLES:
 4. Mark estimated/demo data appropriately
 5. Provide confidence scores based on data quality
 
-YOUR ROLE:
-- Analyze the provided destination scores and knowledge
-- Interpret what the scores mean for the user
+YOUR ROLE (Interpretation & Explanation):
+- Interpret what the computed scores mean for the user
 - Explain why destinations match or don't match user preferences
-- Provide actionable recommendations
+- Provide clear, evidence-backed explanations
+- Generate warnings about potential issues
 - Acknowledge data limitations
+
+IMPORTANT: You are NOT the primary ranking system.
+- ML models and scoring engines handle ranking
+- Your job is to INTERPRET and EXPLAIN the rankings
+- Focus on clear, specific, evidence-based explanations
+- Reference actual scores and data in your explanations
 
 OUTPUT REQUIREMENTS:
 - Return structured JSON only
 - Include score breakdowns with explanations
-- List specific reasons for each recommendation
+- List specific reasons tied to actual data
 - Provide warnings about potential issues
 - State assumptions clearly
 - Mark data sources (knowledge-based, estimated, demo)

@@ -34,15 +34,15 @@ export default function DashboardNav({ user }: DashboardNavProps) {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex h-14 items-center justify-between">
-          <div className="flex items-center gap-6 lg:gap-8">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Brain className="h-4 w-4 text-primary-foreground" />
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-8 lg:gap-10">
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+                <Brain className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="font-semibold">TravelScan</span>
+              <span className="font-bold text-lg">TravelScan</span>
             </Link>
 
             <nav className="hidden md:flex items-center gap-1">
@@ -55,8 +55,8 @@ export default function DashboardNav({ user }: DashboardNavProps) {
                       variant={isActive ? "secondary" : "ghost"}
                       size="sm"
                       className={cn(
-                        "gap-2 h-9",
-                        isActive && "bg-secondary"
+                        "gap-2 h-9 px-3 font-medium transition-all",
+                        isActive && "bg-secondary shadow-sm"
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -69,10 +69,10 @@ export default function DashboardNav({ user }: DashboardNavProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground hidden sm:inline truncate max-w-[200px]">
+            <span className="text-sm text-muted-foreground hidden sm:inline truncate max-w-[200px] font-medium">
               {user.email}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="h-9">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="h-9 font-medium">
               <LogOut className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline text-sm">Sign out</span>
             </Button>

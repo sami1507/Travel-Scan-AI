@@ -105,11 +105,11 @@ export default function AnalysisPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Travel Analysis</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-4xl font-bold tracking-tight mb-2">Travel Analysis</h1>
+        <p className="text-lg text-muted-foreground">
           Evidence-based destination recommendations powered by AI
         </p>
       </div>
@@ -149,12 +149,12 @@ export default function AnalysisPage() {
       {analysis && (
         <div className="space-y-6">
           {/* Action Bar */}
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setSaveDialogOpen(true)}>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={() => setSaveDialogOpen(true)} className="shadow-lg shadow-primary/20">
               <Bookmark className="h-4 w-4 mr-2" />
               Save Analysis
             </Button>
-            <Button variant="outline" onClick={() => setShareDialogOpen(true)}>
+            <Button variant="outline" onClick={() => setShareDialogOpen(true)} className="border-2">
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
@@ -164,12 +164,13 @@ export default function AnalysisPage() {
                 setCompareSelections([])
               }}
               variant={compareMode ? 'default' : 'outline'}
+              className={compareMode ? 'shadow-lg shadow-primary/20' : 'border-2'}
             >
               <GitCompare className="h-4 w-4 mr-2" />
               {compareMode ? 'Exit Compare' : 'Compare Destinations'}
             </Button>
             {compareMode && compareSelections.length === 2 && (
-              <Button asChild>
+              <Button asChild className="shadow-lg shadow-primary/20">
                 <a href={`/dashboard/compare?a=${compareSelections[0].destinationId}&b=${compareSelections[1].destinationId}`}>
                   View Comparison
                 </a>
@@ -181,35 +182,35 @@ export default function AnalysisPage() {
           <PersonalizationIndicator personalization={analysis.personalization} />
 
           {/* Summary Card */}
-          <Card className="border-2 border-primary/20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
-            <CardHeader>
-              <div className="flex items-start justify-between">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 shadow-xl">
+            <CardHeader className="pb-5">
+              <div className="flex items-start justify-between gap-6">
                 <div className="flex-1">
-                  <CardTitle className="text-xl">Analysis Summary</CardTitle>
-                  <CardDescription className="mt-2 text-base">
+                  <CardTitle className="text-2xl font-bold mb-3">Analysis Summary</CardTitle>
+                  <CardDescription className="text-base leading-relaxed">
                     {analysis.querySummary}
                   </CardDescription>
                 </div>
                 <div className="text-right">
-                  <div className={`text-2xl font-bold ${getConfidenceColor(analysis.confidence)}`}>
+                  <div className={`text-4xl font-bold ${getConfidenceColor(analysis.confidence)}`}>
                     {Math.round(analysis.confidence * 100)}%
                   </div>
-                  <div className="text-xs text-muted-foreground">Confidence</div>
+                  <div className="text-sm text-muted-foreground mt-1 font-medium">Confidence</div>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {/* Top Recommendations */}
               {analysis.topRecommendations && analysis.topRecommendations.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
+                  <h4 className="font-bold text-base mb-3 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
                     Top Recommendations
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {analysis.topRecommendations.map((rec, idx) => (
-                      <Badge key={idx} variant="default" className="text-sm px-3 py-1">
-                        <MapPin className="h-3 w-3 mr-1" />
+                      <Badge key={idx} variant="default" className="text-sm px-4 py-1.5 font-medium">
+                        <MapPin className="h-3.5 w-3.5 mr-1.5" />
                         {rec}
                       </Badge>
                     ))}
@@ -220,12 +221,12 @@ export default function AnalysisPage() {
               {/* Key Reasons */}
               {analysis.reasons.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-2">Key Insights</h4>
-                  <ul className="space-y-1">
+                  <h4 className="font-bold text-base mb-3">Key Insights</h4>
+                  <ul className="space-y-2">
                     {analysis.reasons.slice(0, 3).map((reason, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2">
-                        <span className="text-primary mt-0.5">•</span>
-                        <span>{reason}</span>
+                      <li key={i} className="text-sm flex items-start gap-3">
+                        <span className="text-primary mt-0.5 font-bold">•</span>
+                        <span className="leading-relaxed">{reason}</span>
                       </li>
                     ))}
                   </ul>
@@ -236,7 +237,7 @@ export default function AnalysisPage() {
 
           {/* Warnings & Assumptions */}
           {(analysis.warnings.length > 0 || analysis.assumptions.length > 0) && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               {analysis.warnings.length > 0 && (
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
@@ -288,10 +289,10 @@ export default function AnalysisPage() {
 
           {/* Ranked Destinations */}
           <div>
-            <h2 className="text-2xl font-bold mb-4">
+            <h2 className="text-3xl font-bold mb-6">
               All Destinations ({analysis.rankedDestinations.length})
             </h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               {analysis.rankedDestinations.map((destination, index) => (
                 <RecommendationCard
                   key={destination.destinationId}
@@ -305,46 +306,46 @@ export default function AnalysisPage() {
           </div>
 
           {/* Score Breakdown Explanation */}
-          <Card>
+          <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-base">How Scores Are Calculated</CardTitle>
+              <CardTitle className="text-lg font-bold">How Scores Are Calculated</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{analysis.scoreBreakdown}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{analysis.scoreBreakdown}</p>
             </CardContent>
           </Card>
 
           {/* Data Sources */}
-          <Card>
+          <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-base">Data Sources & Freshness</CardTitle>
+              <CardTitle className="text-lg font-bold">Data Sources & Freshness</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 {analysis.sourcesUsed.map((source, idx) => (
-                  <Badge key={idx} variant="secondary">
+                  <Badge key={idx} variant="secondary" className="px-3 py-1">
                     {source}
                   </Badge>
                 ))}
               </div>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>Knowledge Base: {analysis.dataFreshness.knowledgeBase}</p>
-                <p>Provider Data: {analysis.dataFreshness.providerData}</p>
-                <p>Last Updated: {new Date(analysis.dataFreshness.lastUpdated).toLocaleString()}</p>
+              <div className="text-sm text-muted-foreground space-y-1.5">
+                <p><span className="font-medium">Knowledge Base:</span> {analysis.dataFreshness.knowledgeBase}</p>
+                <p><span className="font-medium">Provider Data:</span> {analysis.dataFreshness.providerData}</p>
+                <p><span className="font-medium">Last Updated:</span> {new Date(analysis.dataFreshness.lastUpdated).toLocaleString()}</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Next Best Alternatives */}
           {analysis.nextBestAlternatives && analysis.nextBestAlternatives.length > 0 && (
-            <Card>
+            <Card className="border-2">
               <CardHeader>
-                <CardTitle className="text-base">Alternative Destinations</CardTitle>
+                <CardTitle className="text-lg font-bold">Alternative Destinations</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {analysis.nextBestAlternatives.map((alt, idx) => (
-                    <Badge key={idx} variant="outline">
+                    <Badge key={idx} variant="outline" className="px-3 py-1">
                       {alt}
                     </Badge>
                   ))}

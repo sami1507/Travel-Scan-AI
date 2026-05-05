@@ -97,71 +97,87 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
+    <Card className="border-2 hover:shadow-xl hover:border-primary/30 transition-all duration-300">
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="font-semibold">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="outline" className="font-bold border-2 px-2.5 py-0.5">
                 #{rank}
               </Badge>
-              <Badge variant="outline" className="capitalize text-xs">
+              <Badge variant="outline" className="capitalize text-xs font-medium px-2.5 py-0.5">
                 {destination.destinationType}
               </Badge>
             </div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
               {destination.destinationName}
             </h3>
           </div>
           <div className="text-right">
-            <div className={`text-3xl font-bold ${getScoreColor(destination.totalMatchScore)}`}>
+            <div className={`text-4xl font-bold ${getScoreColor(destination.totalMatchScore)}`}>
               {destination.totalMatchScore}
             </div>
-            <div className="text-xs text-muted-foreground">/ 100</div>
-            <div className="text-xs font-medium mt-1">
+            <div className="text-xs text-muted-foreground font-medium">/ 100</div>
+            <div className="text-xs font-semibold mt-1.5">
               {getScoreLabel(destination.totalMatchScore)}
             </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Best:</span>
-            <span className="font-medium">
-              {destination.bestMonths.map(m => new Date(2024, m - 1).toLocaleString('default', { month: 'short' })).join(', ')}
-            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Calendar className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Best</div>
+              <div className="font-semibold">
+                {destination.bestMonths.map(m => new Date(2024, m - 1).toLocaleString('default', { month: 'short' })).join(', ')}
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Budget:</span>
-            <span className="font-medium capitalize">{destination.estimatedBudgetLevel}</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <DollarSign className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Budget</div>
+              <div className="font-semibold capitalize">{destination.estimatedBudgetLevel}</div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Safety:</span>
-            <span className="font-medium">{destination.safetyLevel}/10</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Shield className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Safety</div>
+              <div className="font-semibold">{destination.safetyLevel}/10</div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Confidence:</span>
-            <span className="font-medium">{Math.round(destination.confidence * 100)}%</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground font-medium">Confidence</div>
+              <div className="font-semibold">{Math.round(destination.confidence * 100)}%</div>
+            </div>
           </div>
         </div>
 
         {/* Why Recommended */}
         {destination.whyRecommended.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold mb-2">Why Recommended</h4>
-            <ul className="space-y-1">
+            <h4 className="text-sm font-bold mb-3">Why Recommended</h4>
+            <ul className="space-y-2">
               {destination.whyRecommended.slice(0, 3).map((reason, i) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                  <span className="text-green-600 mt-0.5">✓</span>
-                  <span>{reason}</span>
+                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2.5">
+                  <span className="text-green-600 mt-0.5 font-bold">✓</span>
+                  <span className="leading-relaxed">{reason}</span>
                 </li>
               ))}
             </ul>
@@ -170,13 +186,13 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
 
         {/* Feedback Actions */}
         {!feedbackState.dismissed && (
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-3">
             <Button
               variant={feedbackState.liked ? 'default' : 'outline'}
               size="sm"
               onClick={() => handleFeedback('thumbs-up')}
               disabled={feedbackState.disliked}
-              className="gap-1"
+              className="gap-1.5 border-2"
             >
               <ThumbsUp className="h-4 w-4" />
             </Button>
@@ -185,7 +201,7 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
               size="sm"
               onClick={() => handleFeedback('thumbs-down')}
               disabled={feedbackState.liked}
-              className="gap-1"
+              className="gap-1.5 border-2"
             >
               <ThumbsDown className="h-4 w-4" />
             </Button>
@@ -193,10 +209,10 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
               variant={feedbackState.saved ? 'default' : 'outline'}
               size="sm"
               onClick={() => handleFeedback('save-trip')}
-              className="gap-1"
+              className="gap-1.5 border-2"
             >
               <Bookmark className="h-4 w-4" />
-              {feedbackState.saved && 'Saved'}
+              {feedbackState.saved && <span className="text-xs font-medium">Saved</span>}
             </Button>
             <div className="flex-1" />
             <Button
@@ -211,11 +227,11 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
         )}
 
         {/* Data Quality & Actions */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <Badge variant="outline" className={getDataQualityColor(destination.dataQuality)}>
+        <div className="flex items-center justify-between pt-4 border-t">
+          <Badge variant="outline" className={`${getDataQualityColor(destination.dataQuality)} font-medium px-3 py-1`}>
             {destination.dataQuality}
           </Badge>
-          <Button variant="ghost" size="sm" onClick={handleViewDetails} className="gap-1">
+          <Button variant="ghost" size="sm" onClick={handleViewDetails} className="gap-1.5 font-medium">
             View Details
             <ChevronRight className="h-4 w-4" />
           </Button>

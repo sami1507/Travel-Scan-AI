@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Brain } from "lucide-react"
+import { Brain, Shield, Zap, CheckCircle2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function SignupPage() {
@@ -77,22 +77,25 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-2">
-        <CardHeader className="space-y-1 pb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left Panel - Form */}
+      <div className="flex items-center justify-center p-8 lg:p-12">
+        <div className="w-full max-w-md">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-8">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
               <Brain className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-semibold">TravelScan</span>
+            <span className="text-xl font-bold">TravelScan</span>
+          </Link>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Create your account</h1>
+            <p className="text-muted-foreground">Start monitoring travel data in minutes</p>
           </div>
-          <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
-          <CardDescription>Start monitoring travel data in minutes</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignup} className="space-y-4">
+
+          <form onSubmit={handleSignup} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email address</Label>
               <Input
                 id="email"
                 type="email"
@@ -101,63 +104,108 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Create a password (min. 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Confirm your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={loading}
+                className="h-11"
               />
             </div>
 
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
+              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 p-4 rounded-xl">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="text-sm text-green-600 bg-green-50 border border-green-200 p-3 rounded-lg">
+              <div className="text-sm text-green-700 bg-green-50 border border-green-200 p-4 rounded-xl">
                 Account created! Please check your email to confirm your account. Redirecting to login...
               </div>
             )}
 
-            <Button type="submit" className="w-full" size="lg" disabled={loading || success}>
+            <Button type="submit" className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20" disabled={loading || success}>
               {loading ? "Creating your account..." : success ? "Success!" : "Create account"}
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-8 text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link href="/login" className="font-semibold text-primary hover:underline">
               Sign in
             </Link>
           </div>
-          <p className="mt-4 text-xs text-center text-muted-foreground">
+          <p className="mt-6 text-xs text-center text-muted-foreground leading-relaxed">
             By creating an account, you agree to our Terms of Service and Privacy Policy.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Right Panel - Trust Elements */}
+      <div className="hidden lg:flex flex-col justify-center p-12 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-l">
+        <div className="max-w-md">
+          <h2 className="text-3xl font-bold mb-6">Start your journey</h2>
+          <p className="text-lg text-muted-foreground mb-12">
+            Join thousands of travelers who save time and money with intelligent travel monitoring.
+          </p>
+
+          <div className="space-y-6">
+            <div className="flex gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Zap className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Real-time monitoring</h3>
+                <p className="text-sm text-muted-foreground">Track flights, hotels, and weather conditions 24/7</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Secure & private</h3>
+                <p className="text-sm text-muted-foreground">Your data is encrypted and never shared</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Smart alerts</h3>
+                <p className="text-sm text-muted-foreground">Get notified when it matters most</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

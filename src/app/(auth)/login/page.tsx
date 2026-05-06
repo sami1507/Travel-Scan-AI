@@ -51,7 +51,7 @@ function LoginForm() {
         if (error.message.includes('Invalid login credentials')) {
           setError("Invalid email or password")
         } else if (error.message.includes('Email not confirmed')) {
-          setError("Please confirm your email address before signing in")
+          setError("Please confirm your email address before signing in. Didn't receive the email?")
         } else {
           setError(error.message || "Failed to sign in. Please check your credentials.")
         }
@@ -144,7 +144,14 @@ function LoginForm() {
             {error && (
               <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 p-4 rounded-xl">
                 <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
+                <div className="flex-1">
+                  <span>{error}</span>
+                  {error.includes("Didn't receive the email") && (
+                    <Link href="/resend-confirmation" className="block mt-2 text-primary hover:underline font-medium">
+                      Resend confirmation email →
+                    </Link>
+                  )}
+                </div>
               </div>
             )}
 

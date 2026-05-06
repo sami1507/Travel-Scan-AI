@@ -34,20 +34,23 @@ export class DuffelFlightsProvider implements IFlightsProvider {
     // Lazy initialization - only check env vars when actually used
   }
 
-  private initialize(): void {
-    if (this.apiToken) return // Already initialized
+  private initialize(): boolean {
+    if (this.apiToken) return true // Already initialized
 
     const token = process.env.DUFFEL_API_TOKEN
     const environment = process.env.DUFFEL_ENVIRONMENT || 'test'
 
     if (!token) {
-      throw new Error('DUFFEL_API_TOKEN environment variable is required')
+      console.warn('DUFFEL_API_TOKEN environment variable not configured - flight data will be unavailable')
+      return false
     }
 
     this.apiToken = token
     this.baseUrl = environment === 'production' 
       ? 'https://api.duffel.com'
       : 'https://api.duffel.com' // Duffel uses same URL for test/prod, token determines environment
+    
+    return true
   }
 
   /**
@@ -60,7 +63,10 @@ export class DuffelFlightsProvider implements IFlightsProvider {
     departureDate: string,
     returnDate?: string
   ): Promise<FlightData[]> {
-    this.initialize() // Ensure API token is loaded
+    if (!this.initialize()) {
+      // API token not configured, return empty array
+      return []
+    }
 
     try {
       // Create offer request

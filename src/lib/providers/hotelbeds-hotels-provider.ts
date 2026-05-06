@@ -56,15 +56,16 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
     // Lazy initialization - only check env vars when actually used
   }
 
-  private initialize(): void {
-    if (this.apiKey) return // Already initialized
+  private initialize(): boolean {
+    if (this.apiKey) return true // Already initialized
 
     const apiKey = process.env.HOTELBEDS_API_KEY
     const apiSecret = process.env.HOTELBEDS_API_SECRET
     const environment = process.env.HOTELBEDS_ENVIRONMENT || 'test'
 
     if (!apiKey || !apiSecret) {
-      throw new Error('HOTELBEDS_API_KEY and HOTELBEDS_API_SECRET environment variables are required')
+      console.warn('HOTELBEDS_API_KEY and HOTELBEDS_API_SECRET environment variables not configured - hotel data will be unavailable')
+      return false
     }
 
     this.apiKey = apiKey
@@ -72,6 +73,8 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
     this.baseUrl = environment === 'production'
       ? 'https://api.hotelbeds.com'
       : 'https://api.test.hotelbeds.com'
+    
+    return true
   }
 
   /**
@@ -131,7 +134,10 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
     checkIn: string,
     checkOut: string
   ): Promise<HotelData[]> {
-    this.initialize() // Ensure API credentials are loaded
+    if (!this.initialize()) {
+      // API credentials not configured, return empty array
+      return []
+    }
 
     try {
       const destinationCode = this.getDestinationCode(city)

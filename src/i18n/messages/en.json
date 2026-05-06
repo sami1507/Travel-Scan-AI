@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "TravelScan",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "noResults": "No results found",
+    "tryAgain": "Try again"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "analysis": "Analysis",
+    "saved": "Saved",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signIn": "Sign in",
+    "signUp": "Sign up"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInToAccount": "Sign in to your account to continue",
+    "createAccount": "Create your account",
+    "startMonitoring": "Start monitoring travel data in minutes",
+    "emailAddress": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signInButton": "Sign in",
+    "signUpButton": "Create account",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "createAccountLink": "Create account",
+    "signInLink": "Sign in",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "signInError": "Failed to sign in. Please check your credentials.",
+    "signUpError": "Failed to create account. Please try again.",
+    "emailConfirmationSent": "Please check your email to confirm your account",
+    "emailConfirmationRequired": "Email confirmation required. Check your inbox.",
+    "invalidCredentials": "Invalid email or password",
+    "userAlreadyExists": "An account with this email already exists",
+    "resetPassword": "Reset password",
+    "sendResetLink": "Send reset link",
+    "resetLinkSent": "Password reset link sent to your email",
+    "backToSignIn": "Back to sign in"
+  },
+  "landing": {
+    "hero": {
+      "title": "AI-Powered Travel Intelligence",
+      "subtitle": "Never miss a travel opportunity with smart monitoring and instant alerts",
+      "cta": "Get started free",
+      "learnMore": "Learn more"
+    },
+    "features": {
+      "title": "Everything you need to travel smarter",
+      "realtime": {
+        "title": "Real-time monitoring",
+        "description": "Track flights, hotels, and weather conditions 24/7"
+      },
+      "secure": {
+        "title": "Secure & private",
+        "description": "Your data is encrypted and never shared"
+      },
+      "alerts": {
+        "title": "Smart alerts",
+        "description": "Get notified when it matters most"
+      }
+    },
+    "footer": {
+      "product": "Product",
+      "company": "Company",
+      "legal": "Legal",
+      "allRightsReserved": "All rights reserved"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "overview": "Overview",
+    "recentActivity": "Recent activity",
+    "quickActions": "Quick actions",
+    "noActivity": "No recent activity",
+    "startAnalysis": "Start a new analysis",
+    "viewSaved": "View saved items",
+    "manageProfile": "Manage profile"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "pageNotFound": "Page not found",
+    "unauthorized": "Unauthorized access",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "networkError": "Network error. Please check your connection.",
+    "tryAgainLater": "Please try again later"
+  }
+}

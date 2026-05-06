@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "TravelScan",
+    "loading": "טוען...",
+    "error": "שגיאה",
+    "success": "הצלחה",
+    "cancel": "ביטול",
+    "save": "שמור",
+    "delete": "מחק",
+    "edit": "ערוך",
+    "close": "סגור",
+    "back": "חזור",
+    "next": "הבא",
+    "submit": "שלח",
+    "search": "חיפוש",
+    "filter": "סינון",
+    "sort": "מיון",
+    "noResults": "לא נמצאו תוצאות",
+    "tryAgain": "נסה שוב"
+  },
+  "nav": {
+    "home": "בית",
+    "dashboard": "לוח בקרה",
+    "analysis": "ניתוח",
+    "saved": "שמורים",
+    "profile": "פרופיל",
+    "settings": "הגדרות",
+    "signOut": "התנתק",
+    "signIn": "התחבר",
+    "signUp": "הרשם"
+  },
+  "auth": {
+    "welcomeBack": "ברוך שובך",
+    "signInToAccount": "התחבר לחשבונך כדי להמשיך",
+    "createAccount": "צור את החשבון שלך",
+    "startMonitoring": "התחל לעקוב אחר נתוני נסיעות תוך דקות",
+    "emailAddress": "כתובת אימייל",
+    "emailPlaceholder": "you@example.com",
+    "password": "סיסמה",
+    "passwordPlaceholder": "הזן את הסיסמה שלך",
+    "confirmPassword": "אשר סיסמה",
+    "confirmPasswordPlaceholder": "הזן שוב את הסיסמה",
+    "rememberMe": "זכור אותי",
+    "forgotPassword": "שכחת סיסמה?",
+    "signInButton": "התחבר",
+    "signUpButton": "צור חשבון",
+    "signingIn": "מתחבר...",
+    "creatingAccount": "יוצר חשבון...",
+    "noAccount": "אין לך חשבון?",
+    "haveAccount": "כבר יש לך חשבון?",
+    "createAccountLink": "צור חשבון",
+    "signInLink": "התחבר",
+    "passwordMismatch": "הסיסמאות אינן תואמות",
+    "passwordTooShort": "הסיסמה חייבת להכיל לפחות 6 תווים",
+    "signInError": "ההתחברות נכשלה. אנא בדוק את פרטי ההתחברות.",
+    "signUpError": "יצירת החשבון נכשלה. אנא נסה שוב.",
+    "emailConfirmationSent": "אנא בדוק את האימייל שלך לאישור החשבון",
+    "emailConfirmationRequired": "נדרש אישור אימייל. בדוק את תיבת הדואר הנכנס.",
+    "invalidCredentials": "אימייל או סיסמה לא חוקיים",
+    "userAlreadyExists": "חשבון עם אימייל זה כבר קיים",
+    "resetPassword": "אפס סיסמה",
+    "sendResetLink": "שלח קישור לאיפוס",
+    "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
+    "backToSignIn": "חזור להתחברות"
+  },
+  "landing": {
+    "hero": {
+      "title": "מודיעין נסיעות מבוסס בינה מלאכותית",
+      "subtitle": "אל תפספס הזדמנות נסיעה עם ניטור חכם והתראות מיידיות",
+      "cta": "התחל בחינם",
+      "learnMore": "למד עוד"
+    },
+    "features": {
+      "title": "כל מה שאתה צריך כדי לנסוע בחוכמה",
+      "realtime": {
+        "title": "ניטור בזמן אמת",
+        "description": "עקוב אחר טיסות, מלונות ותנאי מזג אוויר 24/7"
+      },
+      "secure": {
+        "title": "מאובטח ופרטי",
+        "description": "הנתונים שלך מוצפנים ולעולם לא משותפים"
+      },
+      "alerts": {
+        "title": "התראות חכמות",
+        "description": "קבל התראות כשזה חשוב ביותר"
+      }
+    },
+    "footer": {
+      "product": "מוצר",
+      "company": "חברה",
+      "legal": "משפטי",
+      "allRightsReserved": "כל הזכויות שמורות"
+    }
+  },
+  "dashboard": {
+    "welcome": "ברוך הבא",
+    "overview": "סקירה כללית",
+    "recentActivity": "פעילות אחרונה",
+    "quickActions": "פעולות מהירות",
+    "noActivity": "אין פעילות אחרונה",
+    "startAnalysis": "התחל ניתוח חדש",
+    "viewSaved": "הצג פריטים שמורים",
+    "manageProfile": "נהל פרופיל"
+  },
+  "errors": {
+    "somethingWentWrong": "משהו השתבש",
+    "pageNotFound": "הדף לא נמצא",
+    "unauthorized": "גישה לא מורשית",
+    "sessionExpired": "פג תוקף ההפעלה שלך. אנא התחבר שוב.",
+    "networkError": "שגיאת רשת. אנא בדוק את החיבור שלך.",
+    "tryAgainLater": "אנא נסה שוב מאוחר יותר"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "TravelScan",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "submit": "Soumettre",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "noResults": "Aucun résultat trouvé",
+    "tryAgain": "Réessayer"
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "analysis": "Analyse",
+    "saved": "Enregistrés",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "signOut": "Se déconnecter",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire"
+  },
+  "auth": {
+    "welcomeBack": "Bienvenue",
+    "signInToAccount": "Connectez-vous à votre compte pour continuer",
+    "createAccount": "Créez votre compte",
+    "startMonitoring": "Commencez à surveiller les données de voyage en quelques minutes",
+    "emailAddress": "Adresse e-mail",
+    "emailPlaceholder": "vous@exemple.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Entrez votre mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "Ressaisissez votre mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié?",
+    "signInButton": "Se connecter",
+    "signUpButton": "Créer un compte",
+    "signingIn": "Connexion en cours...",
+    "creatingAccount": "Création du compte...",
+    "noAccount": "Vous n'avez pas de compte?",
+    "haveAccount": "Vous avez déjà un compte?",
+    "createAccountLink": "Créer un compte",
+    "signInLink": "Se connecter",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+    "signInError": "Échec de la connexion. Veuillez vérifier vos identifiants.",
+    "signUpError": "Échec de la création du compte. Veuillez réessayer.",
+    "emailConfirmationSent": "Veuillez vérifier votre e-mail pour confirmer votre compte",
+    "emailConfirmationRequired": "Confirmation par e-mail requise. Vérifiez votre boîte de réception.",
+    "invalidCredentials": "E-mail ou mot de passe invalide",
+    "userAlreadyExists": "Un compte avec cet e-mail existe déjà",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "sendResetLink": "Envoyer le lien de réinitialisation",
+    "resetLinkSent": "Lien de réinitialisation du mot de passe envoyé à votre e-mail",
+    "backToSignIn": "Retour à la connexion"
+  },
+  "landing": {
+    "hero": {
+      "title": "Intelligence de voyage alimentée par l'IA",
+      "subtitle": "Ne manquez jamais une opportunité de voyage avec une surveillance intelligente et des alertes instantanées",
+      "cta": "Commencer gratuitement",
+      "learnMore": "En savoir plus"
+    },
+    "features": {
+      "title": "Tout ce dont vous avez besoin pour voyager plus intelligemment",
+      "realtime": {
+        "title": "Surveillance en temps réel",
+        "description": "Suivez les vols, les hôtels et les conditions météorologiques 24h/24 et 7j/7"
+      },
+      "secure": {
+        "title": "Sécurisé et privé",
+        "description": "Vos données sont cryptées et jamais partagées"
+      },
+      "alerts": {
+        "title": "Alertes intelligentes",
+        "description": "Soyez averti quand cela compte le plus"
+      }
+    },
+    "footer": {
+      "product": "Produit",
+      "company": "Entreprise",
+      "legal": "Légal",
+      "allRightsReserved": "Tous droits réservés"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "overview": "Aperçu",
+    "recentActivity": "Activité récente",
+    "quickActions": "Actions rapides",
+    "noActivity": "Aucune activité récente",
+    "startAnalysis": "Démarrer une nouvelle analyse",
+    "viewSaved": "Voir les éléments enregistrés",
+    "manageProfile": "Gérer le profil"
+  },
+  "errors": {
+    "somethingWentWrong": "Quelque chose s'est mal passé",
+    "pageNotFound": "Page non trouvée",
+    "unauthorized": "Accès non autorisé",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
+    "tryAgainLater": "Veuillez réessayer plus tard"
+  }
+}

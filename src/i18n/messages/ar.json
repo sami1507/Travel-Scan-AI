@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "TravelScan",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "submit": "إرسال",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "noResults": "لا توجد نتائج",
+    "tryAgain": "حاول مرة أخرى"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "analysis": "التحليل",
+    "saved": "المحفوظات",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "signOut": "تسجيل الخروج",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب"
+  },
+  "auth": {
+    "welcomeBack": "مرحباً بعودتك",
+    "signInToAccount": "سجل الدخول إلى حسابك للمتابعة",
+    "createAccount": "إنشاء حسابك",
+    "startMonitoring": "ابدأ مراقبة بيانات السفر في دقائق",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "emailPlaceholder": "you@example.com",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "signInButton": "تسجيل الدخول",
+    "signUpButton": "إنشاء حساب",
+    "signingIn": "جاري تسجيل الدخول...",
+    "creatingAccount": "جاري إنشاء الحساب...",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "createAccountLink": "إنشاء حساب",
+    "signInLink": "تسجيل الدخول",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    "signInError": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.",
+    "signUpError": "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.",
+    "emailConfirmationSent": "يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك",
+    "emailConfirmationRequired": "مطلوب تأكيد البريد الإلكتروني. تحقق من صندوق الوارد.",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "userAlreadyExists": "يوجد حساب بهذا البريد الإلكتروني بالفعل",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "sendResetLink": "إرسال رابط إعادة التعيين",
+    "resetLinkSent": "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني",
+    "backToSignIn": "العودة إلى تسجيل الدخول"
+  },
+  "landing": {
+    "hero": {
+      "title": "ذكاء السفر المدعوم بالذكاء الاصطناعي",
+      "subtitle": "لا تفوت أي فرصة سفر مع المراقبة الذكية والتنبيهات الفورية",
+      "cta": "ابدأ مجاناً",
+      "learnMore": "اعرف المزيد"
+    },
+    "features": {
+      "title": "كل ما تحتاجه للسفر بذكاء",
+      "realtime": {
+        "title": "مراقبة في الوقت الفعلي",
+        "description": "تتبع الرحلات والفنادق وأحوال الطقس على مدار الساعة"
+      },
+      "secure": {
+        "title": "آمن وخاص",
+        "description": "بياناتك مشفرة ولا تتم مشاركتها أبداً"
+      },
+      "alerts": {
+        "title": "تنبيهات ذكية",
+        "description": "احصل على إشعارات عندما يهم الأمر"
+      }
+    },
+    "footer": {
+      "product": "المنتج",
+      "company": "الشركة",
+      "legal": "قانوني",
+      "allRightsReserved": "جميع الحقوق محفوظة"
+    }
+  },
+  "dashboard": {
+    "welcome": "مرحباً",
+    "overview": "نظرة عامة",
+    "recentActivity": "النشاط الأخير",
+    "quickActions": "إجراءات سريعة",
+    "noActivity": "لا يوجد نشاط حديث",
+    "startAnalysis": "بدء تحليل جديد",
+    "viewSaved": "عرض العناصر المحفوظة",
+    "manageProfile": "إدارة الملف الشخصي"
+  },
+  "errors": {
+    "somethingWentWrong": "حدث خطأ ما",
+    "pageNotFound": "الصفحة غير موجودة",
+    "unauthorized": "وصول غير مصرح به",
+    "sessionExpired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
+    "networkError": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
+    "tryAgainLater": "يرجى المحاولة مرة أخرى لاحقاً"
+  }
+}

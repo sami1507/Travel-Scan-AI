@@ -6,8 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Brain, Shield, Zap, CheckCircle2 } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent } from "@/components/ui/card"
+import { Brain, Shield, Zap, CheckCircle2, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 function LoginForm() {
@@ -15,13 +16,14 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
     if (errorParam) {
-      setError(errorParam)
+      setError(decodeURIComponent(errorParam))
     }
   }, [searchParams])
 
@@ -30,8 +32,15 @@ function LoginForm() {
     setLoading(true)
     setError("")
 
+    if (!email || !password) {
+      setError("Please enter your email and password")
+      setLoading(false)
+      return
+    }
+
     try {
-      const supabase = createClient()
+      const supabase = createClient(rememberMe)
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -39,25 +48,34 @@ function LoginForm() {
 
       if (error) {
         console.error('Login error:', error)
-        throw error
+        if (error.message.includes('Invalid login credentials')) {
+          setError("Invalid email or password")
+        } else if (error.message.includes('Email not confirmed')) {
+          setError("Please confirm your email address before signing in")
+        } else {
+          setError(error.message || "Failed to sign in. Please check your credentials.")
+        }
+        setLoading(false)
+        return
       }
 
       if (data?.session) {
-        router.push("/dashboard")
+        const redirectTo = searchParams.get('redirect') || '/dashboard'
+        router.push(redirectTo)
         router.refresh()
+      } else {
+        setError("Failed to sign in. Please try again.")
+        setLoading(false)
       }
     } catch (err: any) {
       console.error('Login exception:', err)
-      const errorMessage = err.message || err.error_description || "Failed to sign in. Please check your credentials."
-      setError(errorMessage)
-    } finally {
+      setError(err.message || "Failed to sign in. Please try again.")
       setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left Panel - Form */}
       <div className="flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-8">
@@ -84,11 +102,17 @@ function LoginForm() {
                 required
                 disabled={loading}
                 className="h-11"
+                autoComplete="email"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Link href="/reset-password" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -98,12 +122,29 @@ function LoginForm() {
                 required
                 disabled={loading}
                 className="h-11"
+                autoComplete="current-password"
               />
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                disabled={loading}
+              />
+              <Label
+                htmlFor="remember"
+                className="text-sm font-normal cursor-pointer select-none"
+              >
+                Remember me
+              </Label>
+            </div>
+
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 p-4 rounded-xl">
-                {error}
+              <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 p-4 rounded-xl">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
@@ -121,7 +162,6 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Right Panel - Trust Elements */}
       <div className="hidden lg:flex flex-col justify-center p-12 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-l">
         <div className="max-w-md">
           <h2 className="text-3xl font-bold mb-6">AI-powered travel intelligence</h2>

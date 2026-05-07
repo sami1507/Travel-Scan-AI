@@ -71,13 +71,21 @@ export default function ResetPasswordPage() {
             <div className="space-y-6">
               <div className="flex items-start gap-3 text-sm bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 p-4 rounded-xl">
                 <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500 mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-medium text-green-900 dark:text-green-100 mb-1">
+                <div className="space-y-2">
+                  <p className="font-medium text-green-900 dark:text-green-100">
                     Reset link sent!
                   </p>
                   <p className="text-green-700 dark:text-green-300">
                     Check your email for a link to reset your password. If it doesn&apos;t appear within a few minutes, check your spam folder.
                   </p>
+                  <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-900">
+                    <p className="font-medium text-green-900 dark:text-green-100 mb-1">
+                      Important for mobile users:
+                    </p>
+                    <p className="text-green-700 dark:text-green-300 text-xs">
+                      Open the reset link in the same browser where you&apos;ll update your password. If you&apos;re on mobile, tap &quot;Open in browser&quot; when clicking the email link.
+                    </p>
+                  </div>
                 </div>
               </div>
 

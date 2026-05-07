@@ -25,7 +25,7 @@ export default function UpdatePasswordPage() {
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session) {
-        setError("Invalid or expired reset link. Please request a new password reset.")
+        setError("Your reset link has expired or is invalid. This can happen if you opened the link in a different browser. Please request a new password reset.")
         return
       }
       
@@ -67,7 +67,12 @@ export default function UpdatePasswordPage() {
 
       if (error) {
         console.error('Update password error:', error)
-        setError(error.message || "Failed to update password. Please try again.")
+        const friendlyMessage = error.message.includes('session')
+          ? "Your session has expired. Please request a new password reset link."
+          : error.message.includes('weak')
+          ? "Please choose a stronger password with at least 6 characters."
+          : "Unable to update password. Please try again or request a new reset link."
+        setError(friendlyMessage)
         setLoading(false)
         return
       }

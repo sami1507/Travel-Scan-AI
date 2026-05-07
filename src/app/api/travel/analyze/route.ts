@@ -5,6 +5,7 @@ import { travelAnalysisEngine } from '@/lib/analysis/engine'
 import { logger } from '@/lib/utils'
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { validateRequest, schemas } from '@/lib/validation'
+import { errorTracker } from '@/lib/monitoring/error-tracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     logger.error('Travel analysis API error', error)
+    errorTracker.trackAnalysisError(error, undefined, undefined)
 
     const errorMessage = error instanceof Error ? error.message : 'Internal server error'
 

@@ -21,6 +21,10 @@ import { preferenceInferenceService } from '../services/preference-inference'
 import { personalizedScoringService } from '../services/personalized-scoring'
 import { routeIntelligenceService } from '../services/route-intelligence'
 import type { UserPreferenceProfile } from '../types/preferences'
+import { errorTracker } from '../monitoring/error-tracker'
+import { costTracker } from '../monitoring/cost-tracker'
+import { cacheManager, CachePresets } from '../cache/cache-manager'
+import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 
 export interface AnalysisRequest {
   query: string
@@ -237,28 +241,47 @@ export class TravelAnalysisEngine {
         routeAnalysis
       )
 
-      // Step 7: Call OpenAI for structured analysis
-      const completion = await this.openai.beta.chat.completions.parse({
-        model: this.model,
-        messages: [
-          {
-            role: 'system',
-            content: this.getSystemInstructions(),
-          },
-          {
-            role: 'user',
-            content: analysisContext,
-          },
-        ],
-        response_format: zodResponseFormat(travelAnalysisResponseSchema, 'travel_analysis'),
-        temperature: 0.3,
-      })
+      // Step 7: Call OpenAI for structured analysis (with caching and resilience)
+      const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, 5))
+      
+      const analysis = await cacheManager.getOrSet(
+        cacheKey,
+        async () => {
+          const completion = await withResilience(
+            'gpt4-analysis',
+            async () => {
+              return await this.openai.beta.chat.completions.parse({
+                model: this.model,
+                messages: [
+                  {
+                    role: 'system',
+                    content: this.getSystemInstructions(),
+                  },
+                  {
+                    role: 'user',
+                    content: analysisContext,
+                  },
+                ],
+                response_format: zodResponseFormat(travelAnalysisResponseSchema, 'travel_analysis'),
+                temperature: 0.3,
+              })
+            },
+            ProviderConfigs.OPENAI
+          )
 
-      const analysis = completion.choices[0].message.parsed
+          const parsed = completion.choices[0].message.parsed
 
-      if (!analysis) {
-        throw new Error('Failed to parse AI response')
-      }
+          if (!parsed) {
+            throw new Error('Failed to parse AI response')
+          }
+
+          // Track OpenAI cost
+          costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
+
+          return parsed
+        },
+        CachePresets.OPENAI_ANALYSIS
+      )
 
       // Add personalization metadata to response
       if (isPersonalized && personalizedWeights.is_personalized) {
@@ -282,7 +305,7 @@ export class TravelAnalysisEngine {
         analysis.recommendedRoutes = [routeAnalysis.recommendedRoute]
       }
 
-      // Step 8: Apply ML inference for improved ranking (with fallback)
+      // Step 8: Apply ML inference for improved ranking (with fallback and error tracking)
       try {
         const { mlInferenceEngine } = await import('../ml/models/ml-inference')
         
@@ -329,6 +352,7 @@ export class TravelAnalysisEngine {
           accommodationCount: mlResult.accommodationRecommendations.size,
         })
       } catch (mlError) {
+        errorTracker.trackMLError(mlError, 'inference', { userId: request.userId })
         logger.error('Travel Analysis Engine: ML inference failed, using baseline', mlError)
         // Fallback: Keep original AI-generated ranking but limit to top 3
         analysis.rankedDestinations = analysis.rankedDestinations.slice(0, 3)
@@ -716,6 +740,16 @@ Be helpful, honest, and precise.`
     }
 
     return data
+  }
+
+  /**
+   * Build cache key for analysis results
+   */
+  private buildCacheKey(request: AnalysisRequest, topDestinations: any[]): string {
+    const destIds = topDestinations.map(d => d.destinationId).join(',')
+    const key = `${request.query}:${request.budget || 'any'}:${(request.travelMonths || []).join(',')}:${(request.interests || []).join(',')}:${destIds}`
+    // Hash to keep key length reasonable
+    return Buffer.from(key).toString('base64').substring(0, 100)
   }
 
   /**

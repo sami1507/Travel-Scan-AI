@@ -6,11 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search } from 'lucide-react'
-import { AnalysisForm } from '@/components/travel/analysis-form'
+import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
-import { RecommendationCard } from '@/components/travel/recommendation-card'
+import { EnhancedRecommendationCard } from '@/components/travel/enhanced-recommendation-card'
 import { RecommendationDetail } from '@/components/travel/recommendation-detail'
 import { PersonalizationIndicator } from '@/components/travel/personalization-indicator'
 import { SaveAnalysisDialog } from '@/components/travel/save-analysis-dialog'
@@ -115,8 +115,6 @@ export default function AnalysisPage() {
       </div>
 
       {/* Analysis Form */}
-      <AnalysisForm onSubmit={handleAnalyze} loading={loading} />
-
       {/* Error State */}
       {error && (
         <ErrorState
@@ -133,6 +131,14 @@ export default function AnalysisPage() {
               })
             }
           }}
+        />
+      )}
+
+      {/* Form */}
+      {(!analysis || error) && (
+        <GuidedAnalysisForm
+          onSubmit={handleAnalyze}
+          loading={loading}
         />
       )}
 
@@ -292,9 +298,9 @@ export default function AnalysisPage() {
             <h2 className="text-3xl font-bold mb-6">
               All Destinations ({analysis.rankedDestinations.length})
             </h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              {analysis.rankedDestinations.map((destination, index) => (
-                <RecommendationCard
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {analysis.rankedDestinations.slice(0, 3).map((destination, index) => (
+                <EnhancedRecommendationCard
                   key={destination.destinationId}
                   destination={destination}
                   rank={index + 1}

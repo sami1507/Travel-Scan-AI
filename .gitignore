@@ -76,3 +76,12 @@ logs
 
 .vercel
 .env*.local
+
+# Generated markdown reports (implementation/audit/verification docs)
+*_IMPLEMENTATION.md
+*_AUDIT*.md
+*_VERIFICATION*.md
+*_REPORT.md
+OPERATIONAL_*.md
+ML_MATURITY*.md
+PROVIDER_ACTIVATION*.md

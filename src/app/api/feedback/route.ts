@@ -5,6 +5,7 @@ import { createFeedback } from '@/lib/db/feedback'
 import { feedbackSchema } from '@/lib/types/feedback'
 import { logger } from '@/lib/utils'
 import { randomUUID } from 'crypto'
+import { signalTracker } from '@/lib/ml/improvement/signal-tracker'
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 365, // 1 year
       })
+    }
+
+    // Track improvement signal
+    try {
+      signalTracker.trackUserSignal(feedback)
+    } catch (signalError) {
+      logger.error('Failed to track improvement signal', signalError)
+      // Don't fail the request if signal tracking fails
     }
 
     logger.info('Feedback submitted successfully', {

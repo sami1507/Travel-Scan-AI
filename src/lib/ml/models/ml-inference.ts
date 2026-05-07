@@ -7,6 +7,7 @@ import { accommodationRecommender, type AccommodationRecommendation } from './ac
 import { featureEngineer } from '../feature-engineering'
 import { recommendationQualityLayer } from '../../recommendation/quality-layer'
 import { pairwiseRanker } from '../../recommendation/pairwise-ranker'
+import { shadowModeManager } from '../comparison/shadow-mode'
 import { logger } from '../../utils'
 
 export interface MLInferenceResult {
@@ -16,6 +17,7 @@ export interface MLInferenceResult {
   fallbackReason?: string
   top3Recommendations: RankedDestination[]
   rankingExplanations: string[]
+  comparisonId?: string // Shadow mode comparison ID if enabled
 }
 
 export class MLInferenceEngine {
@@ -102,6 +104,27 @@ export class MLInferenceEngine {
       // Get top 3 strongest recommendations
       const top3Recommendations = pairwiseRanked.slice(0, 3)
 
+      // Run shadow mode comparison (baseline vs ML)
+      let comparisonId: string | undefined
+      if (mlUsed && destinations.length > 0) {
+        try {
+          const shadowResult = await shadowModeManager.runShadowComparison(
+            destinations.slice(0, 3), // Baseline (original ranking)
+            top3Recommendations, // ML (after quality layer + pairwise)
+            {
+              userId: queryContext.query, // Use query as identifier for now
+              query: queryContext.query,
+            }
+          )
+          if (shadowResult) {
+            comparisonId = shadowResult.comparisonId
+          }
+        } catch (error) {
+          logger.error('ML Inference: Shadow mode comparison failed', error)
+          // Continue without comparison
+        }
+      }
+
       // Generate accommodation recommendations for top 3
       const accommodationRecommendations = new Map<string, AccommodationRecommendation>()
       for (const dest of top3Recommendations) {
@@ -139,6 +162,7 @@ export class MLInferenceEngine {
         fallbackReason,
         top3Recommendations,
         rankingExplanations,
+        comparisonId,
       }
     } catch (error) {
       logger.error('ML Inference: Critical error, using fallback', error)

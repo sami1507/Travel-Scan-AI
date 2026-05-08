@@ -17,27 +17,46 @@ export async function GET(request: NextRequest) {
   // Handle OAuth errors
   if (error_code) {
     console.error('OAuth error:', error_code, error_description)
-    return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error_description || error_code)}`)
+    const friendlyError = error_description?.includes('access_denied') 
+      ? 'Sign in was cancelled'
+      : 'Unable to sign in with Google. Please try again.'
+    return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(friendlyError)}`)
   }
 
   if (code) {
     try {
       const supabase = await createServerSupabaseClient()
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      // Exchange code for session - this handles PKCE verification automatically
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
       if (error) {
         console.error('Auth callback error:', error)
-        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error.message)}`)
+        
+        // Provide user-friendly error messages
+        const friendlyError = error.message.includes('code challenge')
+          ? 'Authentication session expired. Please try signing in again.'
+          : error.message.includes('invalid')
+          ? 'Invalid authentication code. Please try signing in again.'
+          : 'Unable to complete sign in. Please try again.'
+        
+        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(friendlyError)}`)
+      }
+      
+      if (!data.session) {
+        console.error('No session after code exchange')
+        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent('Unable to create session. Please try again.')}`)
       }
       
       // Successful authentication - redirect to intended destination
-      return NextResponse.redirect(`${baseUrl}${next}`)
+      const response = NextResponse.redirect(`${baseUrl}${next}`)
+      return response
     } catch (error) {
       console.error('Auth callback exception:', error)
-      return NextResponse.redirect(`${baseUrl}/login?error=Authentication failed`)
+      return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent('Authentication failed. Please try again.')}`)
     }
   }
 
   // No code provided - redirect to login
-  return NextResponse.redirect(`${baseUrl}/login?error=No authentication code provided`)
+  return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent('No authentication code provided')}`)
 }

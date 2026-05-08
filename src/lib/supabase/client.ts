@@ -18,6 +18,9 @@ export function createClient(persistSession: boolean = true) {
         setItem: () => {},
         removeItem: () => {},
       },
+      flowType: 'pkce',
+      detectSessionInUrl: true,
+      autoRefreshToken: true,
     },
   })
 }

@@ -43,12 +43,21 @@ function LoginForm() {
 
     try {
       const supabase = createClient(true)
-      const redirectTo = `${window.location.origin}/auth/callback${searchParams.get('redirect') ? `?next=${searchParams.get('redirect')}` : ''}`
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Build redirect URL with preserved redirect parameter
+      const nextParam = searchParams.get('redirect')
+      const redirectTo = nextParam 
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+        : `${window.location.origin}/auth/callback`
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       })
 
@@ -56,7 +65,10 @@ function LoginForm() {
         console.error('Google sign-in error:', error)
         setError("Unable to sign in with Google. Please try again or use email/password.")
         setLoading(false)
+        return
       }
+
+      // OAuth redirect happens automatically - no need to set loading to false
     } catch (err: any) {
       console.error('Google sign-in exception:', err)
       setError("Unable to sign in with Google. Please try again.")

@@ -189,7 +189,7 @@ function LoginForm() {
               </Label>
             </div>
 
-            {error && (
+            {error && error.trim() && (
               <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 p-4 rounded-xl">
                 <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                 <div className="flex-1">

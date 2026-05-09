@@ -1,6 +1,7 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,30 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     try {
-      const supabase = await createServerSupabaseClient()
+      // Create response to set cookies
+      const response = NextResponse.redirect(`${baseUrl}${next}`)
+      const cookieStore = await cookies()
+      
+      // Create Supabase client with cookie handling for OAuth callback
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              cookieStore.set({ name, value, ...options })
+              response.cookies.set({ name, value, ...options })
+            },
+            remove(name: string, options: CookieOptions) {
+              cookieStore.set({ name, value: '', ...options })
+              response.cookies.set({ name, value: '', ...options })
+            },
+          },
+        }
+      )
       
       // Exchange code for session - this handles PKCE verification automatically
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
@@ -47,8 +71,7 @@ export async function GET(request: NextRequest) {
       // Don't check data.session as it may be null even when cookies are set correctly
       console.log('Auth callback success - redirecting to:', next)
       
-      // Successful authentication - redirect to intended destination
-      const response = NextResponse.redirect(`${baseUrl}${next}`)
+      // Successful authentication - return the response with cookies set
       return response
     } catch (error) {
       console.error('Auth callback exception:', error)

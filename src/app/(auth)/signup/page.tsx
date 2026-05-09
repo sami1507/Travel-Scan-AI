@@ -69,8 +69,8 @@ export default function SignupPage() {
       }
     } catch (err: any) {
       console.error('Signup exception:', err)
-      const errorMessage = err.message || err.error_description || "Failed to create account. Please try again."
-      setError(errorMessage)
+      const errorMessage = (err.message || err.error_description || "Failed to create account. Please try again.").trim()
+      setError(errorMessage || "Failed to create account. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -136,7 +136,7 @@ export default function SignupPage() {
               />
             </div>
 
-            {error && (
+            {error && error.trim() && (
               <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 p-4 rounded-xl">
                 {error}
               </div>

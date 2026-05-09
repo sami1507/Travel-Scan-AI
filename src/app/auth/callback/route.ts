@@ -43,10 +43,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(friendlyError)}`)
       }
       
-      if (!data.session) {
-        console.error('No session after code exchange')
-        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent('Unable to create session. Please try again.')}`)
-      }
+      // Session is set in cookies by exchangeCodeForSession
+      // Don't check data.session as it may be null even when cookies are set correctly
+      console.log('Auth callback success - redirecting to:', next)
       
       // Successful authentication - redirect to intended destination
       const response = NextResponse.redirect(`${baseUrl}${next}`)

@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocomplete'
 import { Loader2, Search, User, Plane, Calendar, Wallet, Clock, Heart, Home, Shield } from 'lucide-react'
 import Link from 'next/link'
+import { searchAirports, formatAirportDisplay } from '@/lib/data/airports'
+import { searchCountries, formatCountryDisplay } from '@/lib/data/countries'
 
 interface GuidedAnalysisFormProps {
   onSubmit: (data: {
@@ -56,6 +59,10 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
   const [optionalNote, setOptionalNote] = useState('')
   const [hasProfile, setHasProfile] = useState(false)
   const [profileLoaded, setProfileLoaded] = useState(false)
+  
+  // Autocomplete state
+  const [airportOptions, setAirportOptions] = useState<AutocompleteOption[]>([])
+  const [countryOptions, setCountryOptions] = useState<AutocompleteOption[]>([])
 
   useEffect(() => {
     loadProfileDefaults()
@@ -177,11 +184,19 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 <Plane className="h-4 w-4" />
                 Departure City/Airport
               </Label>
-              <Input
+              <Autocomplete
                 id="departure"
                 placeholder="e.g., New York, JFK"
                 value={departureCity}
-                onChange={(e) => setDepartureCity(e.target.value)}
+                onChange={setDepartureCity}
+                onSearch={(query) => {
+                  const results = searchAirports(query)
+                  setAirportOptions(results.map(airport => ({
+                    value: airport.code,
+                    label: formatAirportDisplay(airport)
+                  })))
+                }}
+                options={airportOptions}
                 disabled={loading}
                 required
               />
@@ -191,11 +206,19 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 <Shield className="h-4 w-4" />
                 Passport Country
               </Label>
-              <Input
+              <Autocomplete
                 id="passport"
-                placeholder="e.g., USA, UK, Canada"
+                placeholder="e.g., United States, United Kingdom"
                 value={passport}
-                onChange={(e) => setPassport(e.target.value)}
+                onChange={setPassport}
+                onSearch={(query) => {
+                  const results = searchCountries(query)
+                  setCountryOptions(results.map(country => ({
+                    value: country.code,
+                    label: formatCountryDisplay(country)
+                  })))
+                }}
+                options={countryOptions}
                 disabled={loading}
                 required
               />

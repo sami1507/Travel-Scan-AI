@@ -7,6 +7,7 @@ export const schemas = {
   analysisRequest: z.object({
     query: z.string().min(3).max(500),
     destination: z.string().max(200).optional(),
+    departureCity: z.string().max(200).optional(),
     budget: z.enum(['budget', 'moderate', 'comfortable', 'luxury']).optional(),
     travelMonths: z.array(z.number().min(1).max(12)).max(12).optional(),
     interests: z.array(z.string().max(50)).max(20).optional(),

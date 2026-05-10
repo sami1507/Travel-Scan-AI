@@ -136,9 +136,12 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
   ): Promise<HotelData[]> {
     if (!this.initialize()) {
       // API credentials not configured, return empty array
+      console.log('[Hotelbeds] API credentials not configured - returning empty results')
       return []
     }
 
+    console.log(`[Hotelbeds] Searching hotels in ${city}: ${checkIn} to ${checkOut}`)
+    
     try {
       const destinationCode = this.getDestinationCode(city)
       const signature = this.generateSignature()
@@ -192,7 +195,9 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
       }
 
       // Transform Hotelbeds hotels to HotelData format
-      return this.transformHotels(data.hotels?.hotels || [], city)
+      const hotels = this.transformHotels(data.hotels?.hotels || [], city)
+      console.log(`[Hotelbeds] Successfully retrieved ${hotels.length} hotel offers`)
+      return hotels
     } catch (error) {
       console.error('Hotelbeds hotel search error:', error)
       // Return empty array on error to allow graceful degradation

@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
     const {
       query,
       destination,
+      departureCity,
       budget,
       travelMonths,
       interests,
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       query,
       destination,
+      departureCity,
       budget,
     })
 
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
     const analysis = await travelAnalysisEngine.analyze({
       query,
       destination,
+      departureCity,
       budget,
       travelMonths,
       interests,

@@ -65,9 +65,12 @@ export class DuffelFlightsProvider implements IFlightsProvider {
   ): Promise<FlightData[]> {
     if (!this.initialize()) {
       // API token not configured, return empty array
+      console.log('[Duffel] API token not configured - returning empty results')
       return []
     }
 
+    console.log(`[Duffel] Searching flights: ${origin} → ${destination} on ${departureDate}`)
+    
     try {
       // Create offer request
       const offerRequestBody = {
@@ -129,7 +132,9 @@ export class DuffelFlightsProvider implements IFlightsProvider {
       const offersData: DuffelOffersResponse = await offersResponse.json()
 
       // Transform Duffel offers to FlightData format
-      return this.transformOffers(offersData.data, origin, destination, departureDate, returnDate)
+      const flights = this.transformOffers(offersData.data, origin, destination, departureDate, returnDate)
+      console.log(`[Duffel] Successfully retrieved ${flights.length} flight offers`)
+      return flights
     } catch (error) {
       console.error('Duffel flight search error:', error)
       // Return empty array on error to allow graceful degradation

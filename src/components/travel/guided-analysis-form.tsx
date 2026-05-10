@@ -12,6 +12,7 @@ import Link from 'next/link'
 interface GuidedAnalysisFormProps {
   onSubmit: (data: {
     query: string
+    departureCity: string
     budget: string
     travelMonths: number[]
     interests: string[]
@@ -131,6 +132,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
     
     onSubmit({
       query,
+      departureCity,
       budget,
       travelMonths,
       interests: travelStyles,

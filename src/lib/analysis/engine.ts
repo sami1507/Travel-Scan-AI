@@ -29,6 +29,7 @@ import { withResilience, ProviderConfigs } from '../providers/provider-resilienc
 export interface AnalysisRequest {
   query: string
   destination?: string
+  departureCity?: string
   budget?: 'low' | 'moderate' | 'high' | 'luxury'
   travelMonths?: number[]
   interests?: string[]
@@ -159,7 +160,7 @@ export class TravelAnalysisEngine {
       })
 
       // Step 4: Gather provider data for top destinations
-      const providerData = await this.gatherProviderData(scoredDestinations.slice(0, 5), userPreferences.budget, request.travelMonths)
+      const providerData = await this.gatherProviderData(scoredDestinations.slice(0, 5), userPreferences.budget, request.travelMonths, request.departureCity, request.query)
 
       // Step 5: Re-score top destinations with provider data
       scoredDestinations = scoredDestinations.map(dest => {
@@ -641,7 +642,7 @@ Be helpful, honest, and precise.`
   /**
    * Gather provider data for top destinations
    */
-  private async gatherProviderData(topDestinations: any[], budget: string = 'moderate', travelMonths?: number[]): Promise<any> {
+  private async gatherProviderData(topDestinations: any[], budget: string = 'moderate', travelMonths?: number[], departureCity?: string, query?: string): Promise<any> {
     const data: any = {
       flights: [],
       hotels: [],
@@ -659,8 +660,11 @@ Be helpful, honest, and precise.`
       try {
         // Real flight data from Duffel API (with error handling)
         try {
+          // Use departureCity parameter, fallback to extracting from query, or default to NYC
+          const origin = departureCity || (query ? this.extractDepartureCity(query) : null) || 'NYC'
+          
           const flights = await this.flightsProvider.searchFlights(
-            'NYC',
+            origin,
             dest.destinationName,
             new Date().toISOString().split('T')[0]
           )
@@ -794,6 +798,26 @@ Be helpful, honest, and precise.`
     }
 
     return cityCountryMap[city.toLowerCase()] || 'Unknown'
+  }
+
+  /**
+   * Extract departure city from query string
+   * Looks for patterns like "from NYC", "departing from London", etc.
+   */
+  private extractDepartureCity(query: string): string | null {
+    const patterns = [
+      /(?:from|departing from|traveling from|flying from)\s+([A-Za-z\s]+?)(?:\.|,|$|\s+to\s+|\s+passport)/i,
+      /^([A-Z]{3})\s+to\s+/i, // Airport code at start
+    ]
+
+    for (const pattern of patterns) {
+      const match = query.match(pattern)
+      if (match && match[1]) {
+        return match[1].trim()
+      }
+    }
+
+    return null
   }
 }
 

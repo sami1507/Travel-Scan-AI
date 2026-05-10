@@ -100,6 +100,7 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
    */
   private getDestinationCode(city: string): string {
     const cityToDestination: Record<string, string> = {
+      // Europe
       'paris': 'PAR',
       'london': 'LON',
       'barcelona': 'BCN',
@@ -113,16 +114,93 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
       'budapest': 'BUD',
       'athens': 'ATH',
       'dublin': 'DUB',
+      'milan': 'MIL',
+      'venice': 'VCE',
+      'florence': 'FLR',
+      'munich': 'MUC',
+      'frankfurt': 'FRA',
+      'zurich': 'ZRH',
+      'geneva': 'GVA',
+      'brussels': 'BRU',
+      'copenhagen': 'CPH',
+      'stockholm': 'STO',
+      'oslo': 'OSL',
+      'helsinki': 'HEL',
+      'reykjavik': 'REK',
+      'warsaw': 'WAW',
+      'krakow': 'KRK',
+      'istanbul': 'IST',
+      'edinburgh': 'EDI',
+      'manchester': 'MAN',
+      'nice': 'NCE',
+      'lyon': 'LYS',
+      'seville': 'SVQ',
+      'valencia': 'VLC',
+      'porto': 'OPO',
+      
+      // North America
       'new york': 'NYC',
       'los angeles': 'LAX',
+      'chicago': 'CHI',
+      'san francisco': 'SFO',
+      'miami': 'MIA',
+      'las vegas': 'LAS',
+      'orlando': 'ORL',
+      'boston': 'BOS',
+      'seattle': 'SEA',
+      'washington': 'WAS',
+      'toronto': 'YTO',
+      'vancouver': 'YVR',
+      'montreal': 'YMQ',
+      'mexico city': 'MEX',
+      'cancun': 'CUN',
+      
+      // Asia
       'tokyo': 'TYO',
       'bangkok': 'BKK',
       'singapore': 'SIN',
+      'hong kong': 'HKG',
+      'seoul': 'SEL',
+      'beijing': 'BJS',
+      'shanghai': 'SHA',
       'dubai': 'DXB',
+      'abu dhabi': 'AUH',
+      'doha': 'DOH',
+      'kuala lumpur': 'KUL',
+      'bali': 'DPS',
+      'phuket': 'HKT',
+      'hanoi': 'HAN',
+      'ho chi minh': 'SGN',
+      'manila': 'MNL',
+      'jakarta': 'JKT',
+      'delhi': 'DEL',
+      'mumbai': 'BOM',
+      'taipei': 'TPE',
+      
+      // Oceania
       'sydney': 'SYD',
+      'melbourne': 'MEL',
+      'brisbane': 'BNE',
+      'auckland': 'AKL',
+      'queenstown': 'ZQN',
+      
+      // South America
+      'rio de janeiro': 'RIO',
+      'sao paulo': 'SAO',
+      'buenos aires': 'BUE',
+      'lima': 'LIM',
+      'bogota': 'BOG',
+      'santiago': 'SCL',
+      
+      // Africa & Middle East
+      'cairo': 'CAI',
+      'marrakech': 'RAK',
+      'cape town': 'CPT',
+      'johannesburg': 'JNB',
+      'nairobi': 'NBO',
     }
 
-    return cityToDestination[city.toLowerCase()] || 'PAR' // Default to Paris
+    return cityToDestination[city.toLowerCase()] || 'LON' // Default to London
   }
 
   /**

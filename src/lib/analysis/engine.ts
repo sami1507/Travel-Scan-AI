@@ -480,7 +480,7 @@ Be helpful, honest, and precise.`
     
     // Flight data summary
     if (providerData.flights && providerData.flights.length > 0) {
-      const cheapest = providerData.flights.reduce((min: any, f: any) => f.price < min.price ? f : min)
+      const cheapest = providerData.flights.reduce((min: any, f: any) => f.price < min.price ? f : min, providerData.flights[0])
       sections.push(`Flights: ${providerData.flights.length} options found`)
       sections.push(`  Cheapest: $${Math.round(cheapest.price)} (${cheapest.stops} stops, ${cheapest.airline})`)
       sections.push(`  Source: demo (estimated pricing)`)
@@ -493,7 +493,7 @@ Be helpful, honest, and precise.`
         const hValue = h.rating / (h.pricePerNight / 100)
         const bestV = best.rating / (best.pricePerNight / 100)
         return hValue > bestV ? h : best
-      })
+      }, providerData.hotels[0])
       sections.push(`Hotels: ${providerData.hotels.length} options found`)
       sections.push(`  Best Value: ${bestValue.name} - $${Math.round(bestValue.pricePerNight)}/night (${bestValue.rating.toFixed(1)}★)`)
       sections.push(`  Source: demo (estimated pricing)`)

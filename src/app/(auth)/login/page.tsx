@@ -126,20 +126,20 @@ function LoginForm() {
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-              <Brain className="h-5 w-5 text-primary-foreground" />
+          <Link href="/" className="inline-flex items-center gap-3 mb-10">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+              <Brain className="h-6 w-6 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold">TravelScan</span>
           </Link>
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back</h1>
-            <p className="text-muted-foreground">Sign in to your account to continue</p>
+          <div className="mb-10 space-y-2">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Welcome back</h1>
+            <p className="text-base text-muted-foreground">Sign in to your account to continue</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2.5">
               <Label htmlFor="email" className="text-sm font-medium">Email address</Label>
               <Input
                 id="email"
@@ -149,15 +149,14 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="h-11"
                 autoComplete="email"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                <Link href="/reset-password" className="text-xs text-primary hover:underline">
+                <Link href="/reset-password" className="text-sm text-primary hover:underline font-medium">
                   Forgot password?
                 </Link>
               </div>
@@ -169,7 +168,6 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="h-11"
                 autoComplete="current-password"
               />
             </div>
@@ -203,7 +201,7 @@ function LoginForm() {
               </div>
             )}
 
-            <Button type="submit" className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20" disabled={loading}>
+            <Button type="submit" size="lg" className="w-full font-semibold shadow-lg shadow-primary/20" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
@@ -220,7 +218,8 @@ function LoginForm() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-11 text-base font-medium border-2"
+            size="lg"
+            className="w-full font-medium"
             onClick={handleGoogleSignIn}
             disabled={loading}
           >

@@ -113,41 +113,41 @@ export function EnhancedRecommendationCard({
   const matchPercentage = getMatchPercentage()
 
   return (
-    <Card className="border-2 hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+    <Card className="border-2 hover:shadow-2xl hover:border-primary/30 transition-all duration-300 overflow-hidden group relative">
       {/* Rank Badge */}
-      <div className="absolute top-4 right-4 z-10">
-        <Badge className={`${rankBadge.color} px-3 py-1 font-semibold shadow-lg`}>
+      <div className="absolute top-5 right-5 z-10">
+        <Badge className={`${rankBadge.color} px-4 py-1.5 font-semibold shadow-lg text-sm`}>
           #{rank} · {rankBadge.label}
         </Badge>
       </div>
 
-      <CardHeader className="pb-4 space-y-3">
+      <CardHeader className="pb-5 space-y-4">
         {/* Destination & Month */}
         <div className="pr-32">
-          <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
             {destination.destinationName}
           </h3>
-          <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+          <div className="flex items-center gap-2 mt-2.5 text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span className="font-medium">Best in {bestMonth}</span>
+            <span className="text-sm font-medium">Best in {bestMonth}</span>
           </div>
         </div>
 
         {/* Match Score */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-secondary rounded-full h-2 overflow-hidden">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-secondary rounded-full h-2.5 overflow-hidden shadow-inner">
             <div 
-              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 shadow-sm"
               style={{ width: `${matchPercentage}%` }}
             />
           </div>
-          <span className="text-sm font-semibold text-primary">{matchPercentage}% Match</span>
+          <span className="text-sm font-bold text-primary tabular-nums">{matchPercentage}% Match</span>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {/* Why This Fits */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Sparkles className="h-4 w-4 text-primary" />
             Why This Fits You

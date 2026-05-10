@@ -169,11 +169,11 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
         </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-7">
           {/* Departure & Passport */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departure" className="flex items-center gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2.5">
+              <Label htmlFor="departure" className="flex items-center gap-2 text-sm font-medium">
                 <Plane className="h-4 w-4" />
                 Departure City/Airport
               </Label>
@@ -186,8 +186,8 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="passport" className="flex items-center gap-2">
+            <div className="space-y-2.5">
+              <Label htmlFor="passport" className="flex items-center gap-2 text-sm font-medium">
                 <Shield className="h-4 w-4" />
                 Passport Country
               </Label>
@@ -203,15 +203,15 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
           </div>
 
           {/* Budget & Currency */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="budget" className="flex items-center gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2.5">
+              <Label htmlFor="budget" className="flex items-center gap-2 text-sm font-medium">
                 <Wallet className="h-4 w-4" />
                 Budget Level
               </Label>
               <select
                 id="budget"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full h-11 rounded-lg border-2 border-input bg-background px-4 py-2 text-sm transition-colors hover:border-input/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
                 disabled={loading}
@@ -222,11 +222,11 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 <option value="luxury">Luxury ($400+/day)</option>
               </select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
+            <div className="space-y-2.5">
+              <Label htmlFor="currency" className="text-sm font-medium">Currency</Label>
               <select
                 id="currency"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full h-11 rounded-lg border-2 border-input bg-background px-4 py-2 text-sm transition-colors hover:border-input/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
                 disabled={loading}

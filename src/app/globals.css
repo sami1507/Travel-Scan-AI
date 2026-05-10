@@ -64,15 +64,63 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-optical-sizing: auto;
   }
   
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+  h1 {
+    @apply text-4xl font-bold tracking-tight leading-tight;
+  }
+  
+  h2 {
+    @apply text-3xl font-bold tracking-tight leading-tight;
+  }
+  
+  h3 {
+    @apply text-2xl font-semibold tracking-tight leading-snug;
+  }
+  
+  h4 {
+    @apply text-xl font-semibold tracking-tight leading-snug;
+  }
+  
+  h5 {
+    @apply text-lg font-semibold tracking-tight;
+  }
+  
+  h6 {
+    @apply text-base font-semibold tracking-tight;
+  }
+  
+  p {
+    @apply leading-relaxed;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Premium shadow utilities */
+  .shadow-premium {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  }
+  
+  .shadow-premium-lg {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  
+  .shadow-premium-xl {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Smooth transitions */
+  .transition-premium {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Focus ring utility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }

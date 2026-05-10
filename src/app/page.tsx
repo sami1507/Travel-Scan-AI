@@ -7,11 +7,11 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
                 <Brain className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">TravelScan</span>
@@ -21,7 +21,7 @@ export default function Home() {
                 <Button variant="ghost" size="sm" className="font-medium">Sign in</Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm" className="font-medium shadow-lg shadow-primary/20">Get started</Button>
+                <Button size="sm" className="font-semibold shadow-md shadow-primary/20">Get started</Button>
               </Link>
             </div>
           </div>
@@ -29,35 +29,35 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="relative container mx-auto px-4 lg:px-8 pt-24 pb-20 overflow-hidden">
+      <section className="relative container mx-auto px-4 lg:px-8 pt-28 pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm backdrop-blur-sm">
+          <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2 text-sm backdrop-blur-sm shadow-sm">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="font-medium text-foreground">AI-Powered Travel Intelligence</span>
+            <span className="font-semibold text-foreground">AI-Powered Travel Intelligence</span>
           </div>
-          <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl mb-6 text-balance bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl mb-8 text-balance bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text">
             Never miss a travel
-            <span className="block text-primary mt-2">opportunity</span>
+            <span className="block text-primary mt-3">opportunity</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-10 text-balance max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground mb-12 text-balance max-w-2xl mx-auto leading-relaxed">
             Smart monitoring for flights, hotels, and weather. Get AI-powered insights and alerts when prices drop or conditions change.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/signup">
-              <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base font-semibold shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all">
+              <Button size="lg" className="w-full sm:w-auto px-8 font-semibold shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all">
                 Start monitoring free
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 text-base font-semibold border-2">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 font-semibold">
                 Sign in
               </Button>
             </Link>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <p className="mt-8 text-sm text-muted-foreground flex items-center justify-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary" />
             No credit card required • Free to start
           </p>
@@ -66,17 +66,17 @@ export default function Home() {
 
       {/* Features */}
       <section className="border-t border-border/40 bg-gradient-to-b from-muted/30 to-background">
-        <div className="container mx-auto px-4 lg:px-8 py-24">
+        <div className="container mx-auto px-4 lg:px-8 py-28">
           <div className="mx-auto max-w-3xl text-center mb-20">
-            <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs font-medium mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-1.5 text-xs font-semibold mb-8 shadow-sm">
               <Globe2 className="h-3.5 w-3.5 text-primary" />
               FEATURES
             </div>
-            <h2 className="text-4xl font-bold tracking-tight mb-5">Everything you need to track</h2>
-            <p className="text-lg text-muted-foreground">Monitor all aspects of your travel plans from a single, intelligent dashboard</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">Everything you need to track</h2>
+            <p className="text-lg text-muted-foreground leading-relaxed">Monitor all aspects of your travel plans from a single, intelligent dashboard</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            <Card className="group border-2 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+            <Card className="group border-2 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
               <CardHeader className="pb-6">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mb-5 group-hover:scale-110 transition-transform duration-300">
                   <Plane className="h-7 w-7 text-primary" />

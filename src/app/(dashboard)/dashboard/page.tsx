@@ -16,16 +16,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-lg text-muted-foreground">Monitor your travel intelligence and insights</p>
         </div>
         <Link href="/dashboard/analysis">
-          <Button size="lg" className="shadow-lg shadow-primary/20">
-            <Brain className="h-4 w-4 mr-2" />
+          <Button size="lg" className="shadow-lg shadow-primary/20 w-full md:w-auto">
+            <Brain className="h-5 w-5 mr-2" />
             New Analysis
           </Button>
         </Link>
@@ -33,63 +33,63 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-2 hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <Card className="border-2 hover:shadow-xl transition-all duration-300 hover:border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Active sources</CardTitle>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-              <Activity className="h-5 w-5 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 shadow-sm">
+              <Activity className="h-6 w-6 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold tracking-tight">{stats.activeSources}</div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2.5">
               Monitoring enabled
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <Card className="border-2 hover:shadow-xl transition-all duration-300 hover:border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total scans</CardTitle>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 shadow-sm">
+              <TrendingUp className="h-6 w-6 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold tracking-tight">{stats.totalScans}</div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2.5">
               Data checks completed
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <Card className="border-2 hover:shadow-xl transition-all duration-300 hover:border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Active alerts</CardTitle>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-              <AlertTriangle className="h-5 w-5 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 shadow-sm">
+              <AlertTriangle className="h-6 w-6 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold tracking-tight">{stats.activeAlerts}</div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2.5">
               Needs attention
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <Card className="border-2 hover:shadow-xl transition-all duration-300 hover:border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Last scan</CardTitle>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-              <Clock className="h-5 w-5 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 shadow-sm">
+              <Clock className="h-6 w-6 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold tracking-tight">
               {stats.lastScan ? "2m" : "—"}
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-2.5">
               {stats.lastScan ? "ago" : "No scans yet"}
             </p>
           </CardContent>

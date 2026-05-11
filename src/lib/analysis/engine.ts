@@ -399,6 +399,40 @@ export class TravelAnalysisEngine {
         analysis.topRecommendations = analysis.rankedDestinations.map(d => d.destinationName)
       }
 
+      // Step 9: Optional Claude verification for accuracy (non-blocking)
+      try {
+        const { getClaudeVerifier } = await import('../services/claude-verifier')
+        const claudeVerifier = getClaudeVerifier()
+        
+        if (claudeVerifier.isAvailable()) {
+          logger.info('Running Claude accuracy verification on recommendations')
+          
+          // Verify each recommendation in parallel
+          const verificationPromises = analysis.rankedDestinations.map(async (dest) => {
+            const verification = await claudeVerifier.verifyRecommendation(
+              dest,
+              request.travelMonths?.length || 7,
+              request.tripStructure || 'single_country_one_city'
+            )
+            return claudeVerifier.applyVerification(dest, verification)
+          })
+          
+          const verifiedDestinations = await Promise.all(verificationPromises)
+          analysis.rankedDestinations = verifiedDestinations
+          
+          logger.info('Claude verification completed successfully')
+        }
+      } catch (claudeError) {
+        // Claude verification is optional - log but don't fail
+        logger.warn('Claude verification failed - continuing with unverified recommendations', {
+          error: claudeError instanceof Error ? claudeError.message : String(claudeError),
+        })
+        errorTracker.trackProviderError('claude', claudeError, 'verification', {
+          nonBlocking: true,
+          userId: request.userId,
+        })
+      }
+
       logger.info('Travel Analysis Engine: Analysis complete', {
         recommendations: analysis.topRecommendations.length,
         rankedDestinations: analysis.rankedDestinations.length,

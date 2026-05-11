@@ -333,19 +333,22 @@ export default function AnalysisPage() {
               All Destinations ({analysis.rankedDestinations.length})
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {analysis.rankedDestinations.slice(0, 3).map((destination, index) => (
-                <div
-                  key={destination.destinationId}
-                  className={`animate-scale-in opacity-0 delay-${(index + 1) * 100}`}
-                >
-                  <EnhancedRecommendationCard
-                    destination={destination}
-                    rank={index + 1}
-                    onViewDetails={() => setSelectedDestination(destination)}
-                    queryContext={queryContext || undefined}
-                  />
-                </div>
-              ))}
+              {analysis.rankedDestinations.slice(0, 3).map((destination, index) => {
+                const delayClass = index === 0 ? 'delay-100' : index === 1 ? 'delay-200' : 'delay-300'
+                return (
+                  <div
+                    key={destination.destinationId}
+                    className={`animate-scale-in opacity-0 ${delayClass}`}
+                  >
+                    <EnhancedRecommendationCard
+                      destination={destination}
+                      rank={index + 1}
+                      onViewDetails={() => setSelectedDestination(destination)}
+                      queryContext={queryContext || undefined}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </div>
 

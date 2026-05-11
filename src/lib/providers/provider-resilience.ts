@@ -103,9 +103,23 @@ export async function withResilience<T>(
     return fullConfig.fallbackValue
   }
 
-  // Throw wrapped error
+  // Log the original error clearly before throwing
+  logger.error('Provider: All retries exhausted', {
+    provider: fullConfig.provider,
+    operation,
+    attempts: fullConfig.retries + 1,
+    originalError: lastError?.message,
+    errorStack: lastError?.stack,
+    errorName: lastError?.name,
+  })
+
+  // Throw wrapped error with original error details
+  const wrappedMessage = lastError 
+    ? `Provider operation failed after ${fullConfig.retries + 1} attempts: ${lastError.message}`
+    : `Provider operation failed after ${fullConfig.retries + 1} attempts`
+  
   throw new ProviderError(
-    `Provider operation failed after ${fullConfig.retries + 1} attempts`,
+    wrappedMessage,
     fullConfig.provider || 'unknown',
     operation,
     lastError

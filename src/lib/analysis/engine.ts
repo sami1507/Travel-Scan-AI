@@ -40,22 +40,31 @@ export interface AnalysisRequest {
 }
 
 export class TravelAnalysisEngine {
-  private openai: OpenAI
+  private openai: OpenAI | null = null
   private model: string = 'gpt-4o-2024-08-06'
   private weatherProvider: RealWeatherProvider
   private currencyProvider: RealCurrencyProvider
   private visaProvider: RealVisaProvider
   private flightsProvider: DuffelFlightsProvider
   private hotelsProvider: HotelbedsHotelsProvider
+  private openaiAvailable: boolean = false
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required')
+      logger.warn('OPENAI_API_KEY environment variable not set - AI features will use fallback mode')
+      this.openaiAvailable = false
+    } else {
+      try {
+        this.openai = new OpenAI({ apiKey })
+        this.openaiAvailable = true
+      } catch (error) {
+        logger.error('Failed to initialize OpenAI client', error)
+        this.openaiAvailable = false
+      }
     }
 
-    this.openai = new OpenAI({ apiKey })
     this.weatherProvider = new RealWeatherProvider()
     this.currencyProvider = new RealCurrencyProvider()
     this.visaProvider = new RealVisaProvider()
@@ -243,47 +252,76 @@ export class TravelAnalysisEngine {
         routeAnalysis
       )
 
-      // Step 7: Call OpenAI for structured analysis (with caching and resilience)
+      // Step 7: Call OpenAI for structured analysis (with caching, resilience, and fallback)
       const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, 5))
       
-      const analysis = await cacheManager.getOrSet(
-        cacheKey,
-        async () => {
-          const completion = await withResilience(
-            'gpt4-analysis',
-            async () => {
-              return await this.openai.beta.chat.completions.parse({
-                model: this.model,
-                messages: [
-                  {
-                    role: 'system',
-                    content: this.getSystemInstructions(),
-                  },
-                  {
-                    role: 'user',
-                    content: analysisContext,
-                  },
-                ],
-                response_format: zodResponseFormat(travelAnalysisResponseSchema, 'travel_analysis'),
-                temperature: 0.3,
-              })
-            },
-            ProviderConfigs.OPENAI
-          )
+      let analysis: TravelAnalysisResponse
+      
+      try {
+        // Check if OpenAI is available
+        if (!this.openaiAvailable || !this.openai) {
+          throw new Error('OpenAI client not available - API key missing or invalid')
+        }
 
-          const parsed = completion.choices[0].message.parsed
+        analysis = await cacheManager.getOrSet(
+          cacheKey,
+          async () => {
+            const completion = await withResilience(
+              'gpt4-analysis',
+              async () => {
+                if (!this.openai) {
+                  throw new Error('OpenAI client not initialized')
+                }
+                return await this.openai.beta.chat.completions.parse({
+                  model: this.model,
+                  messages: [
+                    {
+                      role: 'system',
+                      content: this.getSystemInstructions(),
+                    },
+                    {
+                      role: 'user',
+                      content: analysisContext,
+                    },
+                  ],
+                  response_format: zodResponseFormat(travelAnalysisResponseSchema, 'travel_analysis'),
+                  temperature: 0.3,
+                })
+              },
+              ProviderConfigs.OPENAI
+            )
 
-          if (!parsed) {
-            throw new Error('Failed to parse AI response')
-          }
+            const parsed = completion.choices[0].message.parsed
 
-          // Track OpenAI cost
-          costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
+            if (!parsed) {
+              throw new Error('Failed to parse AI response')
+            }
 
-          return parsed
-        },
-        CachePresets.OPENAI_ANALYSIS
-      )
+            // Track OpenAI cost
+            costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
+
+            return parsed
+          },
+          CachePresets.OPENAI_ANALYSIS
+        )
+      } catch (aiError) {
+        // Log the AI provider error clearly
+        logger.error('OpenAI provider failed, using fallback recommendations', {
+          error: aiError instanceof Error ? aiError.message : String(aiError),
+          errorStack: aiError instanceof Error ? aiError.stack : undefined,
+          query: request.query,
+          tripStructure: request.tripStructure,
+        })
+
+        // Track the error
+        errorTracker.trackProviderError('openai', aiError, 'gpt4-analysis', { 
+          fallbackUsed: true,
+          query: request.query,
+        })
+
+        // Use fallback recommendations
+        analysis = this.generateFallbackRecommendations(request, scoredDestinations)
+      }
 
       // Add personalization metadata to response
       if (isPersonalized && personalizedWeights.is_personalized) {
@@ -852,6 +890,172 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
     }
 
     return cityCountryMap[city.toLowerCase()] || 'Unknown'
+  }
+
+  /**
+   * Generate deterministic fallback recommendations when AI provider fails
+   */
+  private generateFallbackRecommendations(request: AnalysisRequest, scoredDestinations: any[]): TravelAnalysisResponse {
+    logger.warn('Generating fallback recommendations due to provider failure', {
+      query: request.query,
+      tripStructure: request.tripStructure,
+    })
+
+    // Use top scored destinations or create safe defaults
+    const topDestinations = scoredDestinations.slice(0, 3)
+    const tripLength = request.travelMonths?.length || 7
+    
+    const rankedDestinations = topDestinations.map((dest, index) => {
+      const tripType = request.tripStructure === 'single_country_one_city' 
+        ? 'Single Country - One City'
+        : request.tripStructure === 'single_country_multi_city'
+        ? 'Single Country - Multi-City'
+        : 'Multi-Country Route'
+
+      // Generate realistic route based on trip structure
+      let suggestedRoute: string[] = []
+      let recommendedNights: Record<string, number> = {}
+      let transportLogic = ''
+      let travelFatigueLevel: 'Low' | 'Medium' | 'High' = 'Low'
+      let routeWarnings: string[] = []
+
+      if (request.tripStructure === 'multi_country' && tripLength >= 12) {
+        // Multi-country route example
+        suggestedRoute = [dest.city, `${dest.city} Region`, 'Nearby City']
+        recommendedNights = {
+          [dest.city]: Math.floor(tripLength * 0.5),
+          [`${dest.city} Region`]: Math.floor(tripLength * 0.3),
+          'Nearby City': Math.floor(tripLength * 0.2),
+        }
+        transportLogic = 'Train and bus connections recommended between cities'
+        travelFatigueLevel = tripLength < 10 ? 'High' : 'Medium'
+        if (tripLength < 10) {
+          routeWarnings.push('Multiple countries in less than 10 days may feel rushed')
+        }
+      } else if (request.tripStructure === 'single_country_multi_city') {
+        suggestedRoute = [dest.city, `Secondary City in ${dest.country}`]
+        recommendedNights = {
+          [dest.city]: Math.floor(tripLength * 0.6),
+          [`Secondary City in ${dest.country}`]: Math.floor(tripLength * 0.4),
+        }
+        transportLogic = 'Domestic train or short flight'
+        travelFatigueLevel = 'Low'
+      } else {
+        // Single city
+        suggestedRoute = [dest.city]
+        recommendedNights = { [dest.city]: tripLength }
+        transportLogic = 'No inter-city transport needed - explore neighborhoods'
+        travelFatigueLevel = 'Low'
+      }
+
+      return {
+        rank: index + 1,
+        destinationName: dest.city,
+        country: dest.country,
+        destinationSummary: `${dest.city} is a great match for your ${request.budget || 'moderate'} budget travel preferences`,
+        whyRecommended: [
+          `Matches your travel style and interests`,
+          `Good value for ${request.budget || 'moderate'} budget`,
+          `Suitable for ${tripLength} day trip`,
+        ],
+        bestMonth: request.travelMonths?.[0] ? this.getMonthName(request.travelMonths[0]) : 'Spring',
+        totalMatchScore: dest.totalScore || 75,
+        scoreBreakdown: dest.scoreBreakdown || {
+          weather: 15,
+          budget: 15,
+          safety: 15,
+          activities: 15,
+          accessibility: 15,
+        },
+        possibleDownsides: ['Weather may vary', 'Peak season crowds possible'],
+        tripType,
+        suggestedRoute,
+        recommendedNights,
+        routeRealismScore: tripLength >= 12 || request.tripStructure !== 'multi_country' ? 85 : 65,
+        travelFatigueLevel,
+        transportLogic,
+        realisticConsultantNotes: `This is a realistic ${tripType.toLowerCase()} itinerary for ${tripLength} days. ${travelFatigueLevel === 'High' ? 'Consider reducing destinations for a more relaxed pace.' : 'The pacing allows for comfortable exploration.'}`,
+        routeWarnings,
+        routeAlternatives: routeWarnings.length > 0 ? 'Consider focusing on fewer destinations for a more relaxed experience' : undefined,
+      }
+    })
+
+    const fallbackTripLength = request.travelMonths?.length || 7
+    const firstDest = rankedDestinations[0]
+    
+    return {
+      querySummary: `Travel recommendations for ${request.tripStructure?.replace(/_/g, ' ') || 'your trip'} with ${request.budget || 'moderate'} budget`,
+      userConstraints: {
+        budget: request.budget || 'moderate',
+        travelMonths: request.travelMonths || [],
+        interests: request.interests || [],
+        travelStyle: request.travelStyle,
+        pace: request.pace,
+      },
+      topRecommendations: rankedDestinations.slice(0, 3).map(d => d.destinationName),
+      rankedDestinations,
+      scoreBreakdown: 'Scores calculated based on budget fit, weather, safety, activities, and accessibility',
+      reasons: ['Based on your preferences and budget', 'Realistic route planning', 'Safe fallback recommendations'],
+      warnings: ['AI provider temporarily unavailable - using knowledge-based recommendations'],
+      assumptions: ['Standard travel preferences applied', 'Moderate pacing assumed'],
+      recommendedRoutes: firstDest ? [{
+        routeType: firstDest.suggestedRoute && firstDest.suggestedRoute.length > 2 ? 'multi-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length === 2 ? '2-city' : 'single-destination',
+        routeName: `${firstDest.destinationName} Route`,
+        orderedStops: (firstDest.suggestedRoute || [firstDest.destinationName]).map((city, idx) => ({
+          destinationId: `${city.toLowerCase().replace(/\s+/g, '-')}-${idx}`,
+          destinationName: city,
+          destinationType: 'city' as const,
+          totalScore: firstDest.totalMatchScore || 75,
+          daysRecommended: firstDest.recommendedNights?.[city] || Math.floor(fallbackTripLength / (firstDest.suggestedRoute?.length || 1)),
+          orderInRoute: idx + 1,
+        })),
+        routeScore: {
+          coherence: 7.5,
+          transferSimplicity: 7.5,
+          transportConvenience: 7.5,
+          budgetEfficiency: 7.5,
+          seasonalCompatibility: 7.5,
+          destinationSynergy: 7.5,
+          fatiguePenalty: firstDest.travelFatigueLevel === 'Low' ? 9 : firstDest.travelFatigueLevel === 'Medium' ? 7 : 5,
+          totalRouteQuality: 75,
+        },
+        whyThisRoute: [firstDest.realisticConsultantNotes || 'Good route for your trip length'],
+        transferNotes: [firstDest.transportLogic || 'Standard transport options available'],
+        routeWarnings: firstDest.routeWarnings || [],
+        estimatedTripIntensity: firstDest.travelFatigueLevel === 'Low' ? 'relaxed' : firstDest.travelFatigueLevel === 'Medium' ? 'moderate' : 'intense',
+        bestFor: request.interests || ['General travel'],
+        routeConfidence: 0.7,
+        totalDays: fallbackTripLength,
+        estimatedCost: {
+          min: request.budget === 'luxury' ? 4000 : request.budget === 'high' ? 2500 : request.budget === 'low' ? 800 : 1500,
+          max: request.budget === 'luxury' ? 6000 : request.budget === 'high' ? 3500 : request.budget === 'low' ? 1200 : 2500,
+          currency: 'USD',
+        },
+        highlights: ['Cultural experiences', 'Local cuisine', 'Historical sites'],
+        bestMonths: request.travelMonths || [4, 5, 9, 10],
+        dataQuality: 'knowledge-based' as const,
+      }] : [],
+      nextBestAlternatives: rankedDestinations.slice(3, 5).map(d => d.destinationName),
+      dataFreshness: {
+        knowledgeBase: new Date().toISOString(),
+        providerData: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+      },
+      confidence: 0.7,
+      sourcesUsed: ['Knowledge base', 'Scoring engine'],
+      personalization: {
+        isPersonalized: false,
+        confidence: 0,
+        explanations: ['Fallback recommendations - AI provider temporarily unavailable'],
+        feedbackCount: 0,
+      },
+    }
+  }
+
+  private getMonthName(month: number): string {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December']
+    return months[month - 1] || 'Spring'
   }
 
   /**

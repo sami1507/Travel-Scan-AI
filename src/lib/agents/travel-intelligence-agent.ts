@@ -43,7 +43,9 @@ export class TravelIntelligenceAgent {
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required')
+      logger.warn('OPENAI_API_KEY not set - Travel intelligence analysis will use basic mode')
+      // Don't throw - allow graceful degradation
+      return
     }
 
     this.openai = new OpenAI({ apiKey })
@@ -59,6 +61,12 @@ export class TravelIntelligenceAgent {
   }): Promise<TravelAnalysis> {
     try {
       logger.info('Travel Intelligence Agent: Starting analysis', options)
+
+      // Return basic analysis if OpenAI not available
+      if (!this.openai) {
+        logger.warn('Travel intelligence using basic analysis - OpenAI not configured')
+        return this.createBasicAnalysis()
+      }
 
       // Gather data using tools
       const records = options?.sourceConfigId
@@ -183,6 +191,18 @@ export class TravelIntelligenceAgent {
     }
 
     return sections.join('\n')
+  }
+
+  /**
+   * Create basic analysis when OpenAI is not available
+   */
+  private createBasicAnalysis(): TravelAnalysis {
+    return {
+      insights: [],
+      overallAssessment: 'Travel intelligence analysis unavailable - OpenAI not configured',
+      priorityActions: [],
+      timestamp: new Date().toISOString(),
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import { zodResponseFormat } from 'openai/helpers/zod'
 import { z } from 'zod'
 import type { RankedDestination, UserConstraints } from '../analysis/schemas'
 import type { RichFeedbackData } from '@/components/travel/rich-feedback-dialog'
+import { logger } from '../utils'
 
 const feedbackAnalysisSchema = z.object({
   sentiment: z.enum(['very_positive', 'positive', 'neutral', 'negative', 'very_negative']),
@@ -63,7 +64,9 @@ export class AIFeedbackAnalyzer {
     const apiKey = process.env.OPENAI_API_KEY
     
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required')
+      logger.warn('OPENAI_API_KEY not set - AI feedback analysis will be disabled')
+      // Don't throw - allow graceful degradation
+      return
     }
 
     this.openai = new OpenAI({
@@ -82,6 +85,12 @@ export class AIFeedbackAnalyzer {
    * Analyze user feedback to extract structured insights
    */
   async analyze(context: FeedbackContext): Promise<FeedbackAnalysis> {
+    // Return fallback analysis if OpenAI not available
+    if (!this.openai) {
+      logger.warn('AI feedback analysis skipped - OpenAI not configured')
+      return this.createFallbackAnalysis(context)
+    }
+
     const prompt = this.buildAnalysisPrompt(context)
 
     try {
@@ -245,6 +254,35 @@ Be specific and actionable in your analysis.`
       positiveThemes,
       affectedDimensions,
       productIssues,
+    }
+  }
+
+  /**
+   * Create fallback analysis when OpenAI is not available
+   */
+  private createFallbackAnalysis(context: FeedbackContext): FeedbackAnalysis {
+    // Basic sentiment analysis based on feedback type
+    const sentiment: FeedbackAnalysis['sentiment'] = 
+      context.feedbackData.feedbackType === 'positive' ? 'positive' : 'negative'
+
+    return {
+      sentiment,
+      rootCause: context.feedbackData.comment || context.feedbackData.selectedReasons[0] || 'User feedback recorded',
+      affectedDimensions: [],
+      recommendationQuality: context.feedbackData.feedbackType === 'positive' ? 4 : 2,
+      explanationQuality: 3,
+      confidence: 0.5,
+      userIntentSignal: {
+        preferenceShift: Object.keys(context.feedbackData.preferenceCorrections).length > 0,
+        specificRequest: undefined,
+        missingInformation: undefined,
+      },
+      productIssue: {
+        hasIssue: context.feedbackData.feedbackType === 'negative',
+        issueType: context.feedbackData.feedbackType === 'negative' ? 'scoring_mismatch' : 'none',
+        severity: context.feedbackData.feedbackType === 'negative' ? 'medium' : 'low',
+      },
+      notes: 'Fallback analysis - OpenAI not configured',
     }
   }
 }

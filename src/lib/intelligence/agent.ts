@@ -62,7 +62,9 @@ export class TravelIntelligenceAgent {
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required')
+      logger.warn('OPENAI_API_KEY not set - Intelligence reports will use basic analysis')
+      // Don't throw - allow graceful degradation
+      return
     }
 
     this.openai = new OpenAI({ apiKey })
@@ -78,6 +80,12 @@ export class TravelIntelligenceAgent {
   }): Promise<IntelligenceReport> {
     try {
       logger.info('Intelligence Agent: Starting evidence-based analysis', options)
+
+      // Return basic report if OpenAI not available
+      if (!this.openai) {
+        logger.warn('Intelligence report using basic analysis - OpenAI not configured')
+        return this.createBasicReport()
+      }
 
       // Step 1: Gather structured data
       const data = await intelligenceDataTools.getStructuredTravelData(options)
@@ -259,6 +267,25 @@ export class TravelIntelligenceAgent {
     return {
       ...report,
       insights: verifiedInsights,
+    }
+  }
+
+  /**
+   * Create basic intelligence report when OpenAI is not available
+   */
+  private createBasicReport(): IntelligenceReport {
+    return {
+      insights: [],
+      topOpportunities: [],
+      topRisks: [],
+      recommendedActions: [],
+      overallAssessment: 'Intelligence analysis unavailable - OpenAI not configured',
+      dataQuality: {
+        sourceConfidence: 0,
+        dataCompleteness: 0,
+        lastUpdated: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
     }
   }
 }

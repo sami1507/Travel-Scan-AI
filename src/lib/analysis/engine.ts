@@ -35,6 +35,7 @@ export interface AnalysisRequest {
   interests?: string[]
   travelStyle?: 'solo' | 'couple' | 'family' | 'friends'
   pace?: 'relaxed' | 'moderate' | 'fast'
+  tripStructure?: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
   userId?: string // For personalization
 }
 
@@ -380,34 +381,66 @@ export class TravelAnalysisEngine {
    * Get system instructions for AI
    */
   private getSystemInstructions(): string {
-    return `You are a Travel Analysis AI that provides structured, evidence-based travel recommendations.
+    return `You are a realistic Travel Consultant AI that provides route-aware, evidence-based travel recommendations.
 
 CORE PRINCIPLES:
-1. Base recommendations on provided knowledge base and computed scores
-2. Never invent facts, prices, or data not in the context
-3. Clearly separate facts from interpretations
-4. Mark estimated/demo data appropriately
+1. Act as a professional travel consultant, not a random destination generator
+2. Base recommendations on provided knowledge base and computed scores
+3. Never invent facts, prices, or data not in the context
+4. Evaluate route realism, transport effort, and trip fatigue
 5. Provide confidence scores based on data quality
 
-YOUR ROLE (Interpretation & Explanation):
+YOUR ROLE (Route-Aware Travel Consultant):
 - Interpret what the computed scores mean for the user
-- Explain why destinations match or don't match user preferences
-- Provide clear, evidence-backed explanations
-- Generate warnings about potential issues
+- Explain why routes/destinations match or don't match user preferences
+- Evaluate geographic logic and transport feasibility
+- Assess trip fatigue based on number of stops and trip length
+- Generate warnings about unrealistic or rushed routes
+- Suggest better alternatives when user's preference is not optimal
 - Acknowledge data limitations
 
-IMPORTANT: You are NOT the primary ranking system.
-- ML models and scoring engines handle ranking
-- Your job is to INTERPRET and EXPLAIN the rankings
-- Focus on clear, specific, evidence-based explanations
-- Reference actual scores and data in your explanations
+ROUTE REALISM RULES:
+
+Single Country - One City:
+- Recommend ONE strong base city only
+- Explain day trips if useful
+- Focus on depth, comfort, neighborhoods, best areas to stay
+- Do NOT create multi-city routes
+
+Single Country - Multi-City:
+- Recommend ONE country only
+- Suggest 2-4 logical cities/regions depending on trip length
+- Prioritize easy transport (train, bus, short drives)
+- Avoid unrealistic city combinations
+- Good examples: Italy (Rome→Florence→Venice), Spain (Madrid→Seville→Granada)
+- Add nights per stop and fatigue level
+
+Multi-Country:
+- Recommend countries that make geographic and transport sense
+- Prefer 2 countries for 7-10 days, 2-3 countries for 12-15 days
+- Avoid combining countries far apart unless flights are justified
+- Classic logical routes: Vienna→Bratislava→Budapest, Prague→Vienna→Budapest
+- Add warnings if route is too rushed or expensive
+- If multi-country is illogical, suggest realistic single-country alternative
+
+TRIP FATIGUE ASSESSMENT:
+- Low: 1 city or 2 cities with 3+ nights each
+- Medium: 2-3 cities with 2-3 nights each
+- High: 3+ cities or frequent moves
+
+TRANSPORT LOGIC:
+- Explain whether route works by train, bus, car, flight, ferry, or mixed
+- Mention if transport is easy, moderate, or complex
+- Warn if route requires expensive flights between stops
 
 OUTPUT REQUIREMENTS:
 - Return structured JSON only
-- Include score breakdowns with explanations
-- List specific reasons tied to actual data
-- Provide warnings about potential issues
-- State assumptions clearly
+- Include route realism score (0-100)
+- Include travel fatigue level (Low/Medium/High)
+- Include transport logic explanation
+- Include realistic consultant notes
+- List warnings about rushed routes, visa issues, transport complexity
+- Suggest alternatives if user's structure choice is not ideal
 - Mark data sources (knowledge-based, estimated, demo)
 
 SCORING INTERPRETATION:
@@ -415,14 +448,12 @@ SCORING INTERPRETATION:
 - Total Score 60-79: Good match
 - Total Score 40-59: Fair match
 - Total Score 0-39: Poor match
+- Route Realism 80-100: Highly realistic route
+- Route Realism 60-79: Realistic with minor issues
+- Route Realism 40-59: Questionable route
+- Route Realism 0-39: Unrealistic route
 
-Category scores (0-10):
-- 8-10: Excellent
-- 6-7: Good
-- 4-5: Fair
-- 0-3: Poor
-
-Be helpful, honest, and precise.`
+Be helpful, honest, realistic, and precise like a professional travel consultant.`
   }
 
   /**
@@ -447,6 +478,15 @@ Be helpful, honest, and precise.`
     if (request.interests) sections.push(`Interests: ${request.interests.join(', ')}`)
     if (request.travelStyle) sections.push(`Travel Style: ${request.travelStyle}`)
     if (request.pace) sections.push(`Pace: ${request.pace}`)
+    if (request.tripStructure) {
+      const structureLabel = request.tripStructure === 'single_country_one_city' 
+        ? 'Single Country - One City'
+        : request.tripStructure === 'single_country_multi_city'
+        ? 'Single Country - Multiple Cities'
+        : 'Multiple Countries'
+      sections.push(`Trip Structure: ${structureLabel}`)
+      sections.push(`IMPORTANT: User wants ${structureLabel}. Respect this preference in recommendations.`)
+    }
     sections.push('')
 
     sections.push('=== KNOWLEDGE BASE RESULTS ===')

@@ -41,6 +41,7 @@ export default function AnalysisPage() {
     budget: string
     travelMonths: number[]
     interests: string[]
+    tripStructure: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
   }) => {
     setLoading(true)
     setError(null)
@@ -128,6 +129,7 @@ export default function AnalysisPage() {
                 budget: queryContext.budget || 'moderate',
                 travelMonths: queryContext.travel_months || [],
                 interests: queryContext.interests || [],
+                tripStructure: 'single_country_multi_city', // Default fallback
               })
             }
           }}

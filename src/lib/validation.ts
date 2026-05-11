@@ -13,6 +13,7 @@ export const schemas = {
     interests: z.array(z.string().max(50)).max(20).optional(),
     travelStyle: z.enum(['solo', 'couple', 'family', 'friends', 'business']).optional(),
     pace: z.enum(['relaxed', 'moderate', 'fast', 'very-fast']).optional(),
+    tripStructure: z.enum(['single_country_one_city', 'single_country_multi_city', 'multi_country']).optional(),
   }),
 
   // Feedback submission

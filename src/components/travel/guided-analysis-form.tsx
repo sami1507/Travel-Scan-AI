@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocomplete'
-import { Loader2, Search, User, Plane, Calendar, Wallet, Clock, Heart, Home, Shield } from 'lucide-react'
+import { Loader2, Search, User, Plane, Calendar, Wallet, Clock, Heart, Home, Shield, MapPin, Route } from 'lucide-react'
 import Link from 'next/link'
 import { searchAirports, formatAirportDisplay } from '@/lib/data/airports'
 import { searchCountries, formatCountryDisplay } from '@/lib/data/countries'
+
+type TripStructure = 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
 
 interface GuidedAnalysisFormProps {
   onSubmit: (data: {
@@ -19,6 +21,7 @@ interface GuidedAnalysisFormProps {
     budget: string
     travelMonths: number[]
     interests: string[]
+    tripStructure: TripStructure
   }) => void
   loading: boolean
 }
@@ -45,6 +48,27 @@ const ACCOMMODATION_TYPES = [
   { value: 'either', label: 'Either', icon: '🏘️' },
 ]
 
+const TRIP_STRUCTURES = [
+  {
+    value: 'single_country_one_city' as TripStructure,
+    label: 'Single Country - One City',
+    description: 'Deep dive into one city with optional day trips',
+    icon: '🏙️',
+  },
+  {
+    value: 'single_country_multi_city' as TripStructure,
+    label: 'Single Country - Multiple Cities',
+    description: 'Explore 2-4 cities within one country',
+    icon: '🗺️',
+  },
+  {
+    value: 'multi_country' as TripStructure,
+    label: 'Multiple Countries',
+    description: 'Cross-border route with 2-3 countries',
+    icon: '🌍',
+  },
+]
+
 export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProps) {
   const [departureCity, setDepartureCity] = useState('')
   const [passport, setPassport] = useState('')
@@ -56,6 +80,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
   const [selectedSeason, setSelectedSeason] = useState<keyof typeof SEASONS | null>(null)
   const [travelStyles, setTravelStyles] = useState<string[]>([])
   const [accommodation, setAccommodation] = useState('either')
+  const [tripStructure, setTripStructure] = useState<TripStructure>('single_country_multi_city')
   const [optionalNote, setOptionalNote] = useState('')
   const [hasProfile, setHasProfile] = useState(false)
   const [profileLoaded, setProfileLoaded] = useState(false)
@@ -143,6 +168,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
       budget,
       travelMonths,
       interests: travelStyles,
+      tripStructure,
     })
   }
 
@@ -366,6 +392,40 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{style.icon}</span>
                     <span className="text-sm font-medium">{style.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Trip Structure */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Route className="h-4 w-4" />
+              Trip Structure
+            </Label>
+            <p className="text-sm text-muted-foreground mb-3">
+              Choose whether you prefer one country, multiple cities in one country, or a multi-country route. TravelScan will evaluate route realism, transport effort, and trip fatigue.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {TRIP_STRUCTURES.map((structure) => (
+                <button
+                  key={structure.value}
+                  type="button"
+                  onClick={() => setTripStructure(structure.value)}
+                  disabled={loading}
+                  className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    tripStructure === structure.value
+                      ? 'border-primary bg-primary/10'
+                      : 'border-input hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">{structure.icon}</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold mb-1">{structure.label}</div>
+                      <div className="text-xs text-muted-foreground">{structure.description}</div>
+                    </div>
                   </div>
                 </button>
               ))}

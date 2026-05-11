@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       interests,
       travelStyle,
       pace,
+      tripStructure,
     } = validation.data
 
     logger.info('Travel analysis requested', {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       destination,
       departureCity,
       budget,
+      tripStructure,
     })
 
     // Run analysis with personalization
@@ -68,6 +70,7 @@ export async function POST(request: NextRequest) {
       interests,
       travelStyle,
       pace,
+      tripStructure,
       userId: user.id, // Enable personalization
     })
 

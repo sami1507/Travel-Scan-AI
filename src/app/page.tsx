@@ -36,37 +36,41 @@ export default function Home() {
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 px-6 py-2.5 text-sm backdrop-blur-sm shadow-premium-lg">
+          <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 px-6 py-2.5 text-sm backdrop-blur-sm shadow-premium-lg animate-fade-in opacity-0">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
             </div>
             <span className="font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AI-Powered Travel Intelligence</span>
           </div>
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl mb-8 text-balance">
-            <span className="bg-gradient-to-br from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">Discover smarter</span>
-            <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mt-3">travel destinations</span>
+            <span className="block animate-fade-up opacity-0 delay-100 bg-gradient-to-br from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">Discover smarter</span>
+            <span className="block animate-fade-up opacity-0 delay-200 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mt-3">travel destinations</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-12 text-balance max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground mb-12 text-balance max-w-2xl mx-auto leading-relaxed animate-fade-up opacity-0 delay-300">
             AI-powered route analysis with realistic itineraries, budget-aware recommendations, and passport-smart suggestions. Find your perfect trip.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up opacity-0 delay-400">
             <Link href="/signup">
-              <Button size="lg" className="w-full sm:w-auto px-10 h-14 font-bold text-base gradient-travel shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 border-0">
-                <Compass className="mr-2 h-5 w-5" />
+              <Button size="lg" className="group w-full sm:w-auto px-10 h-14 font-bold text-base gradient-travel shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 border-0">
+                <Compass className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
                 Get 3 Recommendations
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 font-semibold">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 font-semibold hover:border-primary/50 transition-colors">
                 Sign in
               </Button>
             </Link>
           </div>
-          <p className="mt-8 text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <p className="mt-8 text-sm text-muted-foreground flex items-center justify-center gap-2 animate-fade-in opacity-0 delay-500">
             <CheckCircle2 className="h-4 w-4 text-primary" />
             No credit card required • Free to start
           </p>
+          {/* Floating travel icon */}
+          <div className="absolute top-0 right-0 opacity-10 pointer-events-none hidden lg:block">
+            <Compass className="h-24 w-24 text-primary animate-float" />
+          </div>
         </div>
       </section>
 
@@ -85,8 +89,8 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <Card className="group border-0 shadow-premium-lg hover:shadow-travel hover:-translate-y-1 transition-all duration-300 bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-travel shadow-premium mb-5 group-hover:scale-110 transition-transform duration-300">
-                  <Brain className="h-8 w-8 text-white" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-travel shadow-premium mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Brain className="h-8 w-8 text-white transition-transform group-hover:scale-110" />
                 </div>
                 <CardTitle className="text-xl mb-2 font-bold">AI Route Analysis</CardTitle>
                 <CardDescription className="text-base leading-relaxed">
@@ -97,8 +101,8 @@ export default function Home() {
 
             <Card className="group border-0 shadow-premium-lg hover:shadow-travel hover:-translate-y-1 transition-all duration-300 bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-teal shadow-premium mb-5 group-hover:scale-110 transition-transform duration-300">
-                  <Wallet className="h-8 w-8 text-white" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-teal shadow-premium mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Wallet className="h-8 w-8 text-white transition-transform group-hover:scale-110" />
                 </div>
                 <CardTitle className="text-xl mb-2 font-bold">Budget-Aware Matching</CardTitle>
                 <CardDescription className="text-base leading-relaxed">
@@ -109,8 +113,8 @@ export default function Home() {
 
             <Card className="group border-0 shadow-premium-lg hover:shadow-travel hover:-translate-y-1 transition-all duration-300 bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-sunset shadow-premium mb-5 group-hover:scale-110 transition-transform duration-300">
-                  <Shield className="h-8 w-8 text-white" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-sunset shadow-premium mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Shield className="h-8 w-8 text-white transition-transform group-hover:scale-110" />
                 </div>
                 <CardTitle className="text-xl mb-2 font-bold">Passport-Smart Suggestions</CardTitle>
                 <CardDescription className="text-base leading-relaxed">
@@ -253,10 +257,10 @@ export default function Home() {
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">Ready to find your next trip?</h2>
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">Get AI-powered recommendations tailored to your budget, passport, and travel style</p>
               <Link href="/signup">
-                <Button size="lg" className="h-16 px-12 text-lg font-bold gradient-travel shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 border-0">
-                  <Sparkles className="mr-2 h-5 w-5" />
+                <Button size="lg" className="group h-16 px-12 text-lg font-bold gradient-travel shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 border-0">
+                  <Sparkles className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
                   Start Free Analysis
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
               <p className="mt-8 text-sm text-muted-foreground flex items-center justify-center gap-2">

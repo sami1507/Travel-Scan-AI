@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route } from 'lucide-react'
 import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
+import { TravelLoading } from '@/components/ui/travel-loading'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { EnhancedRecommendationCard } from '@/components/travel/enhanced-recommendation-card'
@@ -166,6 +167,15 @@ export default function AnalysisPage() {
         />
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <Card className="border-0 shadow-premium-xl">
+          <CardContent className="p-0">
+            <TravelLoading />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Empty State */}
       {!loading && !error && !analysis && (
         <EmptyState
@@ -176,16 +186,16 @@ export default function AnalysisPage() {
       )}
 
       {/* Results */}
-      {analysis && (
+      {analysis && !loading && (
         <div className="space-y-6">
           {/* Action Bar */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={() => setSaveDialogOpen(true)} className="shadow-lg shadow-primary/20">
-              <Bookmark className="h-4 w-4 mr-2" />
+          <div className="flex flex-wrap items-center gap-3 animate-fade-in">
+            <Button onClick={() => setSaveDialogOpen(true)} className="group shadow-lg shadow-primary/20 hover:shadow-xl transition-all hover:-translate-y-0.5">
+              <Bookmark className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
               Save Analysis
             </Button>
-            <Button variant="outline" onClick={() => setShareDialogOpen(true)} className="border-2">
-              <Share2 className="h-4 w-4 mr-2" />
+            <Button variant="outline" onClick={() => setShareDialogOpen(true)} className="group border-2 hover:border-primary/50 transition-all hover:-translate-y-0.5">
+              <Share2 className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
               Share
             </Button>
             <Button
@@ -319,18 +329,22 @@ export default function AnalysisPage() {
 
           {/* Ranked Destinations */}
           <div>
-            <h2 className="text-3xl font-bold mb-6">
+            <h2 className="text-3xl font-bold mb-6 animate-fade-up opacity-0">
               All Destinations ({analysis.rankedDestinations.length})
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {analysis.rankedDestinations.slice(0, 3).map((destination, index) => (
-                <EnhancedRecommendationCard
+                <div
                   key={destination.destinationId}
-                  destination={destination}
-                  rank={index + 1}
-                  onViewDetails={() => setSelectedDestination(destination)}
-                  queryContext={queryContext || undefined}
-                />
+                  className={`animate-scale-in opacity-0 delay-${(index + 1) * 100}`}
+                >
+                  <EnhancedRecommendationCard
+                    destination={destination}
+                    rank={index + 1}
+                    onViewDetails={() => setSelectedDestination(destination)}
+                    queryContext={queryContext || undefined}
+                  />
+                </div>
               ))}
             </div>
           </div>

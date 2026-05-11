@@ -46,10 +46,10 @@ export default function DashboardPage() {
 
       {/* Premium Stats Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1">
+        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Active sources</CardTitle>
-            <div className="icon-container-travel">
+            <div className="icon-container-travel group-hover:scale-110 transition-transform">
               <Activity className="h-6 w-6" />
             </div>
           </CardHeader>
@@ -61,10 +61,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1">
+        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0 delay-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total scans</CardTitle>
-            <div className="icon-container-teal">
+            <div className="icon-container-teal group-hover:scale-110 transition-transform">
               <TrendingUp className="h-6 w-6" />
             </div>
           </CardHeader>
@@ -76,10 +76,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1">
+        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0 delay-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Active alerts</CardTitle>
-            <div className="icon-container-sunset">
+            <div className="icon-container-sunset group-hover:scale-110 transition-transform">
               <AlertTriangle className="h-6 w-6" />
             </div>
           </CardHeader>
@@ -91,10 +91,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1">
+        <Card className="border-0 shadow-premium-lg hover:shadow-travel transition-all duration-300 hover:-translate-y-1 animate-scale-in opacity-0 delay-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Last scan</CardTitle>
-            <div className="icon-container-travel">
+            <div className="icon-container-travel group-hover:scale-110 transition-transform">
               <Clock className="h-6 w-6" />
             </div>
           </CardHeader>
@@ -128,13 +128,13 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-travel-subtle shadow-premium mb-4">
-                <Activity className="h-8 w-8 text-primary" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-travel-subtle shadow-premium mb-4 animate-pulse-glow">
+                <Activity className="h-8 w-8 text-primary animate-pulse" />
               </div>
               <p className="font-semibold text-base">No scans yet</p>
               <p className="text-sm text-muted-foreground mt-2">Add a source to start monitoring</p>
               <Link href="/dashboard/sources" className="mt-4">
-                <Button variant="outline" size="sm" className="shadow-sm">
+                <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Source
                 </Button>
@@ -160,8 +160,8 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-travel-subtle shadow-premium mb-4">
-                <AlertTriangle className="h-8 w-8 text-warning" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-travel-subtle shadow-premium mb-4 animate-pulse-glow">
+                <AlertTriangle className="h-8 w-8 text-warning animate-pulse" />
               </div>
               <p className="font-semibold text-base">No alerts yet</p>
               <p className="text-sm text-muted-foreground mt-2">Alerts appear when changes are detected</p>
@@ -215,10 +215,10 @@ export default function DashboardPage() {
 
           <div className="pt-3">
             <Link href="/dashboard/analysis">
-              <Button className="w-full h-12 text-base font-semibold gradient-travel shadow-xl hover:shadow-2xl transition-all duration-300 border-0">
-                <Sparkles className="h-4 w-4 mr-2" />
+              <Button className="group w-full h-12 text-base font-semibold gradient-travel shadow-xl hover:shadow-2xl transition-all duration-300 border-0 hover:scale-105">
+                <Sparkles className="h-4 w-4 mr-2 transition-transform group-hover:rotate-12" />
                 Start your first analysis
-                <ArrowRight className="h-4 w-4 ml-2" />
+                <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </div>

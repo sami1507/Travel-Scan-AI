@@ -1,0 +1,166 @@
+{
+  "demoStates": [
+    {
+      "state": "Landing Page",
+      "url": "/",
+      "status": "ready",
+      "notes": "Premium travel-themed design with hero section and features"
+    },
+    {
+      "state": "Login Page",
+      "url": "/login",
+      "status": "ready",
+      "notes": "Supabase authentication"
+    },
+    {
+      "state": "Dashboard Overview",
+      "url": "/dashboard",
+      "status": "ready",
+      "notes": "Stat cards with entrance animations"
+    },
+    {
+      "state": "Analysis Form - Empty",
+      "url": "/dashboard/analysis",
+      "status": "ready",
+      "notes": "9-field guided form with trip structure selection"
+    },
+    {
+      "state": "Analysis Form - Filled",
+      "url": "/dashboard/analysis",
+      "testData": {
+        "departure": "Cairo (CAI)",
+        "passport": "Egypt",
+        "tripLength": 15,
+        "season": "Autumn",
+        "budget": "Moderate",
+        "interests": ["Culture", "History", "Food"],
+        "accommodation": "Hotel",
+        "tripStructure": "Multi-country",
+        "currency": "USD"
+      },
+      "status": "ready",
+      "notes": "Complete form ready to submit"
+    },
+    {
+      "state": "Loading State",
+      "url": "/dashboard/analysis",
+      "trigger": "Submit analysis form",
+      "status": "ready",
+      "notes": "Travel-themed loading with animated plane and rotating messages"
+    },
+    {
+      "state": "Recommendation Card - Standard",
+      "url": "/dashboard/analysis",
+      "trigger": "After analysis completes",
+      "status": "ready",
+      "notes": "Route-aware card with realism score, fatigue level, suggested route, recommended nights"
+    },
+    {
+      "state": "Recommendation Card - Rushed Trip Warning",
+      "url": "/dashboard/analysis",
+      "testData": {
+        "departure": "New York (JFK)",
+        "passport": "United States",
+        "tripLength": 7,
+        "tripStructure": "Multi-country"
+      },
+      "status": "ready",
+      "notes": "Shows route warnings, high fatigue, lower realism score"
+    },
+    {
+      "state": "Fallback Mode Recommendation",
+      "url": "/dashboard/analysis",
+      "setup": "Disable OPENAI_API_KEY temporarily",
+      "status": "ready",
+      "notes": "Deterministic fallback library provides 3 recommendations"
+    },
+    {
+      "state": "Profile Page",
+      "url": "/dashboard/profile",
+      "status": "ready",
+      "notes": "User profile and preferences"
+    },
+    {
+      "state": "Saved Trips",
+      "url": "/dashboard/saved",
+      "status": "ready",
+      "notes": "Previously saved analyses"
+    }
+  ],
+  "criticalFeatures": [
+    {
+      "feature": "Trip Structure Selection",
+      "location": "Analysis form",
+      "options": [
+        "Single country, one city",
+        "Single country, multi-city",
+        "Multi-country"
+      ],
+      "status": "implemented"
+    },
+    {
+      "feature": "Route Realism Scoring",
+      "location": "Recommendation cards",
+      "range": "0-100",
+      "status": "implemented"
+    },
+    {
+      "feature": "Travel Fatigue Analysis",
+      "location": "Recommendation cards",
+      "levels": ["Low", "Medium", "High"],
+      "status": "implemented"
+    },
+    {
+      "feature": "Route Warnings",
+      "location": "Recommendation cards",
+      "triggers": "Rushed trips, long transfers",
+      "status": "implemented"
+    },
+    {
+      "feature": "Fallback Reliability",
+      "location": "AI pipeline",
+      "guarantee": "100% uptime",
+      "status": "implemented"
+    },
+    {
+      "feature": "Passport-Aware Filtering",
+      "location": "Analysis engine",
+      "status": "implemented"
+    }
+  ],
+  "testScenarios": [
+    {
+      "scenario": "Standard Multi-Country",
+      "input": "15 days, 2-3 countries, moderate budget",
+      "expected": "Logical route, realism >70, Low/Medium fatigue"
+    },
+    {
+      "scenario": "Rushed Trip",
+      "input": "7 days, 3 countries",
+      "expected": "Warnings, High fatigue, alternatives suggested"
+    },
+    {
+      "scenario": "Single Country",
+      "input": "10 days, one country, multiple cities",
+      "expected": "All cities in same country, realism >75"
+    },
+    {
+      "scenario": "Single City",
+      "input": "7 days, one city",
+      "expected": "No multi-city route, Low fatigue, realism >85"
+    },
+    {
+      "scenario": "Fallback Mode",
+      "input": "Any valid input with OpenAI disabled",
+      "expected": "3 recommendations from curated library"
+    }
+  ],
+  "productionReadiness": {
+    "buildStatus": "passing",
+    "lintStatus": "passing",
+    "crashFixed": true,
+    "defensiveUIHandling": true,
+    "evaluationReady": true,
+    "demoReady": true
+  }
+}

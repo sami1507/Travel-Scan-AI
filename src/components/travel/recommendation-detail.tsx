@@ -41,7 +41,9 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
               <div>
                 <div className="text-xs text-muted-foreground">Best Months</div>
                 <div className="font-medium text-sm">
-                  {destination.bestMonths.map(m => new Date(2024, m - 1).toLocaleString('default', { month: 'short' })).join(', ')}
+                  {destination.bestMonths && Array.isArray(destination.bestMonths) && destination.bestMonths.length > 0
+                    ? destination.bestMonths.map(m => new Date(2024, m - 1).toLocaleString('default', { month: 'short' })).join(', ')
+                    : 'Year-round'}
                 </div>
               </div>
             </div>
@@ -69,7 +71,7 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
           </div>
 
           {/* Why Recommended */}
-          {destination.whyRecommended.length > 0 && (
+          {destination.whyRecommended && Array.isArray(destination.whyRecommended) && destination.whyRecommended.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -91,7 +93,7 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
           )}
 
           {/* Possible Downsides */}
-          {destination.possibleDownsides.length > 0 && (
+          {destination.possibleDownsides && Array.isArray(destination.possibleDownsides) && destination.possibleDownsides.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -140,7 +142,7 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
                   <span className="text-sm font-medium">{Math.round(destination.confidence * 100)}%</span>
                 </div>
               </div>
-              {destination.sourceLabels.length > 0 && (
+              {destination.sourceLabels && Array.isArray(destination.sourceLabels) && destination.sourceLabels.length > 0 && (
                 <div>
                   <span className="text-sm text-muted-foreground">Data Sources:</span>
                   <div className="flex flex-wrap gap-2 mt-2">

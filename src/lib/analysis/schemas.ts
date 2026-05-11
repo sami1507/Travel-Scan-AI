@@ -40,6 +40,16 @@ export const rankedDestinationSchema = z.object({
   confidence: z.number().min(0).max(1),
   sourceLabels: z.array(z.string()),
   dataQuality: z.enum(['knowledge-based', 'estimated', 'demo']),
+  // Route-aware fields
+  tripType: z.string().optional().describe('Single Country - One City, Single Country - Multi-City, or Multi-Country Route'),
+  suggestedRoute: z.array(z.string()).optional().describe('Ordered list of cities/stops in the route'),
+  recommendedNights: z.record(z.number()).optional().describe('Nights per stop, e.g., {"Vienna": 4, "Budapest": 6}'),
+  routeRealismScore: z.number().min(0).max(100).optional().describe('How realistic/practical the route is'),
+  travelFatigueLevel: z.enum(['Low', 'Medium', 'High']).optional().describe('Expected travel fatigue level'),
+  transportLogic: z.string().optional().describe('Explanation of transport between stops'),
+  realisticConsultantNotes: z.string().optional().describe('Practical advice like a travel consultant would give'),
+  routeWarnings: z.array(z.string()).optional().describe('Warnings about the route (rushed, expensive, etc.)'),
+  routeAlternatives: z.string().optional().describe('Alternative route suggestion if current is not optimal'),
 })
 
 export const routeStopSchema = z.object({

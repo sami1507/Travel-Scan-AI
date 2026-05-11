@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   MapPin, Calendar, DollarSign, AlertTriangle, Info, 
   ChevronRight, ThumbsUp, ThumbsDown, Bookmark, Home,
-  Sparkles, TrendingUp
+  Sparkles, TrendingUp, Route, Moon, Gauge, Train
 } from 'lucide-react'
 import type { RankedDestination } from '@/lib/analysis/schemas'
 import { useFeedback } from '@/hooks/use-feedback'
@@ -186,6 +186,135 @@ export function EnhancedRecommendationCard({
               ))}
             </ul>
           </div>
+        )}
+
+        {/* Trip Type Badge */}
+        {destination.tripType && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs font-medium">
+              {destination.tripType}
+            </Badge>
+          </div>
+        )}
+
+        {/* Suggested Route */}
+        {destination.suggestedRoute && destination.suggestedRoute.length > 0 && (
+          <div className="space-y-2 bg-primary/5 rounded-lg p-3 border border-primary/20">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Route className="h-4 w-4 text-primary" />
+              Suggested Route
+            </div>
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+              {destination.suggestedRoute.map((city, idx) => (
+                <span key={idx} className="flex items-center gap-2">
+                  {city}
+                  {idx < destination.suggestedRoute!.length - 1 && (
+                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recommended Nights */}
+        {destination.recommendedNights && Object.keys(destination.recommendedNights).length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Moon className="h-4 w-4 text-primary" />
+              Suggested Nights
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {Object.entries(destination.recommendedNights).map(([city, nights]) => (
+                <div key={city} className="flex items-center justify-between text-muted-foreground">
+                  <span>{city}:</span>
+                  <span className="font-semibold text-foreground">{nights} nights</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Route Realism & Travel Fatigue */}
+        {(destination.routeRealismScore !== undefined || destination.travelFatigueLevel) && (
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            {destination.routeRealismScore !== undefined && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Gauge className="h-3 w-3" />
+                  Route Realism
+                </div>
+                <div className="text-sm font-bold text-foreground">
+                  {destination.routeRealismScore}/100
+                </div>
+              </div>
+            )}
+            {destination.travelFatigueLevel && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <TrendingUp className="h-3 w-3" />
+                  Travel Fatigue
+                </div>
+                <div className="text-sm font-bold text-foreground">
+                  {destination.travelFatigueLevel}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Transport Logic */}
+        {destination.transportLogic && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Train className="h-4 w-4 text-primary" />
+              Transport
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {destination.transportLogic}
+            </p>
+          </div>
+        )}
+
+        {/* Consultant Notes */}
+        {destination.realisticConsultantNotes && (
+          <div className="space-y-2 bg-blue-50 rounded-lg p-3 border border-blue-200">
+            <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+              <Info className="h-4 w-4 text-blue-600" />
+              Travel Consultant Notes
+            </div>
+            <p className="text-sm text-blue-800 leading-relaxed">
+              {destination.realisticConsultantNotes}
+            </p>
+          </div>
+        )}
+
+        {/* Route Warnings */}
+        {destination.routeWarnings && destination.routeWarnings.length > 0 && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-sm text-orange-800">
+              <div className="font-semibold mb-1">Route Considerations:</div>
+              <ul className="space-y-1">
+                {destination.routeWarnings.map((warning, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-orange-600 mt-0.5">•</span>
+                    <span>{warning}</span>
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Route Alternatives */}
+        {destination.routeAlternatives && (
+          <Alert className="border-purple-200 bg-purple-50">
+            <Sparkles className="h-4 w-4 text-purple-600" />
+            <AlertDescription className="text-sm text-purple-800">
+              <span className="font-semibold">Alternative Suggestion:</span> {destination.routeAlternatives}
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Budget & Accommodation */}

@@ -343,13 +343,18 @@ export class RouteIntelligenceService {
    * Select best route from options
    */
   private selectBestRoute(routes: IntelligentRoute[], userPreferences: any): IntelligentRoute {
+    // Guard against empty routes array
+    if (routes.length === 0) {
+      return this.createFallbackRoute(userPreferences)
+    }
+
     // Default to single destination if it's strong
     const singleDest = routes.find(r => r.routeType === 'single-destination')
     if (singleDest && singleDest.routeScore.totalRouteQuality >= 75) {
       return singleDest
     }
 
-    // Find highest scoring route
+    // Find highest scoring route - safe because we checked length above
     const bestRoute = routes.reduce((best, current) => {
       return current.routeScore.totalRouteQuality > best.routeScore.totalRouteQuality ? current : best
     })
@@ -363,6 +368,64 @@ export class RouteIntelligenceService {
     }
 
     return bestRoute
+  }
+
+  /**
+   * Create fallback route when no destinations are available
+   */
+  private createFallbackRoute(userPreferences: any): IntelligentRoute {
+    // Create a minimal fallback route indicating no recommendations available
+    const fallbackStop: RouteStop = {
+      destinationId: 'fallback-1',
+      destinationName: 'No destinations available',
+      destinationType: 'city',
+      totalScore: 0,
+      categoryScores: {
+        weatherFit: 0,
+        budgetFit: 0,
+        safety: 0,
+        nightlife: 0,
+        nature: 0,
+        culture: 0,
+        food: 0,
+        transport: 0,
+        hotelValue: 0,
+        passportEase: 0,
+      },
+      daysRecommended: 7,
+      orderInRoute: 1,
+    }
+
+    return {
+      routeType: 'single-destination',
+      routeName: 'No Recommendations Available',
+      orderedStops: [fallbackStop],
+      routeScore: {
+        coherence: 0,
+        transferSimplicity: 0,
+        transportConvenience: 0,
+        budgetEfficiency: 0,
+        seasonalCompatibility: 0,
+        destinationSynergy: 0,
+        fatiguePenalty: 0,
+        totalRouteQuality: 0,
+      },
+      whyThisRoute: [
+        'No destinations match your criteria at this time',
+        'Try adjusting your search parameters',
+        'Consider different travel dates or budget',
+      ],
+      transferNotes: ['No route available'],
+      routeWarnings: ['Unable to generate recommendations with current parameters'],
+      estimatedTripIntensity: 'relaxed',
+      bestFor: [],
+      routeConfidence: 0,
+      totalDays: 7,
+      estimatedCost: { min: 0, max: 0, currency: 'USD' },
+      highlights: [],
+      bestMonths: [],
+      dataQuality: 'demo',
+    }
   }
 
   /**

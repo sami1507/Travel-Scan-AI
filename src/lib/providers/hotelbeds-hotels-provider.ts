@@ -389,11 +389,12 @@ export class HotelbedsHotelsProvider implements IHotelsProvider {
     if (hotels.length === 0) return null
 
     // Calculate value score: rating / (pricePerNight / 100)
+    // Use first hotel as initial value to avoid reduce error
     return hotels.reduce((best, hotel) => {
       const hotelValue = hotel.rating / (hotel.pricePerNight / 100)
       const bestValue = best.rating / (best.pricePerNight / 100)
       return hotelValue > bestValue ? hotel : best
-    })
+    }, hotels[0])
   }
 
   /**

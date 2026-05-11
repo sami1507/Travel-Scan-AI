@@ -893,6 +893,329 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
   }
 
   /**
+   * Curated fallback route library for realistic recommendations
+   */
+  private getFallbackRouteLibrary() {
+    return [
+      // Multi-Country Routes
+      {
+        id: 'central-europe-classic',
+        tripStructure: 'multi_country',
+        countries: ['Austria', 'Slovakia', 'Hungary'],
+        cities: ['Vienna', 'Bratislava', 'Budapest'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['city-life', 'history', 'food', 'nightlife'],
+        transportMode: 'train',
+        fatigueLevel: 'Low',
+        minDays: 10,
+        maxDays: 15,
+        nightsDistribution: { 'Vienna': 4, 'Bratislava': 2, 'Budapest': 5 },
+      },
+      {
+        id: 'central-europe-prague',
+        tripStructure: 'multi_country',
+        countries: ['Czech Republic', 'Austria', 'Hungary'],
+        cities: ['Prague', 'Vienna', 'Budapest'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['city-life', 'history', 'food', 'nightlife', 'culture'],
+        transportMode: 'train',
+        fatigueLevel: 'Medium',
+        minDays: 12,
+        maxDays: 18,
+        nightsDistribution: { 'Prague': 4, 'Vienna': 4, 'Budapest': 5 },
+      },
+      {
+        id: 'balkans-adriatic',
+        tripStructure: 'multi_country',
+        countries: ['Albania', 'Montenegro'],
+        cities: ['Tirana', 'Shkoder', 'Kotor', 'Budva'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['low', 'moderate'],
+        travelStyles: ['nature', 'beach', 'history', 'adventure'],
+        transportMode: 'bus',
+        fatigueLevel: 'Medium',
+        minDays: 10,
+        maxDays: 14,
+        nightsDistribution: { 'Tirana': 2, 'Shkoder': 2, 'Kotor': 3, 'Budva': 4 },
+      },
+      {
+        id: 'balkans-capitals',
+        tripStructure: 'multi_country',
+        countries: ['Serbia', 'Bosnia', 'Croatia'],
+        cities: ['Belgrade', 'Sarajevo', 'Mostar'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['low', 'moderate'],
+        travelStyles: ['history', 'food', 'culture', 'city-life'],
+        transportMode: 'bus',
+        fatigueLevel: 'Medium',
+        minDays: 10,
+        maxDays: 14,
+        nightsDistribution: { 'Belgrade': 4, 'Sarajevo': 4, 'Mostar': 3 },
+      },
+      {
+        id: 'benelux-route',
+        tripStructure: 'multi_country',
+        countries: ['Belgium', 'Netherlands'],
+        cities: ['Brussels', 'Amsterdam', 'Rotterdam'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['moderate', 'high', 'luxury'],
+        travelStyles: ['city-life', 'culture', 'food', 'nightlife'],
+        transportMode: 'train',
+        fatigueLevel: 'Low',
+        minDays: 8,
+        maxDays: 12,
+        nightsDistribution: { 'Brussels': 3, 'Amsterdam': 4, 'Rotterdam': 2 },
+      },
+      {
+        id: 'iberia-capitals',
+        tripStructure: 'multi_country',
+        countries: ['Spain', 'Portugal'],
+        cities: ['Madrid', 'Lisbon', 'Porto'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['city-life', 'food', 'history', 'nightlife'],
+        transportMode: 'train',
+        fatigueLevel: 'Medium',
+        minDays: 12,
+        maxDays: 16,
+        nightsDistribution: { 'Madrid': 4, 'Lisbon': 5, 'Porto': 3 },
+      },
+      
+      // Single Country Multi-City Routes
+      {
+        id: 'italy-classic',
+        tripStructure: 'single_country_multi_city',
+        countries: ['Italy'],
+        cities: ['Rome', 'Florence', 'Venice'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['moderate', 'high', 'luxury'],
+        travelStyles: ['history', 'food', 'culture', 'city-life'],
+        transportMode: 'train',
+        fatigueLevel: 'Low',
+        minDays: 10,
+        maxDays: 14,
+        nightsDistribution: { 'Rome': 4, 'Florence': 3, 'Venice': 3 },
+      },
+      {
+        id: 'spain-south',
+        tripStructure: 'single_country_multi_city',
+        countries: ['Spain'],
+        cities: ['Madrid', 'Seville', 'Granada'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['history', 'food', 'culture', 'nightlife'],
+        transportMode: 'train',
+        fatigueLevel: 'Low',
+        minDays: 10,
+        maxDays: 14,
+        nightsDistribution: { 'Madrid': 4, 'Seville': 3, 'Granada': 3 },
+      },
+      {
+        id: 'portugal-highlights',
+        tripStructure: 'single_country_multi_city',
+        countries: ['Portugal'],
+        cities: ['Lisbon', 'Porto', 'Sintra'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['history', 'food', 'nature', 'beach'],
+        transportMode: 'train',
+        fatigueLevel: 'Low',
+        minDays: 8,
+        maxDays: 12,
+        nightsDistribution: { 'Lisbon': 4, 'Porto': 3, 'Sintra': 2 },
+      },
+      {
+        id: 'georgia-adventure',
+        tripStructure: 'single_country_multi_city',
+        countries: ['Georgia'],
+        cities: ['Tbilisi', 'Kazbegi', 'Batumi'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['low', 'moderate'],
+        travelStyles: ['nature', 'adventure', 'food', 'history'],
+        transportMode: 'bus',
+        fatigueLevel: 'Medium',
+        minDays: 10,
+        maxDays: 14,
+        nightsDistribution: { 'Tbilisi': 4, 'Kazbegi': 3, 'Batumi': 4 },
+      },
+      {
+        id: 'greece-mainland',
+        tripStructure: 'single_country_multi_city',
+        countries: ['Greece'],
+        cities: ['Athens', 'Meteora', 'Thessaloniki'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['history', 'nature', 'food', 'culture'],
+        transportMode: 'train',
+        fatigueLevel: 'Medium',
+        minDays: 10,
+        maxDays: 14,
+        nightsDistribution: { 'Athens': 4, 'Meteora': 2, 'Thessaloniki': 4 },
+      },
+      {
+        id: 'albania-coast',
+        tripStructure: 'single_country_multi_city',
+        countries: ['Albania'],
+        cities: ['Tirana', 'Berat', 'Saranda'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['low', 'moderate'],
+        travelStyles: ['history', 'beach', 'nature', 'adventure'],
+        transportMode: 'bus',
+        fatigueLevel: 'Medium',
+        minDays: 8,
+        maxDays: 12,
+        nightsDistribution: { 'Tirana': 3, 'Berat': 2, 'Saranda': 4 },
+      },
+      
+      // Single City Routes
+      {
+        id: 'budapest-solo',
+        tripStructure: 'single_country_one_city',
+        countries: ['Hungary'],
+        cities: ['Budapest'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['low', 'moderate', 'high'],
+        travelStyles: ['city-life', 'history', 'nightlife', 'food', 'culture'],
+        transportMode: 'local',
+        fatigueLevel: 'Low',
+        minDays: 5,
+        maxDays: 10,
+        nightsDistribution: { 'Budapest': 7 },
+      },
+      {
+        id: 'athens-solo',
+        tripStructure: 'single_country_one_city',
+        countries: ['Greece'],
+        cities: ['Athens'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['history', 'culture', 'food', 'city-life'],
+        transportMode: 'local',
+        fatigueLevel: 'Low',
+        minDays: 5,
+        maxDays: 10,
+        nightsDistribution: { 'Athens': 7 },
+      },
+      {
+        id: 'prague-solo',
+        tripStructure: 'single_country_one_city',
+        countries: ['Czech Republic'],
+        cities: ['Prague'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['moderate', 'high'],
+        travelStyles: ['city-life', 'history', 'nightlife', 'food'],
+        transportMode: 'local',
+        fatigueLevel: 'Low',
+        minDays: 4,
+        maxDays: 8,
+        nightsDistribution: { 'Prague': 7 },
+      },
+      {
+        id: 'istanbul-solo',
+        tripStructure: 'single_country_one_city',
+        countries: ['Turkey'],
+        cities: ['Istanbul'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['low', 'moderate', 'high'],
+        travelStyles: ['history', 'food', 'culture', 'city-life'],
+        transportMode: 'local',
+        fatigueLevel: 'Low',
+        minDays: 5,
+        maxDays: 10,
+        nightsDistribution: { 'Istanbul': 7 },
+      },
+      {
+        id: 'rome-solo',
+        tripStructure: 'single_country_one_city',
+        countries: ['Italy'],
+        cities: ['Rome'],
+        bestSeasons: ['spring', 'autumn'],
+        budgetFit: ['moderate', 'high', 'luxury'],
+        travelStyles: ['history', 'food', 'culture', 'city-life'],
+        transportMode: 'local',
+        fatigueLevel: 'Low',
+        minDays: 5,
+        maxDays: 10,
+        nightsDistribution: { 'Rome': 7 },
+      },
+      {
+        id: 'tbilisi-solo',
+        tripStructure: 'single_country_one_city',
+        countries: ['Georgia'],
+        cities: ['Tbilisi'],
+        bestSeasons: ['spring', 'summer', 'autumn'],
+        budgetFit: ['low', 'moderate'],
+        travelStyles: ['food', 'history', 'culture', 'nightlife'],
+        transportMode: 'local',
+        fatigueLevel: 'Low',
+        minDays: 4,
+        maxDays: 8,
+        nightsDistribution: { 'Tbilisi': 7 },
+      },
+    ]
+  }
+
+  /**
+   * Select best fallback routes based on user preferences
+   */
+  private selectBestFallbackRoutes(request: AnalysisRequest, count: number = 3) {
+    const library = this.getFallbackRouteLibrary()
+    const tripLength = request.travelMonths?.length || 7
+    const season = this.getSeasonFromMonths(request.travelMonths || [])
+    
+    // Filter by trip structure
+    let candidates = library.filter(route => route.tripStructure === request.tripStructure)
+    
+    // Score each route
+    const scoredRoutes = candidates.map(route => {
+      let score = 0
+      
+      // Trip length fit (most important)
+      if (tripLength >= route.minDays && tripLength <= route.maxDays) {
+        score += 40
+      } else if (tripLength >= route.minDays - 2 && tripLength <= route.maxDays + 2) {
+        score += 20
+      }
+      
+      // Budget fit
+      if (request.budget && route.budgetFit.includes(request.budget)) {
+        score += 20
+      }
+      
+      // Season fit
+      if (route.bestSeasons.includes(season)) {
+        score += 15
+      }
+      
+      // Travel style match
+      const userStyles = (request.interests || []).map(i => i.toLowerCase().replace(/\s+/g, '-'))
+      const matchingStyles = route.travelStyles.filter(style => 
+        userStyles.some(us => style.includes(us) || us.includes(style))
+      )
+      score += matchingStyles.length * 5
+      
+      return { route, score }
+    })
+    
+    // Sort by score and return top N
+    return scoredRoutes
+      .sort((a, b) => b.score - a.score)
+      .slice(0, count)
+      .map(sr => sr.route)
+  }
+
+  private getSeasonFromMonths(months: number[]): string {
+    if (months.length === 0) return 'spring'
+    const month = months[0]
+    if (month >= 3 && month <= 5) return 'spring'
+    if (month >= 6 && month <= 8) return 'summer'
+    if (month >= 9 && month <= 11) return 'autumn'
+    return 'winter'
+  }
+
+  /**
    * Generate deterministic fallback recommendations when AI provider fails
    */
   private generateFallbackRecommendations(request: AnalysisRequest, scoredDestinations: any[]): TravelAnalysisResponse {
@@ -901,82 +1224,95 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
       tripStructure: request.tripStructure,
     })
 
-    // Use top scored destinations or create safe defaults
-    const topDestinations = scoredDestinations.slice(0, 3)
+    // Select best routes from curated library
+    const selectedRoutes = this.selectBestFallbackRoutes(request, 3)
     const tripLength = request.travelMonths?.length || 7
     
-    const rankedDestinations = topDestinations.map((dest, index) => {
+    const rankedDestinations = selectedRoutes.map((route, index) => {
       const tripType = request.tripStructure === 'single_country_one_city' 
         ? 'Single Country - One City'
         : request.tripStructure === 'single_country_multi_city'
         ? 'Single Country - Multi-City'
         : 'Multi-Country Route'
 
-      // Generate realistic route based on trip structure
-      let suggestedRoute: string[] = []
-      let recommendedNights: Record<string, number> = {}
-      let transportLogic = ''
-      let travelFatigueLevel: 'Low' | 'Medium' | 'High' = 'Low'
-      let routeWarnings: string[] = []
-
-      if (request.tripStructure === 'multi_country' && tripLength >= 12) {
-        // Multi-country route example
-        suggestedRoute = [dest.city, `${dest.city} Region`, 'Nearby City']
-        recommendedNights = {
-          [dest.city]: Math.floor(tripLength * 0.5),
-          [`${dest.city} Region`]: Math.floor(tripLength * 0.3),
-          'Nearby City': Math.floor(tripLength * 0.2),
-        }
-        transportLogic = 'Train and bus connections recommended between cities'
-        travelFatigueLevel = tripLength < 10 ? 'High' : 'Medium'
-        if (tripLength < 10) {
-          routeWarnings.push('Multiple countries in less than 10 days may feel rushed')
-        }
-      } else if (request.tripStructure === 'single_country_multi_city') {
-        suggestedRoute = [dest.city, `Secondary City in ${dest.country}`]
-        recommendedNights = {
-          [dest.city]: Math.floor(tripLength * 0.6),
-          [`Secondary City in ${dest.country}`]: Math.floor(tripLength * 0.4),
-        }
-        transportLogic = 'Domestic train or short flight'
-        travelFatigueLevel = 'Low'
-      } else {
-        // Single city
-        suggestedRoute = [dest.city]
-        recommendedNights = { [dest.city]: tripLength }
-        transportLogic = 'No inter-city transport needed - explore neighborhoods'
-        travelFatigueLevel = 'Low'
+      // Adjust nights distribution to match actual trip length
+      const totalNightsInTemplate = Object.values(route.nightsDistribution).reduce((a: number, b: number) => a + b, 0)
+      const adjustedNights: Record<string, number> = {}
+      
+      Object.entries(route.nightsDistribution).forEach(([city, nights]) => {
+        adjustedNights[city] = Math.round((nights as number / totalNightsInTemplate) * tripLength)
+      })
+      
+      // Ensure total matches trip length
+      const currentTotal = Object.values(adjustedNights).reduce((a, b) => a + b, 0)
+      if (currentTotal !== tripLength && route.cities.length > 0) {
+        const firstCity = route.cities[0]
+        adjustedNights[firstCity] = adjustedNights[firstCity] + (tripLength - currentTotal)
       }
+
+      // Generate warnings for rushed itineraries
+      const routeWarnings: string[] = []
+      let travelFatigueLevel: 'Low' | 'Medium' | 'High' = route.fatigueLevel as any
+      let routeRealismScore = 85
+      
+      if (request.tripStructure === 'multi_country') {
+        if (tripLength < route.minDays) {
+          routeWarnings.push(`${route.cities.length} countries in ${tripLength} days may feel rushed - consider ${route.minDays}+ days`)
+          travelFatigueLevel = 'High'
+          routeRealismScore = 60
+        } else if (tripLength < route.minDays + 2) {
+          routeWarnings.push('Tight schedule - plan transfers carefully')
+          travelFatigueLevel = 'Medium'
+          routeRealismScore = 75
+        }
+      }
+
+      const transportLogic = route.transportMode === 'train' 
+        ? 'Convenient train connections between cities'
+        : route.transportMode === 'bus'
+        ? 'Bus connections recommended - book in advance'
+        : route.transportMode === 'local'
+        ? 'Local transport within city - metro, trams, walking'
+        : 'Mixed transport - trains and buses'
+
+      const consultantNotes = tripLength < route.minDays
+        ? `This ${tripType.toLowerCase()} route typically needs ${route.minDays}-${route.maxDays} days. With ${tripLength} days, you'll have a fast-paced trip. Consider reducing stops for a more relaxed experience.`
+        : tripLength > route.maxDays
+        ? `Perfect timing for this ${tripType.toLowerCase()} route. You'll have ${tripLength} days to explore comfortably with time for day trips and spontaneous discoveries.`
+        : `This is a realistic ${tripType.toLowerCase()} itinerary for ${tripLength} days. The pacing allows for comfortable exploration of each destination.`
 
       return {
         rank: index + 1,
-        destinationName: dest.city,
-        country: dest.country,
-        destinationSummary: `${dest.city} is a great match for your ${request.budget || 'moderate'} budget travel preferences`,
+        destinationName: route.cities[0],
+        country: route.countries[0],
+        destinationSummary: `${route.cities.join(' → ')} offers a perfect ${tripType.toLowerCase()} experience combining ${route.travelStyles.slice(0, 3).join(', ')}`,
         whyRecommended: [
-          `Matches your travel style and interests`,
-          `Good value for ${request.budget || 'moderate'} budget`,
-          `Suitable for ${tripLength} day trip`,
+          `Ideal ${tripType.toLowerCase()} for ${tripLength} days`,
+          `Matches your ${request.budget || 'moderate'} budget and ${route.travelStyles.slice(0, 2).join(', ')} interests`,
+          `${transportLogic}`,
+          `${travelFatigueLevel} travel fatigue with well-paced itinerary`,
         ],
         bestMonth: request.travelMonths?.[0] ? this.getMonthName(request.travelMonths[0]) : 'Spring',
-        totalMatchScore: dest.totalScore || 75,
-        scoreBreakdown: dest.scoreBreakdown || {
-          weather: 15,
-          budget: 15,
-          safety: 15,
-          activities: 15,
-          accessibility: 15,
+        totalMatchScore: routeRealismScore,
+        scoreBreakdown: {
+          weather: Math.round(routeRealismScore * 0.2),
+          budget: Math.round(routeRealismScore * 0.2),
+          safety: Math.round(routeRealismScore * 0.2),
+          activities: Math.round(routeRealismScore * 0.2),
+          accessibility: Math.round(routeRealismScore * 0.2),
         },
-        possibleDownsides: ['Weather may vary', 'Peak season crowds possible'],
+        possibleDownsides: routeWarnings.length > 0 ? routeWarnings : ['Peak season may have higher prices', 'Book accommodation in advance'],
         tripType,
-        suggestedRoute,
-        recommendedNights,
-        routeRealismScore: tripLength >= 12 || request.tripStructure !== 'multi_country' ? 85 : 65,
+        suggestedRoute: route.cities,
+        recommendedNights: adjustedNights,
+        routeRealismScore,
         travelFatigueLevel,
         transportLogic,
-        realisticConsultantNotes: `This is a realistic ${tripType.toLowerCase()} itinerary for ${tripLength} days. ${travelFatigueLevel === 'High' ? 'Consider reducing destinations for a more relaxed pace.' : 'The pacing allows for comfortable exploration.'}`,
-        routeWarnings,
-        routeAlternatives: routeWarnings.length > 0 ? 'Consider focusing on fewer destinations for a more relaxed experience' : undefined,
+        realisticConsultantNotes: consultantNotes,
+        routeWarnings: routeWarnings.length > 0 ? routeWarnings : undefined,
+        routeAlternatives: routeWarnings.length > 0 && request.tripStructure === 'multi_country'
+          ? `Consider a single-country multi-city route for ${tripLength} days, or extend to ${route.minDays}+ days for this multi-country route`
+          : undefined,
       }
     })
 

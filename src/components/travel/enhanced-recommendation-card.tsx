@@ -171,7 +171,7 @@ export function EnhancedRecommendationCard({
         </div>
 
         {/* What You Can Do */}
-        {destination.whyRecommended && destination.whyRecommended.length > 1 && (
+        {destination.whyRecommended && Array.isArray(destination.whyRecommended) && destination.whyRecommended.length > 1 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <MapPin className="h-4 w-4 text-primary" />
@@ -198,7 +198,7 @@ export function EnhancedRecommendationCard({
         )}
 
         {/* Suggested Route */}
-        {destination.suggestedRoute && destination.suggestedRoute.length > 0 && (
+        {destination.suggestedRoute && Array.isArray(destination.suggestedRoute) && destination.suggestedRoute.length > 0 && (
           <div className="space-y-2 bg-primary/5 rounded-lg p-3 border border-primary/20">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Route className="h-4 w-4 text-primary" />
@@ -208,7 +208,7 @@ export function EnhancedRecommendationCard({
               {destination.suggestedRoute.map((city, idx) => (
                 <span key={idx} className="flex items-center gap-2">
                   {city}
-                  {idx < destination.suggestedRoute!.length - 1 && (
+                  {idx < destination.suggestedRoute.length - 1 && (
                     <ChevronRight className="h-3 w-3 text-muted-foreground" />
                   )}
                 </span>
@@ -218,7 +218,7 @@ export function EnhancedRecommendationCard({
         )}
 
         {/* Recommended Nights */}
-        {destination.recommendedNights && Object.keys(destination.recommendedNights).length > 0 && (
+        {destination.recommendedNights && typeof destination.recommendedNights === 'object' && Object.keys(destination.recommendedNights).length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Moon className="h-4 w-4 text-primary" />
@@ -290,7 +290,7 @@ export function EnhancedRecommendationCard({
         )}
 
         {/* Route Warnings */}
-        {destination.routeWarnings && destination.routeWarnings.length > 0 && (
+        {destination.routeWarnings && Array.isArray(destination.routeWarnings) && destination.routeWarnings.length > 0 && (
           <Alert className="border-orange-200 bg-orange-50">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-sm text-orange-800">
@@ -332,7 +332,7 @@ export function EnhancedRecommendationCard({
         </div>
 
         {/* Warnings */}
-        {destination.possibleDownsides && destination.possibleDownsides.length > 0 && (
+        {destination.possibleDownsides && Array.isArray(destination.possibleDownsides) && destination.possibleDownsides.length > 0 && (
           <Alert className="border-yellow-200 bg-yellow-50">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-sm text-yellow-800">

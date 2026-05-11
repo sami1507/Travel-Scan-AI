@@ -4,30 +4,38 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 10% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 10% 10%;
+    /* Premium travel-inspired palette */
+    --background: 36 33% 97%; /* Warm sand background #F8F5EF */
+    --foreground: 215 50% 15%; /* Deep navy text #0B1F3A */
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 215 50% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 10% 10%;
-    --primary: 221 83% 53%;
+    --popover-foreground: 215 50% 15%;
+    --primary: 217 91% 60%; /* Travel blue #2563EB */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 224 10% 10%;
-    --muted: 220 13% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 224 10% 10%;
+    --secondary: 214 100% 97%; /* Light blue tint #F4F8FF */
+    --secondary-foreground: 215 50% 15%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 174 84% 40%; /* Teal accent #14B8A6 */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 50%; /* Sunset orange #F59E0B */
     --warning-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221 83% 53%;
-    --radius: 0.75rem;
+    --border: 214 32% 88%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.875rem;
+    
+    /* Travel-specific colors */
+    --travel-navy: 215 50% 15%;
+    --travel-blue: 217 91% 60%;
+    --sky-blue: 213 94% 68%;
+    --teal: 174 84% 40%;
+    --sunset: 38 92% 50%;
   }
 
   .dark {
@@ -65,6 +73,9 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-optical-sizing: auto;
+    background-image: 
+      radial-gradient(at 0% 0%, hsl(214 100% 97% / 0.3) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(174 84% 40% / 0.05) 0px, transparent 50%);
   }
   
   h1 {
@@ -114,6 +125,10 @@
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
   
+  .shadow-travel {
+    box-shadow: 0 4px 20px -2px rgb(37 99 235 / 0.15), 0 2px 8px -2px rgb(20 184 166 / 0.1);
+  }
+  
   /* Smooth transitions */
   .transition-premium {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -122,5 +137,46 @@
   /* Focus ring utility */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  
+  /* Gradient utilities */
+  .gradient-travel {
+    background: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(213 94% 68%) 100%);
+  }
+  
+  .gradient-travel-subtle {
+    background: linear-gradient(135deg, hsl(214 100% 97%) 0%, hsl(0 0% 100%) 100%);
+  }
+  
+  .gradient-sunset {
+    background: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(25 95% 53%) 100%);
+  }
+  
+  .gradient-teal {
+    background: linear-gradient(135deg, hsl(174 84% 40%) 0%, hsl(173 80% 50%) 100%);
+  }
+  
+  /* Glass effect */
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Icon container */
+  .icon-container {
+    @apply flex items-center justify-center rounded-xl p-3 shadow-premium;
+  }
+  
+  .icon-container-travel {
+    @apply icon-container gradient-travel text-white;
+  }
+  
+  .icon-container-teal {
+    @apply icon-container gradient-teal text-white;
+  }
+  
+  .icon-container-sunset {
+    @apply icon-container gradient-sunset text-white;
   }
 }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search } from 'lucide-react'
+import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route } from 'lucide-react'
 import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -107,15 +107,37 @@ export default function AnalysisPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Travel Analysis</h1>
-        <p className="text-lg text-muted-foreground">
-          Evidence-based destination recommendations powered by AI
-        </p>
+      {/* Premium Hero Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 p-8 md:p-10 border border-primary/20 shadow-travel">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImRvdHMiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9ImhzbCgyMTcgOTElIDYwJSAvIDAuMSkiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZG90cykiLz48L3N2Zz4=')] opacity-40"></div>
+        <div className="relative space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+              <Brain className="h-3 w-3 mr-1" />
+              AI-Powered
+            </Badge>
+            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+              <Shield className="h-3 w-3 mr-1" />
+              Passport-Aware
+            </Badge>
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+              <Route className="h-3 w-3 mr-1" />
+              Route Logic
+            </Badge>
+            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Smart Itineraries
+            </Badge>
+          </div>
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Travel Analysis</h1>
+            <p className="text-lg text-foreground/80 max-w-3xl">
+              Get evidence-based destination recommendations with intelligent route planning, budget optimization, and visa-aware suggestions
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Analysis Form */}
       {/* Error State */}
       {error && (
         <ErrorState

@@ -113,15 +113,15 @@ export function EnhancedRecommendationCard({
   const matchPercentage = getMatchPercentage()
 
   return (
-    <Card className="border-2 hover:shadow-2xl hover:border-primary/30 transition-all duration-300 overflow-hidden group relative">
+    <Card className="border-0 shadow-travel hover:shadow-2xl transition-all duration-300 overflow-hidden group relative hover:-translate-y-1">
       {/* Rank Badge */}
       <div className="absolute top-5 right-5 z-10">
-        <Badge className={`${rankBadge.color} px-4 py-1.5 font-semibold shadow-lg text-sm`}>
+        <Badge className={`${rankBadge.color} px-4 py-1.5 font-semibold shadow-xl text-sm border-0`}>
           #{rank} · {rankBadge.label}
         </Badge>
       </div>
 
-      <CardHeader className="pb-5 space-y-4">
+      <CardHeader className="pb-5 space-y-4 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
         {/* Destination & Month */}
         <div className="pr-32">
           <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
@@ -135,9 +135,9 @@ export function EnhancedRecommendationCard({
 
         {/* Match Score */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 bg-secondary rounded-full h-2.5 overflow-hidden shadow-inner">
+          <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden shadow-inner">
             <div 
-              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 shadow-sm"
+              className="h-full gradient-travel transition-all duration-500 shadow-sm"
               style={{ width: `${matchPercentage}%` }}
             />
           </div>

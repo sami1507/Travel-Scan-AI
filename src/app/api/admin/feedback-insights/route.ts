@@ -3,11 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AIFeedbackAnalyzer } from '@/lib/services/ai-feedback-analyzer'
 import { FeedbackImprovementLoop } from '@/lib/services/feedback-improvement-loop'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/admin/feedback-insights - Get aggregated feedback insights
 export async function GET(request: NextRequest) {
+  // Require admin authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const supabase = await createServerSupabaseClient()
     const { searchParams } = new URL(request.url)

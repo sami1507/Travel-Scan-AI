@@ -1,0 +1,245 @@
+{
+  "timestamp": "2026-05-12T07:50:12.137Z",
+  "summary": {
+    "secure": 26,
+    "warnings": 0,
+    "vulnerable": 0,
+    "total": 26
+  },
+  "results": [
+    {
+      "route": "/dashboard",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/analysis",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/saved",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/profile",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/sources",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/alerts",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/opportunities",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/intelligence",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/notifications",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/compare",
+      "type": "user",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/admin",
+      "type": "admin",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/admin/operations",
+      "type": "admin",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/admin/ml-monitoring",
+      "type": "admin",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/admin/quality",
+      "type": "admin",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/admin/feedback-intelligence",
+      "type": "admin",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/admin/intelligence-signals",
+      "type": "admin",
+      "hasServerProtection": false,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + none",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/dashboard/travel-test",
+      "type": "dev",
+      "hasServerProtection": true,
+      "hasLayoutProtection": true,
+      "protectionMethod": "layout + production block",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/analytics",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/operations",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/ml-monitoring",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/ml-quality",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/quality-eval",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/feedback-insights",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/admin/intelligence-signals",
+      "type": "admin",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/trigger-all",
+      "type": "dev",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    },
+    {
+      "route": "/api/trigger-scan",
+      "type": "dev",
+      "hasServerProtection": true,
+      "hasLayoutProtection": false,
+      "protectionMethod": "requireAdmin()",
+      "issues": [],
+      "status": "secure"
+    }
+  ]
+}

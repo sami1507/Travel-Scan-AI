@@ -1,11 +1,16 @@
 // API endpoint for intelligence signals processing
 import { NextRequest, NextResponse } from 'next/server'
 import { FeedbackIntelligenceSignals } from '@/lib/services/feedback-intelligence-signals'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/admin/intelligence-signals - Extract and view intelligence signals
 export async function GET(request: NextRequest) {
+  // Require admin authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const timeframe = (searchParams.get('timeframe') || 'week') as 'day' | 'week' | 'month'
@@ -47,6 +52,10 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/intelligence-signals - Apply intelligence signals
 export async function POST(request: NextRequest) {
+  // Require admin authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const { timeframe = 'week', autoApply = false } = body

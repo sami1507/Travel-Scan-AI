@@ -3,20 +3,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { analyticsDataAccess } from '@/lib/analytics/data-access'
 import { logger } from '@/lib/utils'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate user
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // Require admin authentication
+    const authError = await requireAdmin()
+    if (authError) return authError
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get query parameters

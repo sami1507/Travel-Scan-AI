@@ -4,20 +4,28 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getSourceConfig } from '@/lib/db/sources'
 import { orchestrator } from '@/lib/services/orchestrator'
 import { logger } from '@/lib/utils'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    // Block in production unless explicitly enabled
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_TRIGGER_ROUTES !== 'true') {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'This endpoint is disabled in production' },
+        { status: 403 }
       )
+    }
+
+    // Require admin authentication
+    const authError = await requireAdmin()
+    if (authError) return authError
+
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Parse request body

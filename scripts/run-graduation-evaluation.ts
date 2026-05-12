@@ -3,6 +3,8 @@
  * Runs 8 test scenarios and generates evaluation-results.json
  */
 
+import { travelAnalysisEngine } from '../src/lib/analysis/engine'
+
 interface EvaluationScenario {
   scenarioName: string
   input: {
@@ -199,36 +201,27 @@ async function runEvaluation(): Promise<EvaluationResults> {
     console.log(`\n📋 Running ${scenario.scenarioName}...`)
 
     try {
-      // Make API request to /api/travel/analyze
-      const response = await fetch('http://localhost:3000/api/travel/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `${scenario.input.tripLength}-day trip from ${scenario.input.departure}`,
-          departure: scenario.input.departure,
-          passportCountry: scenario.input.passportCountry,
-          tripLength: scenario.input.tripLength,
-          travelMonths: scenario.input.travelMonths,
-          budget: scenario.input.budget,
-          interests: scenario.input.interests,
-          accommodation: scenario.input.accommodation,
-          tripStructure: scenario.input.tripStructure,
-          currency: scenario.input.currency,
-        }),
+      // Call analysis engine directly
+      const analysis = await travelAnalysisEngine.analyze({
+        query: `${scenario.input.tripLength}-day trip from ${scenario.input.departure}`,
+        departure: scenario.input.departure,
+        passportCountry: scenario.input.passportCountry,
+        tripLength: scenario.input.tripLength,
+        travelMonths: scenario.input.travelMonths,
+        budget: scenario.input.budget as 'budget' | 'moderate' | 'luxury',
+        interests: scenario.input.interests,
+        accommodation: scenario.input.accommodation as 'hotel' | 'hostel' | 'apartment',
+        tripStructure: scenario.input.tripStructure as 'single_country_one_city' | 'single_country_multi_city' | 'multi_country',
+        currency: scenario.input.currency,
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        scenario.actualBehavior = `API Error: ${errorData.error || response.statusText}`
+      if (!analysis) {
+        scenario.actualBehavior = `Engine Error: No analysis returned`
         scenario.pass = false
-        scenario.notes = 'API request failed'
+        scenario.notes = 'Analysis engine failed'
         results.failed++
         console.log(`   ❌ FAIL: ${scenario.actualBehavior}`)
       } else {
-        const data = await response.json()
-        const analysis = data.analysis
 
         // Extract metrics
         const topDestination = analysis.rankedDestinations?.[0]

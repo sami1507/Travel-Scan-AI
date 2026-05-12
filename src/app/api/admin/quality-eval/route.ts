@@ -3,11 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { RecommendationEvaluator } from '@/lib/analysis/evaluator'
 import { RecommendationVerifier } from '@/lib/analysis/verifier'
 import { FeedbackQualityLoop } from '@/lib/services/feedback-quality-loop'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/admin/quality-eval - Run quality evaluations
 export async function GET(request: NextRequest) {
+  // Require admin authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'all'
@@ -61,6 +66,10 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/quality-eval - Verify a specific analysis
 export async function POST(request: NextRequest) {
+  // Require admin authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const { analysis } = body

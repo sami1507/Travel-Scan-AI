@@ -1,0 +1,255 @@
+{
+  "timestamp": "2026-05-11T14:32:27.518Z",
+  "totalScenarios": 8,
+  "passed": 8,
+  "failed": 0,
+  "successRate": 100,
+  "scenarios": [
+    {
+      "scenarioName": "Scenario 1: Standard 15-day Multi-Country Trip",
+      "input": {
+        "departure": "Cairo (CAI)",
+        "passportCountry": "Egypt",
+        "tripLength": 15,
+        "travelMonths": [
+          9,
+          10,
+          11
+        ],
+        "budget": "moderate",
+        "interests": [
+          "culture",
+          "history",
+          "food"
+        ],
+        "accommodation": "hotel",
+        "tripStructure": "multi_country",
+        "currency": "USD"
+      },
+      "expectedBehavior": "Logical 2-3 country route, realistic nights allocation, Low/Medium fatigue, realism score >70",
+      "routeRealismScore": 85,
+      "fatigueLevel": "Medium",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 2: Rushed 7-day Multi-Country Trip",
+      "input": {
+        "departure": "New York (JFK)",
+        "passportCountry": "United States",
+        "tripLength": 7,
+        "travelMonths": [
+          6,
+          7,
+          8
+        ],
+        "budget": "moderate",
+        "interests": [
+          "sightseeing",
+          "culture"
+        ],
+        "accommodation": "hotel",
+        "tripStructure": "multi_country",
+        "currency": "USD"
+      },
+      "expectedBehavior": "Warnings about rushed route, High/Medium fatigue, route warnings present, realism score 40-70",
+      "routeRealismScore": 70,
+      "fatigueLevel": "Medium",
+      "warningsFound": true,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 70, Fatigue: Medium, Warnings: Yes",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 3: Single Country Multi-City",
+      "input": {
+        "departure": "London (LHR)",
+        "passportCountry": "United Kingdom",
+        "tripLength": 10,
+        "travelMonths": [
+          3,
+          4,
+          5
+        ],
+        "budget": "budget",
+        "interests": [
+          "nature",
+          "adventure"
+        ],
+        "accommodation": "hostel",
+        "tripStructure": "single_country_multi_city",
+        "currency": "GBP"
+      },
+      "expectedBehavior": "All cities within ONE country only, multiple cities, realism score >75, Low/Medium fatigue",
+      "routeRealismScore": 88,
+      "fatigueLevel": "Medium",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 88, Fatigue: Medium, Warnings: No",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 4: Single City Deep Dive",
+      "input": {
+        "departure": "Tokyo (NRT)",
+        "passportCountry": "Japan",
+        "tripLength": 7,
+        "travelMonths": [
+          9,
+          10,
+          11
+        ],
+        "budget": "luxury",
+        "interests": [
+          "food",
+          "culture",
+          "shopping"
+        ],
+        "accommodation": "hotel",
+        "tripStructure": "single_country_one_city",
+        "currency": "JPY"
+      },
+      "expectedBehavior": "Single city only, no multi-city routes, realism score >85, Low fatigue, focus on activities",
+      "routeRealismScore": 92,
+      "fatigueLevel": "Low",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 92, Fatigue: Low, Warnings: No",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 5: OpenAI Provider Failure (Fallback Test)",
+      "input": {
+        "departure": "Paris (CDG)",
+        "passportCountry": "France",
+        "tripLength": 12,
+        "travelMonths": [
+          12,
+          1,
+          2
+        ],
+        "budget": "moderate",
+        "interests": [
+          "art",
+          "history"
+        ],
+        "accommodation": "apartment",
+        "tripStructure": "multi_country",
+        "currency": "EUR"
+      },
+      "expectedBehavior": "Fallback library activated, 3 recommendations returned, route structure matches request, no crash",
+      "routeRealismScore": 85,
+      "fatigueLevel": "Low",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Low, Warnings: No",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 6: Claude Verifier Disabled",
+      "input": {
+        "departure": "Dubai (DXB)",
+        "passportCountry": "United Arab Emirates",
+        "tripLength": 14,
+        "travelMonths": [
+          3,
+          4,
+          5
+        ],
+        "budget": "luxury",
+        "interests": [
+          "luxury",
+          "shopping",
+          "beach"
+        ],
+        "accommodation": "hotel",
+        "tripStructure": "multi_country",
+        "currency": "AED"
+      },
+      "expectedBehavior": "OpenAI recommendations without Claude verification, still valid, realism score present, no errors",
+      "routeRealismScore": 85,
+      "fatigueLevel": "Medium",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 7: Google Maps API Missing",
+      "input": {
+        "departure": "Singapore",
+        "passportCountry": "Singapore",
+        "tripLength": 10,
+        "travelMonths": [
+          6,
+          7,
+          8
+        ],
+        "budget": "moderate",
+        "interests": [
+          "food",
+          "culture"
+        ],
+        "accommodation": "hotel",
+        "tripStructure": "multi_country",
+        "currency": "SGD"
+      },
+      "expectedBehavior": "Manual input accepted, recommendations generated, no crash, graceful degradation",
+      "routeRealismScore": 85,
+      "fatigueLevel": "Medium",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "notes": "All checks passed"
+    },
+    {
+      "scenarioName": "Scenario 8: Missing Hotel/Flight APIs",
+      "input": {
+        "departure": "Sydney (SYD)",
+        "passportCountry": "Australia",
+        "tripLength": 14,
+        "travelMonths": [
+          3,
+          4,
+          5
+        ],
+        "budget": "moderate",
+        "interests": [
+          "nature",
+          "adventure",
+          "beach"
+        ],
+        "accommodation": "hotel",
+        "tripStructure": "multi_country",
+        "currency": "AUD"
+      },
+      "expectedBehavior": "Recommendations generated without real-time pricing, budget estimates provided, no crash",
+      "routeRealismScore": 85,
+      "fatigueLevel": "Medium",
+      "warningsFound": false,
+      "recommendationsCount": 3,
+      "pass": true,
+      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "notes": "All checks passed"
+    }
+  ],
+  "summary": {
+    "avgRealismScore": 84,
+    "fatigueDistribution": {
+      "Low": 2,
+      "Medium": 6,
+      "High": 0
+    },
+    "warningRate": 13,
+    "fallbackActivations": 1
+  }
+}

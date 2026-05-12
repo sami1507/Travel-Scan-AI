@@ -136,7 +136,9 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
             <div>
               <div className="text-xs text-muted-foreground font-medium">Best</div>
               <div className="font-semibold">
-                {destination.bestMonths.map(m => new Date(2024, m - 1).toLocaleString('default', { month: 'short' })).join(', ')}
+                {destination.bestMonths && Array.isArray(destination.bestMonths) && destination.bestMonths.length > 0
+                  ? destination.bestMonths.map(m => new Date(2024, m - 1).toLocaleString('default', { month: 'short' })).join(', ')
+                  : 'Year-round'}
               </div>
             </div>
           </div>
@@ -170,7 +172,7 @@ export function RecommendationCard({ destination, rank, onViewDetails, queryCont
         </div>
 
         {/* Why Recommended */}
-        {destination.whyRecommended.length > 0 && (
+        {destination.whyRecommended && Array.isArray(destination.whyRecommended) && destination.whyRecommended.length > 0 && (
           <div>
             <h4 className="text-sm font-bold mb-3">Why Recommended</h4>
             <ul className="space-y-2">

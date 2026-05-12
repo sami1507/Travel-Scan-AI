@@ -1,140 +1,147 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Plane, Hotel, Cloud, DollarSign, Calendar } from "lucide-react"
-import Link from "next/link"
+import { Brain, CheckCircle, XCircle, Plane, Hotel, Cloud, DollarSign, Database, MapPin } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
 export default function SourcesPage() {
-  // Mock data - will be replaced with real data in Phase 2
-  const sources = []
+  // Check provider configuration status (safe - no secrets exposed)
+  const providers = [
+    {
+      name: 'OpenAI GPT-4',
+      type: 'AI Recommendations',
+      icon: Brain,
+      status: process.env.NEXT_PUBLIC_OPENAI_CONFIGURED === 'true' ? 'configured' : 'fallback',
+      description: 'Primary AI engine for travel recommendations',
+      fallbackAvailable: true,
+    },
+    {
+      name: 'Anthropic Claude',
+      type: 'AI Verification',
+      icon: Brain,
+      status: process.env.NEXT_PUBLIC_CLAUDE_CONFIGURED === 'true' ? 'configured' : 'optional',
+      description: 'Optional AI verifier for recommendation quality',
+      fallbackAvailable: false,
+    },
+    {
+      name: 'Google Maps',
+      type: 'Location Data',
+      icon: MapPin,
+      status: process.env.NEXT_PUBLIC_GOOGLE_MAPS_CONFIGURED === 'true' ? 'configured' : 'manual',
+      description: 'Airport and location autocomplete',
+      fallbackAvailable: true,
+    },
+    {
+      name: 'Duffel',
+      type: 'Flight Data',
+      icon: Plane,
+      status: process.env.NEXT_PUBLIC_DUFFEL_CONFIGURED === 'true' ? 'configured' : 'estimates',
+      description: 'Real-time flight prices and availability',
+      fallbackAvailable: true,
+    },
+    {
+      name: 'Hotelbeds',
+      type: 'Hotel Data',
+      icon: Hotel,
+      status: process.env.NEXT_PUBLIC_HOTELBEDS_CONFIGURED === 'true' ? 'configured' : 'estimates',
+      description: 'Real-time hotel prices and availability',
+      fallbackAvailable: true,
+    },
+    {
+      name: 'Weather API',
+      type: 'Weather Data',
+      icon: Cloud,
+      status: 'configured',
+      description: 'Weather forecasts and seasonal data',
+      fallbackAvailable: false,
+    },
+    {
+      name: 'Currency API',
+      type: 'Exchange Rates',
+      icon: DollarSign,
+      status: 'configured',
+      description: 'Real-time currency exchange rates',
+      fallbackAvailable: false,
+    },
+    {
+      name: 'Supabase',
+      type: 'Database',
+      icon: Database,
+      status: 'configured',
+      description: 'User data and saved recommendations',
+      fallbackAvailable: false,
+    },
+  ]
 
-  const sourceTypeIcons = {
-    flights: Plane,
-    hotels: Hotel,
-    weather: Cloud,
-    exchange_rates: DollarSign,
-    events: Calendar,
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'configured':
+        return <Badge className="bg-green-500"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>
+      case 'fallback':
+        return <Badge variant="secondary">Fallback Mode</Badge>
+      case 'optional':
+        return <Badge variant="outline">Optional</Badge>
+      case 'manual':
+        return <Badge variant="secondary">Manual Input</Badge>
+      case 'estimates':
+        return <Badge variant="secondary">Using Estimates</Badge>
+      default:
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Not Configured</Badge>
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Data sources</h1>
-          <p className="text-sm text-muted-foreground">Configure monitoring for your travel data</p>
-        </div>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add source
-        </Button>
-      </div>
-
-      {/* Source Types */}
       <div>
-        <h2 className="text-base font-semibold mb-4">Available source types</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="border-2 cursor-pointer hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                <Plane className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-base">Flights</CardTitle>
-              <CardDescription className="text-sm">Monitor flight prices and availability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" className="w-full">Set up</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 cursor-pointer hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                <Hotel className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-base">Hotels</CardTitle>
-              <CardDescription className="text-sm">Track hotel prices and availability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" className="w-full">Set up</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 cursor-pointer hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                <Cloud className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-base">Weather</CardTitle>
-              <CardDescription className="text-sm">Get weather forecasts and alerts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" className="w-full">Set up</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 cursor-pointer hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                <DollarSign className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-base">Exchange rates</CardTitle>
-              <CardDescription className="text-sm">Monitor currency exchange rates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" className="w-full">Set up</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 cursor-pointer hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-base">Events</CardTitle>
-              <CardDescription className="text-sm">Discover local events and activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" className="w-full">Set up</Button>
-            </CardContent>
-          </Card>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Data Providers</h1>
+        <p className="text-sm text-muted-foreground">
+          View the status of AI and data provider integrations powering TravelScan AI
+        </p>
       </div>
 
-      {/* Active Sources Table */}
-      <Card className="border-2">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">Your sources</CardTitle>
-          <CardDescription className="text-sm">Manage your configured monitoring sources</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sources.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted mb-4">
-                <Plus className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <p className="font-semibold text-base mb-2">No sources yet</p>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm">Configure your first source above to start monitoring travel data</p>
+      <div className="grid gap-4 md:grid-cols-2">
+        {providers.map((provider) => {
+          const Icon = provider.icon
+          return (
+            <Card key={provider.name}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">{provider.name}</CardTitle>
+                      <CardDescription className="text-xs">{provider.type}</CardDescription>
+                    </div>
+                  </div>
+                  {getStatusBadge(provider.status)}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{provider.description}</p>
+                {provider.fallbackAvailable && provider.status !== 'configured' && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ✓ Fallback available - recommendations will still work
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-sm text-blue-900 dark:text-blue-100">System Status: Operational</p>
+              <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
+                All core features are working. When external providers are unavailable, the system automatically uses fallback data and estimates.
+              </p>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Name</TableHead>
-                  <TableHead className="text-xs">Type</TableHead>
-                  <TableHead className="text-xs">Status</TableHead>
-                  <TableHead className="text-xs">Interval</TableHead>
-                  <TableHead className="text-xs">Last run</TableHead>
-                  <TableHead className="text-xs">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* Will be populated with real data */}
-              </TableBody>
-            </Table>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>

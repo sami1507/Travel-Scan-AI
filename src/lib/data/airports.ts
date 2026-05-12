@@ -141,6 +141,8 @@ export const MAJOR_AIRPORTS: Airport[] = [
   
   // Middle East - Israel & Jordan (PRIORITY)
   { code: 'TLV', city: 'Tel Aviv', country: 'Israel', name: 'Ben Gurion Airport' },
+  { code: 'ETM', city: 'Eilat', country: 'Israel', name: 'Ramon Airport' },
+  { code: 'VDA', city: 'Ovda', country: 'Israel', name: 'Ovda Airport' },
   { code: 'AMM', city: 'Amman', country: 'Jordan', name: 'Queen Alia International' },
   { code: 'AQJ', city: 'Aqaba', country: 'Jordan', name: 'King Hussein International' },
   

@@ -29,13 +29,18 @@ export default function OpportunitiesPage() {
       {opportunities.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground max-w-2xl mx-auto">
               <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p className="text-lg font-medium">No opportunities detected yet</p>
-              <p className="text-sm mt-2">Configure sources to start detecting travel opportunities</p>
-              <Link href="/dashboard/sources">
+              <p className="text-lg font-medium">No travel opportunities detected yet</p>
+              <p className="text-sm mt-2">
+                Travel opportunities are AI-detected deals, price drops, and favorable travel conditions based on your saved trips and preferences.
+              </p>
+              <p className="text-sm mt-2">
+                Create travel analyses to start receiving personalized opportunity alerts.
+              </p>
+              <Link href="/dashboard/analysis">
                 <Button className="mt-4">
-                  Configure Sources
+                  Create Travel Analysis
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

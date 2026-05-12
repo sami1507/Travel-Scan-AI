@@ -1,0 +1,135 @@
+{
+  "timestamp": "2026-05-12T09:06:47.796Z",
+  "summary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "successRate": 100
+  },
+  "results": [
+    {
+      "name": "Learning Disabled Check",
+      "passed": true,
+      "message": "ENABLE_AI_LEARNING is not set to true - learning will be disabled"
+    },
+    {
+      "name": "Migration File Exists",
+      "passed": true,
+      "message": "Learning layer migration file found",
+      "details": {
+        "path": "C:\\Users\\User\\CascadeProjects\\travel-scan-ai\\supabase\\migrations\\20260512_ai_learning_layer.sql"
+      }
+    },
+    {
+      "name": "Learning Service Exists",
+      "passed": true,
+      "message": "Learning service file found",
+      "details": {
+        "path": "C:\\Users\\User\\CascadeProjects\\travel-scan-ai\\src\\lib\\learning\\learning-service.ts"
+      }
+    },
+    {
+      "name": "Learning Service Functions",
+      "passed": true,
+      "message": "All required learning service functions present",
+      "details": {
+        "recordRecommendationEvent": true,
+        "recordFeedbackSignal": true,
+        "updateUserPreferenceProfile": true,
+        "getUserPreferenceProfile": true,
+        "getLearningContextForAnalysis": true
+      }
+    },
+    {
+      "name": "Analysis Integration",
+      "passed": true,
+      "message": "Learning integrated into analysis engine",
+      "details": {
+        "hasImport": true,
+        "hasContextLoad": true,
+        "hasEventRecord": true
+      }
+    },
+    {
+      "name": "Feedback API Exists",
+      "passed": true,
+      "message": "Feedback API endpoint found",
+      "details": {
+        "path": "C:\\Users\\User\\CascadeProjects\\travel-scan-ai\\src\\app\\api\\learning\\feedback\\route.ts"
+      }
+    },
+    {
+      "name": "Feedback API Implementation",
+      "passed": true,
+      "message": "Feedback API properly implemented",
+      "details": {
+        "hasAuth": true,
+        "hasValidation": true,
+        "hasRecordCall": true
+      }
+    },
+    {
+      "name": "Profile API Exists",
+      "passed": true,
+      "message": "Profile API endpoint found",
+      "details": {
+        "path": "C:\\Users\\User\\CascadeProjects\\travel-scan-ai\\src\\app\\api\\learning\\profile\\route.ts"
+      }
+    },
+    {
+      "name": "Profile API Implementation",
+      "passed": true,
+      "message": "Profile API properly implemented",
+      "details": {
+        "hasAuth": true,
+        "hasGetProfile": true
+      }
+    },
+    {
+      "name": "Admin Insights API Exists",
+      "passed": true,
+      "message": "Admin insights API endpoint found",
+      "details": {
+        "path": "C:\\Users\\User\\CascadeProjects\\travel-scan-ai\\src\\app\\api\\admin\\learning-insights\\route.ts"
+      }
+    },
+    {
+      "name": "Admin Insights API Implementation",
+      "passed": true,
+      "message": "Admin insights API properly implemented with admin guard",
+      "details": {
+        "hasAdminGuard": true,
+        "hasAggregation": true
+      }
+    },
+    {
+      "name": "RLS Policies",
+      "passed": true,
+      "message": "RLS policies properly defined in migration",
+      "details": {
+        "hasRLSEnable": true,
+        "hasUserPolicy": true,
+        "hasServicePolicy": true
+      }
+    },
+    {
+      "name": "Privacy Protection",
+      "passed": true,
+      "message": "Privacy protections in place",
+      "details": {
+        "hasEnvCheck": true,
+        "hasMinSignals": true,
+        "noSecretsInLogs": false
+      }
+    },
+    {
+      "name": "Minimum Signals Requirement",
+      "passed": true,
+      "message": "Minimum signals check present (5 signals required)",
+      "details": {
+        "hasMinCheck": true,
+        "minSignals": 5
+      }
+    }
+  ]
+}

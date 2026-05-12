@@ -1,82 +1,77 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, BarChart3, TrendingUp, Search, Users, Target } from 'lucide-react'
-import { OverviewMetrics } from '@/components/admin/overview-metrics'
-import { DestinationTable } from '@/components/admin/destination-table'
-import { RecommendationInsights } from '@/components/admin/recommendation-insights'
-import { FeedbackInsightsCard } from '@/components/admin/feedback-insights'
-import { SearchInsightsCards } from '@/components/admin/search-insights'
-import { PersonalizationInsightsCard } from '@/components/admin/personalization-insights'
-import type {
-  AnalyticsOverview,
-  DestinationStats,
-  RecommendationPerformance,
-  FeedbackInsights,
-  SearchInsights,
-  PersonalizationInsights,
-} from '@/lib/types/analytics'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { 
+  AlertTriangle, 
+  Activity, 
+  Users, 
+  Brain, 
+  TrendingUp, 
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Database,
+  Zap,
+  ArrowRight
+} from 'lucide-react'
 
-export default function AdminAnalyticsPage() {
+interface SystemMetrics {
+  totalAnalyses: number
+  totalUsers: number
+  feedbackCount: number
+  fallbackUsageRate: number
+  providerStatus: {
+    openai: boolean
+    claude: boolean
+    supabase: boolean
+  }
+}
+
+export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [overview, setOverview] = useState<AnalyticsOverview | null>(null)
-  const [destinations, setDestinations] = useState<DestinationStats[]>([])
-  const [recommendations, setRecommendations] = useState<RecommendationPerformance | null>(null)
-  const [feedback, setFeedback] = useState<FeedbackInsights | null>(null)
-  const [search, setSearch] = useState<SearchInsights | null>(null)
-  const [personalization, setPersonalization] = useState<PersonalizationInsights | null>(null)
+  const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
 
   useEffect(() => {
-    loadAnalytics()
+    loadMetrics()
   }, [])
 
-  const loadAnalytics = async () => {
+  const loadMetrics = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // Load all analytics data in parallel
-      const [
-        overviewRes,
-        destinationsRes,
-        recommendationsRes,
-        feedbackRes,
-        searchRes,
-        personalizationRes,
-      ] = await Promise.all([
-        fetch('/api/admin/analytics?type=overview'),
-        fetch('/api/admin/analytics?type=destinations&limit=20'),
-        fetch('/api/admin/analytics?type=recommendations'),
-        fetch('/api/admin/analytics?type=feedback'),
-        fetch('/api/admin/analytics?type=search'),
-        fetch('/api/admin/analytics?type=personalization'),
-      ])
+      const res = await fetch('/api/admin/analytics?type=overview')
+      
+      if (res.status === 403) {
+        setError('Access denied. Admin privileges required.')
+        setLoading(false)
+        return
+      }
 
-      if (!overviewRes.ok) throw new Error('Failed to load overview')
-      if (!destinationsRes.ok) throw new Error('Failed to load destinations')
-      if (!recommendationsRes.ok) throw new Error('Failed to load recommendations')
-      if (!feedbackRes.ok) throw new Error('Failed to load feedback')
-      if (!searchRes.ok) throw new Error('Failed to load search insights')
-      if (!personalizationRes.ok) throw new Error('Failed to load personalization')
+      if (!res.ok) {
+        throw new Error('Failed to load metrics')
+      }
 
-      const overviewData = await overviewRes.json()
-      const destinationsData = await destinationsRes.json()
-      const recommendationsData = await recommendationsRes.json()
-      const feedbackData = await feedbackRes.json()
-      const searchData = await searchRes.json()
-      const personalizationData = await personalizationRes.json()
-
-      setOverview(overviewData.data)
-      setDestinations(destinationsData.data)
-      setRecommendations(recommendationsData.data)
-      setFeedback(feedbackData.data)
-      setSearch(searchData.data)
-      setPersonalization(personalizationData.data)
+      const data = await res.json()
+      setMetrics(data.data || {
+        totalAnalyses: 0,
+        totalUsers: 0,
+        feedbackCount: 0,
+        fallbackUsageRate: 0,
+        providerStatus: {
+          openai: process.env.NEXT_PUBLIC_OPENAI_CONFIGURED === 'true',
+          claude: process.env.NEXT_PUBLIC_CLAUDE_CONFIGURED === 'true',
+          supabase: true,
+        }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics')
+      setError(err instanceof Error ? err.message : 'Failed to load metrics')
     } finally {
       setLoading(false)
     }
@@ -86,13 +81,13 @@ export default function AdminAnalyticsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Analytics</h1>
-          <p className="text-muted-foreground mt-1">Internal insights and performance metrics</p>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Console</h1>
+          <p className="text-muted-foreground mt-1">System overview and metrics</p>
         </div>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading analytics...</p>
+            <p className="text-muted-foreground">Loading metrics...</p>
           </div>
         </div>
       </div>
@@ -103,8 +98,8 @@ export default function AdminAnalyticsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Analytics</h1>
-          <p className="text-muted-foreground mt-1">Internal insights and performance metrics</p>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Console</h1>
+          <p className="text-muted-foreground mt-1">System overview and metrics</p>
         </div>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -116,66 +111,223 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Analytics</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Admin Console</h1>
         <p className="text-muted-foreground mt-1">
-          Internal insights and performance metrics for the travel analysis product
+          System overview and operational metrics
         </p>
       </div>
 
-      {/* Overview Metrics */}
-      {overview && <OverviewMetrics data={overview} />}
+      {/* System Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Analyses</CardTitle>
+            <Brain className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.totalAnalyses || 0}</div>
+            <p className="text-xs text-muted-foreground">Travel recommendations generated</p>
+          </CardContent>
+        </Card>
 
-      {/* Tabbed Analytics */}
-      <Tabs defaultValue="destinations" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="destinations" className="flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Destinations
-          </TabsTrigger>
-          <TabsTrigger value="recommendations" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Recommendations
-          </TabsTrigger>
-          <TabsTrigger value="feedback" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Feedback
-          </TabsTrigger>
-          <TabsTrigger value="search" className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            Search
-          </TabsTrigger>
-          <TabsTrigger value="personalization" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Personalization
-          </TabsTrigger>
-        </TabsList>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.totalUsers || 0}</div>
+            <p className="text-xs text-muted-foreground">Registered accounts</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="destinations" className="space-y-4">
-          <DestinationTable
-            destinations={destinations}
-            title="Top Performing Destinations"
-            description="Destinations ranked by total user interactions and engagement"
-          />
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Feedback Received</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.feedbackCount || 0}</div>
+            <p className="text-xs text-muted-foreground">User feedback submissions</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="recommendations" className="space-y-4">
-          {recommendations && <RecommendationInsights data={recommendations} />}
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Fallback Usage</CardTitle>
+            <Zap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics?.fallbackUsageRate ? `${(metrics.fallbackUsageRate * 100).toFixed(1)}%` : '0%'}
+            </div>
+            <p className="text-xs text-muted-foreground">Using fallback routes</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="feedback" className="space-y-4">
-          {feedback && <FeedbackInsightsCard data={feedback} />}
-        </TabsContent>
+      {/* Provider Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Provider Status</CardTitle>
+          <CardDescription>Current status of integrated services</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div className="flex items-center gap-3">
+            {metrics?.providerStatus.openai ? (
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            ) : (
+              <XCircle className="h-5 w-5 text-orange-500" />
+            )}
+            <div>
+              <p className="font-medium">OpenAI GPT-4</p>
+              <p className="text-xs text-muted-foreground">
+                {metrics?.providerStatus.openai ? 'Active' : 'Fallback Mode'}
+              </p>
+            </div>
+          </div>
 
-        <TabsContent value="search" className="space-y-4">
-          {search && <SearchInsightsCards data={search} />}
-        </TabsContent>
+          <div className="flex items-center gap-3">
+            {metrics?.providerStatus.claude ? (
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            ) : (
+              <XCircle className="h-5 w-5 text-gray-400" />
+            )}
+            <div>
+              <p className="font-medium">Anthropic Claude</p>
+              <p className="text-xs text-muted-foreground">
+                {metrics?.providerStatus.claude ? 'Active' : 'Optional'}
+              </p>
+            </div>
+          </div>
 
-        <TabsContent value="personalization" className="space-y-4">
-          {personalization && <PersonalizationInsightsCard data={personalization} />}
-        </TabsContent>
-      </Tabs>
+          <div className="flex items-center gap-3">
+            {metrics?.providerStatus.supabase ? (
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            ) : (
+              <XCircle className="h-5 w-5 text-red-500" />
+            )}
+            <div>
+              <p className="font-medium">Supabase</p>
+              <p className="text-xs text-muted-foreground">
+                {metrics?.providerStatus.supabase ? 'Active' : 'Offline'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Links */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="hover:border-primary/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Operations
+            </CardTitle>
+            <CardDescription>System health and monitoring</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/admin/operations">
+              <Button variant="outline" className="w-full">
+                View Operations
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              ML Monitoring
+            </CardTitle>
+            <CardDescription>AI quality and performance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/admin/ml-monitoring">
+              <Button variant="outline" className="w-full">
+                View ML Metrics
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Quality
+            </CardTitle>
+            <CardDescription>Recommendation quality metrics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/admin/quality">
+              <Button variant="outline" className="w-full">
+                View Quality
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Feedback Intelligence
+            </CardTitle>
+            <CardDescription>User feedback insights</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/admin/feedback-intelligence">
+              <Button variant="outline" className="w-full">
+                View Feedback
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Intelligence Signals
+            </CardTitle>
+            <CardDescription>System-generated insights</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/admin/intelligence-signals">
+              <Button variant="outline" className="w-full">
+                View Signals
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Data Providers
+            </CardTitle>
+            <CardDescription>Provider configuration status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/sources">
+              <Button variant="outline" className="w-full">
+                View Providers
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

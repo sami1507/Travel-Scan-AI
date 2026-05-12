@@ -5,6 +5,7 @@ import { mlQualityMonitor } from '@/lib/ml/monitoring/ml-quality-monitor'
 import { mlEvaluator } from '@/lib/ml/evaluation/ml-evaluator'
 import { evaluationScenarios } from '@/lib/ml/evaluation/evaluation-scenarios'
 import { logger } from '@/lib/utils'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,27 +15,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient()
-
-    // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check admin role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (userData?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    // Require admin authentication
+    const authError = await requireAdmin()
+    if (authError) return authError
 
     // Get time range from query params
     const { searchParams } = new URL(request.url)
@@ -62,7 +45,6 @@ export async function GET(request: Request) {
     }))
 
     logger.info('Admin: ML quality report generated', {
-      userId: user.id,
       timeRange: { start: startDate, end: endDate },
     })
 
@@ -94,26 +76,9 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient()
-
-    // Check authentication and admin role
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (userData?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    // Require admin authentication
+    const authError = await requireAdmin()
+    if (authError) return authError
 
     const body = await request.json()
     const { scenarioIds } = body
@@ -124,7 +89,6 @@ export async function POST(request: Request) {
       : evaluationScenarios
 
     logger.info('Admin: Running evaluation scenarios', {
-      userId: user.id,
       scenarioCount: scenariosToRun.length,
     })
 

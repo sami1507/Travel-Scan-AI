@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-05-12T06:45:48.817Z",
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "warnings": 1,
+    "info": 1
+  },
+  "results": [
+    {
+      "test": "RLS Migrations",
+      "status": "info",
+      "message": "Found 2 RLS migration files",
+      "details": "Files: 20260504_security_hardening_rls.sql, 20260511_additional_rls_policies.sql\n\nTo apply: supabase db push"
+    },
+    {
+      "test": "Vercel KV",
+      "status": "warning",
+      "message": "KV not configured - using in-memory fallback",
+      "details": "Rate limiting will work but per-instance only. For production, configure:\nKV_REST_API_URL=...\nKV_REST_API_TOKEN=..."
+    },
+    {
+      "test": "Security Files",
+      "status": "pass",
+      "message": "All security implementation files exist"
+    },
+    {
+      "test": "Admin Protection",
+      "status": "pass",
+      "message": "All 7 admin routes protected"
+    },
+    {
+      "test": "Trigger Protection",
+      "status": "pass",
+      "message": "Trigger routes properly protected"
+    },
+    {
+      "test": "Secret Exposure",
+      "status": "pass",
+      "message": "No dangerous public env vars found"
+    },
+    {
+      "test": "Security Headers",
+      "status": "pass",
+      "message": "Security headers configured"
+    },
+    {
+      "test": "Build Output",
+      "status": "pass",
+      "message": "Build directory exists"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { errorTracker } from '@/lib/monitoring/error-tracker'
 import { costTracker } from '@/lib/monitoring/cost-tracker'
 import { cacheManager } from '@/lib/cache/cache-manager'
 import { logger } from '@/lib/utils'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,23 +15,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    // Require admin authentication
+    const authError = await requireAdmin()
+    if (authError) return authError
 
     // Get error statistics
     const errorStats = errorTracker.getErrorStats()

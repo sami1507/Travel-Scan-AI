@@ -4,22 +4,23 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getActiveSourceConfigs } from '@/lib/db/sources'
 import { orchestrator } from '@/lib/services/orchestrator'
 import { logger } from '@/lib/utils'
+import { requireAdmin } from '@/lib/auth/admin-guard'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user (or use service key for cron jobs)
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    // Allow both authenticated users and service role
-    if (authError && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // Block in production unless explicitly enabled
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_TRIGGER_ROUTES !== 'true') {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'This endpoint is disabled in production' },
+        { status: 403 }
       )
     }
+
+    // Require admin authentication
+    const authError = await requireAdmin()
+    if (authError) return authError
 
     // Get all active source configs
     const sourceConfigs = await getActiveSourceConfigs()

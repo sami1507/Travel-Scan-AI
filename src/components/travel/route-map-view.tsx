@@ -47,7 +47,7 @@ export function RouteMapView({ route }: RouteMapViewProps) {
           {/* Visual Route Flow */}
           <div className="relative bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg p-6">
             <div className="flex items-center justify-between">
-              {route.orderedStops.map((stop, index) => (
+              {route.orderedStops && Array.isArray(route.orderedStops) && route.orderedStops.map((stop, index) => (
                 <div key={index} className="flex items-center">
                   {/* Stop Marker */}
                   <div className="flex flex-col items-center">

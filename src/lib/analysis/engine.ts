@@ -25,6 +25,7 @@ import { errorTracker } from '../monitoring/error-tracker'
 import { costTracker } from '../monitoring/cost-tracker'
 import { cacheManager, CachePresets } from '../cache/cache-manager'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
+import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
 
 export interface AnalysisRequest {
   query: string
@@ -32,6 +33,7 @@ export interface AnalysisRequest {
   departureCity?: string
   budget?: 'low' | 'moderate' | 'high' | 'luxury'
   travelMonths?: number[]
+  tripLength?: number // Trip duration in days
   interests?: string[]
   travelStyle?: 'solo' | 'couple' | 'family' | 'friends'
   pace?: 'relaxed' | 'moderate' | 'fast'
@@ -92,6 +94,29 @@ export class TravelAnalysisEngine {
       let userPreferenceProfile: UserPreferenceProfile | null = null
       let isPersonalized = false
       let feedbackHistory: any[] = []
+
+      // Step 0a: Load AI learning context (Phase 1)
+      let learningContext: any = null
+      try {
+        learningContext = await getLearningContextForAnalysis(request.userId || null, {
+          departure: request.departureCity,
+          passportCountry: undefined,
+          budgetLevel: request.budget,
+          tripLength: request.tripLength,
+          season: undefined,
+          travelMonths: request.travelMonths?.map(m => m.toString()),
+          interests: request.interests,
+          tripStructure: request.tripStructure,
+        })
+        if (learningContext?.learningContextAvailable) {
+          logger.info('Learning context loaded', { 
+            confidenceScore: learningContext.confidenceScore,
+            fatigueTolerance: learningContext.fatigueTolerance 
+          })
+        }
+      } catch (error) {
+        logger.warn('Failed to load learning context, continuing without it', error)
+      }
 
       if (request.userId) {
         try {
@@ -441,6 +466,55 @@ export class TravelAnalysisEngine {
         routeType: routeAnalysis.recommendedRoute.routeType,
         routeScore: routeAnalysis.recommendedRoute.routeScore.totalRouteQuality,
       })
+
+      // Step 10: Record learning event (non-blocking)
+      try {
+        const recommendationItems = analysis.rankedDestinations.map((dest, index) => ({
+          rank: index + 1,
+          destinationTitle: dest.destinationName,
+          tripType: dest.tripType,
+          suggestedRoute: dest.suggestedRoute,
+          recommendedNights: dest.recommendedNights,
+          totalScore: dest.totalMatchScore,
+          routeRealismScore: dest.routeRealismScore,
+          travelFatigueLevel: dest.travelFatigueLevel,
+          transportLogic: dest.transportLogic,
+          warnings: dest.routeWarnings,
+          alternatives: dest.routeAlternatives ? [dest.routeAlternatives] : [],
+          providerSource: this.openaiAvailable ? 'openai' : 'fallback',
+          claudeVerified: false,
+          claudeAccuracyNotes: [],
+        }))
+
+        const learningEventId = await recordRecommendationEvent(
+          request.userId || null,
+          null,
+          {
+            departure: request.departureCity,
+            passportCountry: undefined,
+            budgetLevel: request.budget,
+            tripLength: request.tripLength,
+            interests: request.interests,
+            tripStructure: request.tripStructure,
+          },
+          recommendationItems,
+          {
+            provider: this.openaiAvailable ? 'openai' : 'fallback',
+            claudeVerifierUsed: false,
+            fallbackUsed: !this.openaiAvailable,
+          }
+        )
+
+        if (learningEventId) {
+          // Add learning metadata to response
+          const analysisWithLearning = analysis as any
+          analysisWithLearning.learningEventId = learningEventId
+          analysisWithLearning.learningEnabled = true
+          analysisWithLearning.personalizationApplied = learningContext?.confidenceScore >= 0.5
+        }
+      } catch (learningError) {
+        logger.warn('Failed to record learning event, continuing', learningError)
+      }
 
       return analysis
     } catch (error) {
@@ -1196,7 +1270,7 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
    */
   private selectBestFallbackRoutes(request: AnalysisRequest, count: number = 3) {
     const library = this.getFallbackRouteLibrary()
-    const tripLength = request.travelMonths?.length || 7
+    const tripLength = request.tripLength || request.travelMonths?.length || 7
     const season = this.getSeasonFromMonths(request.travelMonths || [])
     
     // Filter by trip structure
@@ -1260,7 +1334,7 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
 
     // Select best routes from curated library
     const selectedRoutes = this.selectBestFallbackRoutes(request, 3)
-    const tripLength = request.travelMonths?.length || 7
+    const tripLength = request.tripLength || request.travelMonths?.length || 7
     
     const rankedDestinations = selectedRoutes.map((route, index) => {
       const tripType = request.tripStructure === 'single_country_one_city' 
@@ -1290,15 +1364,36 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
       let routeRealismScore = 85
       
       if (request.tripStructure === 'multi_country') {
-        if (tripLength < route.minDays) {
+        // Only mark as rushed if significantly below minimum days
+        if (tripLength < route.minDays - 2) {
           routeWarnings.push(`${route.cities.length} countries in ${tripLength} days may feel rushed - consider ${route.minDays}+ days`)
           travelFatigueLevel = 'High'
-          routeRealismScore = 60
-        } else if (tripLength < route.minDays + 2) {
+          routeRealismScore = 55
+        } else if (tripLength < route.minDays) {
           routeWarnings.push('Tight schedule - plan transfers carefully')
           travelFatigueLevel = 'Medium'
-          routeRealismScore = 75
+          routeRealismScore = 70
+        } else if (tripLength >= route.minDays && tripLength <= route.maxDays) {
+          // Perfect fit - use route's natural fatigue level and high realism
+          routeRealismScore = 85
+          // Keep the route's designed fatigue level
+        } else if (tripLength > route.maxDays) {
+          // Extra time is good - lower fatigue
+          routeRealismScore = 88
+          travelFatigueLevel = 'Low'
         }
+      } else if (request.tripStructure === 'single_country_multi_city') {
+        // Single country routes are generally less fatiguing
+        if (tripLength >= route.minDays && tripLength <= route.maxDays) {
+          routeRealismScore = 88
+        } else if (tripLength > route.maxDays) {
+          routeRealismScore = 90
+          travelFatigueLevel = 'Low'
+        }
+      } else if (request.tripStructure === 'single_country_one_city') {
+        // Single city is always low fatigue
+        routeRealismScore = 92
+        travelFatigueLevel = 'Low'
       }
 
       const transportLogic = route.transportMode === 'train' 
@@ -1350,7 +1445,7 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
       }
     })
 
-    const fallbackTripLength = request.travelMonths?.length || 7
+    const fallbackTripLength = request.tripLength || request.travelMonths?.length || 7
     const firstDest = rankedDestinations[0]
     
     return {

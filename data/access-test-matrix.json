@@ -1,0 +1,191 @@
+{
+  "timestamp": "2026-05-12T07:37:31.212Z",
+  "testMatrix": {
+    "Unauthenticated User": [
+      {
+        "scenario": "Unauthenticated",
+        "route": "/dashboard",
+        "expectedStatus": "307 → /login",
+        "description": "Should redirect to login"
+      },
+      {
+        "scenario": "Unauthenticated",
+        "route": "/dashboard/admin",
+        "expectedStatus": "307 → /login",
+        "description": "Should redirect to login"
+      },
+      {
+        "scenario": "Unauthenticated",
+        "route": "/api/admin/analytics",
+        "expectedStatus": 401,
+        "description": "Should return Unauthorized"
+      },
+      {
+        "scenario": "Unauthenticated",
+        "route": "/api/trigger-all",
+        "expectedStatus": 401,
+        "description": "Should return Unauthorized or production blocked"
+      }
+    ],
+    "Normal Authenticated User": [
+      {
+        "scenario": "Normal User",
+        "route": "/dashboard",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/dashboard/analysis",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/dashboard/profile",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/dashboard/admin",
+        "expectedStatus": "307 → /dashboard",
+        "description": "Should redirect to dashboard (non-admin)"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/dashboard/admin/ml-monitoring",
+        "expectedStatus": "307 → /dashboard",
+        "description": "Should redirect to dashboard (non-admin)"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/dashboard/travel-test (production)",
+        "expectedStatus": "Blocked",
+        "description": "Should show production block message"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/api/admin/analytics",
+        "expectedStatus": 403,
+        "description": "Should return Forbidden"
+      },
+      {
+        "scenario": "Normal User",
+        "route": "/api/trigger-all",
+        "expectedStatus": 403,
+        "description": "Should return Forbidden or production blocked"
+      }
+    ],
+    "Admin User": [
+      {
+        "scenario": "Admin",
+        "route": "/dashboard",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/dashboard/admin",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/dashboard/admin/operations",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/dashboard/admin/ml-monitoring",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/dashboard/admin/quality",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/dashboard/admin/feedback-intelligence",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/dashboard/admin/intelligence-signals",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/analytics",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/operations",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/ml-monitoring",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/ml-quality",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/quality-eval",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/feedback-insights",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      },
+      {
+        "scenario": "Admin",
+        "route": "/api/admin/intelligence-signals",
+        "expectedStatus": 200,
+        "description": "Should allow access"
+      }
+    ],
+    "Production Environment": [
+      {
+        "scenario": "Production",
+        "route": "/dashboard/travel-test",
+        "expectedStatus": "Blocked",
+        "description": "Dev page should show production block message"
+      },
+      {
+        "scenario": "Production",
+        "route": "/api/trigger-all",
+        "expectedStatus": 403,
+        "description": "Should be blocked unless ENABLE_TRIGGER_ROUTES=true"
+      },
+      {
+        "scenario": "Production",
+        "route": "/api/trigger-scan",
+        "expectedStatus": 403,
+        "description": "Should be blocked unless ENABLE_TRIGGER_ROUTES=true"
+      }
+    ]
+  },
+  "summary": {
+    "totalTests": 29,
+    "userTypes": 4
+  }
+}

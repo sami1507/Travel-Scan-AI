@@ -1,0 +1,184 @@
+{
+  "timestamp": "2026-05-11T15:07:59.638Z",
+  "totalRoutes": 25,
+  "existing": 25,
+  "missing": 0,
+  "successRate": 100,
+  "results": [
+    {
+      "route": "/",
+      "title": "Home",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ active page - Main landing page for TravelScan AI"
+    },
+    {
+      "route": "/login",
+      "title": "Login",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ active page - Login page with email/password and Google OAuth"
+    },
+    {
+      "route": "/signup",
+      "title": "Sign Up",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ active page - Registration page for new users"
+    },
+    {
+      "route": "/reset-password",
+      "title": "Reset Password",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ active page - Request password reset link"
+    },
+    {
+      "route": "/update-password",
+      "title": "Update Password",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ active page - Update password after reset"
+    },
+    {
+      "route": "/resend-confirmation",
+      "title": "Resend Confirmation",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ active page - Resend email confirmation link"
+    },
+    {
+      "route": "/auth/callback",
+      "title": "Auth Callback",
+      "expectedAccess": "public",
+      "status": "exists",
+      "notes": "✓ internal page - Handles OAuth authentication callbacks"
+    },
+    {
+      "route": "/dashboard",
+      "title": "Dashboard",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - Main dashboard with overview and quick actions"
+    },
+    {
+      "route": "/dashboard/analysis",
+      "title": "Travel Analysis",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - Create new travel analysis with AI recommendations"
+    },
+    {
+      "route": "/dashboard/saved",
+      "title": "Saved Trips",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - Browse and manage saved travel recommendations"
+    },
+    {
+      "route": "/dashboard/profile",
+      "title": "Profile",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - Manage profile, preferences, and account settings"
+    },
+    {
+      "route": "/dashboard/sources",
+      "title": "Data Sources",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - View status of AI and data provider integrations"
+    },
+    {
+      "route": "/dashboard/alerts",
+      "title": "Travel Alerts",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - Manage travel alerts and notifications"
+    },
+    {
+      "route": "/dashboard/compare",
+      "title": "Compare Trips",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - Compare multiple saved trip recommendations"
+    },
+    {
+      "route": "/dashboard/notifications",
+      "title": "Notifications",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ active page - View and manage notifications"
+    },
+    {
+      "route": "/dashboard/scans",
+      "title": "Analysis History",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ internal page - Redirects to Saved Trips - analysis history"
+    },
+    {
+      "route": "/dashboard/opportunities",
+      "title": "Travel Opportunities",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ internal page - Future: AI-detected travel deals and opportunities"
+    },
+    {
+      "route": "/dashboard/intelligence",
+      "title": "Travel Intelligence",
+      "expectedAccess": "user",
+      "status": "exists",
+      "notes": "✓ internal page - Future: AI-powered travel insights and trends"
+    },
+    {
+      "route": "/dashboard/admin",
+      "title": "Admin Dashboard",
+      "expectedAccess": "admin",
+      "status": "exists",
+      "notes": "✓ admin page - Admin-only analytics dashboard"
+    },
+    {
+      "route": "/dashboard/admin/operations",
+      "title": "Operations",
+      "expectedAccess": "admin",
+      "status": "exists",
+      "notes": "✓ admin page - Admin-only operational metrics"
+    },
+    {
+      "route": "/dashboard/admin/ml-monitoring",
+      "title": "ML Monitoring",
+      "expectedAccess": "admin",
+      "status": "exists",
+      "notes": "✓ admin page - Admin-only ML monitoring"
+    },
+    {
+      "route": "/dashboard/admin/quality",
+      "title": "Quality Monitoring",
+      "expectedAccess": "admin",
+      "status": "exists",
+      "notes": "✓ admin page - Admin-only quality monitoring"
+    },
+    {
+      "route": "/dashboard/admin/feedback-intelligence",
+      "title": "Feedback Intelligence",
+      "expectedAccess": "admin",
+      "status": "exists",
+      "notes": "✓ admin page - Admin-only feedback intelligence"
+    },
+    {
+      "route": "/dashboard/admin/intelligence-signals",
+      "title": "Intelligence Signals",
+      "expectedAccess": "admin",
+      "status": "exists",
+      "notes": "✓ admin page - Admin-only intelligence signals"
+    },
+    {
+      "route": "/dashboard/travel-test",
+      "title": "Travel Test",
+      "expectedAccess": "dev",
+      "status": "exists",
+      "notes": "✓ dev page - Development-only testing page"
+    }
+  ]
+}

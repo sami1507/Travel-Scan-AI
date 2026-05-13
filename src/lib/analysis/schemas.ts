@@ -21,6 +21,206 @@ export const categoryScoresSchema = z.object({
   flightValue: z.number().min(0).max(10).optional(),
 })
 
+// Itinerary Map Plan Schemas
+export const itineraryStopSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  city: z.string(),
+  country: z.string(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  day: z.number(),
+  recommendedTimeOfDay: z.enum(['morning', 'afternoon', 'evening', 'full-day']),
+  durationEstimate: z.string(),
+  type: z.enum(['landmark', 'museum', 'food', 'nature', 'market', 'viewpoint', 'neighborhood', 'transport', 'hotel_area', 'day_trip']),
+  whyVisit: z.string(),
+  whatToDo: z.string(),
+  whatToSee: z.string(),
+  practicalTip: z.string(),
+  costLevel: z.enum(['free', 'low', 'moderate', 'high', 'unknown']),
+})
+
+export const dayPlanSchema = z.object({
+  day: z.number(),
+  title: z.string(),
+  areaFocus: z.string(),
+  whyThisArea: z.string(),
+  morning: z.string(),
+  afternoon: z.string(),
+  evening: z.string(),
+  foodSuggestion: z.string(),
+  transportTip: z.string(),
+  walkingIntensity: z.enum(['low', 'moderate', 'high']),
+  warnings: z.array(z.string()),
+})
+
+export const routeReasoningSchema = z.object({
+  whyThisRoute: z.string(),
+  whyThisOrder: z.string(),
+  whyTheseAreas: z.string(),
+  fatigueReasoning: z.string(),
+  transportReasoning: z.string(),
+  budgetReasoning: z.string(),
+})
+
+export const itineraryMapPlanSchema = z.object({
+  routeTitle: z.string(),
+  mapAvailable: z.boolean(),
+  polylineSource: z.enum(['google_directions', 'generated_estimate', 'fallback_visual']),
+  center: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }).optional(),
+  zoomLevel: z.number().optional(),
+  routePolyline: z.object({
+    encodedPolyline: z.string().optional(),
+    coordinates: z.array(z.object({
+      lat: z.number(),
+      lng: z.number(),
+      label: z.string(),
+      day: z.number(),
+      type: z.string(),
+    })).optional(),
+  }).optional(),
+  stops: z.array(itineraryStopSchema),
+  dayPlans: z.array(dayPlanSchema),
+  routeReasoning: routeReasoningSchema,
+})
+
+// Travel Strategy Tips Schemas
+export const idealDateScannerSchema = z.object({
+  title: z.string(),
+  suggestedDateWindow: z.string(),
+  whyThisWindow: z.string(),
+  estimatedPriceTendency: z.enum(['lower', 'moderate', 'higher', 'unknown']),
+  weatherNote: z.string(),
+  crowdNote: z.string(),
+  flexibilityTip: z.string(),
+  dataConfidence: z.number().min(0).max(1),
+  sourceLabel: z.enum(['live_provider', 'structured_knowledge', 'ai_estimate', 'fallback_estimate']),
+})
+
+export const alternativeAirportStrategySchema = z.object({
+  title: z.string(),
+  primaryAirport: z.string(),
+  alternativeAirports: z.array(z.string()),
+  nearbyArrivalCities: z.array(z.string()),
+  routeLogic: z.string(),
+  possibleSavingsNote: z.string(),
+  riskWarnings: z.array(z.string()),
+  dataConfidence: z.number().min(0).max(1),
+  sourceLabel: z.enum(['live_provider', 'structured_knowledge', 'ai_estimate', 'fallback_estimate']),
+})
+
+export const smartRouteOptimizerSchema = z.object({
+  title: z.string(),
+  optimizedRoute: z.array(z.string()),
+  originalRouteIssue: z.string().optional(),
+  transportLogic: z.string(),
+  connectionSimplicity: z.string(),
+  fatigueImpact: z.string(),
+  routeRealismImpact: z.string(),
+  recommendedNights: z.record(z.number()),
+  riskWarnings: z.array(z.string()),
+})
+
+export const verifiedDealsDetectorSchema = z.object({
+  title: z.string(),
+  dealType: z.string(),
+  whereToCheck: z.array(z.string()),
+  verificationNeeded: z.boolean(),
+  estimatedSavingsPotential: z.string(),
+  sourceLabel: z.enum(['live_provider', 'structured_knowledge', 'ai_estimate', 'fallback_estimate']),
+  confidence: z.number().min(0).max(1),
+})
+
+export const extraFeesBreakdownSchema = z.object({
+  title: z.string(),
+  likelyExtraFees: z.array(z.object({
+    feeType: z.string(),
+    estimatedAmount: z.string(),
+    avoidable: z.boolean(),
+  })),
+  howToAvoid: z.array(z.string()),
+  bookingChecklist: z.array(z.string()),
+  riskLevel: z.enum(['low', 'medium', 'high']),
+  confidence: z.number().min(0).max(1),
+})
+
+export const negotiationEmailSchema = z.object({
+  title: z.string(),
+  emailSubject: z.string(),
+  emailBody: z.string(),
+  negotiationAngle: z.string(),
+  whenToUse: z.string(),
+  expectedOutcome: z.string(),
+  riskWarnings: z.array(z.string()),
+})
+
+export const flexibilityRiskAnalysisSchema = z.object({
+  title: z.string(),
+  flexibilityScore: z.number().min(0).max(10),
+  mainRisks: z.array(z.string()),
+  whatCanGoWrong: z.array(z.string()),
+  saferAlternative: z.string(),
+  changeDateImpact: z.string(),
+  routeRisk: z.string(),
+  budgetRisk: z.string(),
+  cancellationRisk: z.string(),
+  recommendation: z.string(),
+})
+
+export const nearbyDestinationStrategySchema = z.object({
+  title: z.string(),
+  nearbyDestinations: z.array(z.object({
+    name: z.string(),
+    distanceKm: z.number().optional(),
+    transportOptions: z.array(z.string()),
+  })),
+  whyTheyMayHelp: z.string(),
+  onwardTransport: z.string(),
+  riskWarnings: z.array(z.string()),
+  sourceLabel: z.enum(['live_provider', 'structured_knowledge', 'ai_estimate', 'fallback_estimate']),
+  confidence: z.number().min(0).max(1),
+})
+
+export const travelStrategyTipsSchema = z.object({
+  idealDateScanner: idealDateScannerSchema.optional(),
+  alternativeAirportStrategy: alternativeAirportStrategySchema.optional(),
+  smartRouteOptimizer: smartRouteOptimizerSchema.optional(),
+  verifiedDealsAndPromotionsDetector: verifiedDealsDetectorSchema.optional(),
+  extraFeesBreakdown: extraFeesBreakdownSchema.optional(),
+  negotiationEmail: negotiationEmailSchema.optional(),
+  flexibilityAndRiskAnalysis: flexibilityRiskAnalysisSchema.optional(),
+  nearbyDestinationStrategy: nearbyDestinationStrategySchema.optional(),
+})
+
+// Season Month Strategy Schemas
+export const monthOptionSchema = z.object({
+  title: z.string(),
+  month: z.number().min(1).max(12),
+  optionType: z.enum(['bestValue', 'bestExperience', 'lowestFatigue']),
+  suggestedRoute: z.array(z.string()),
+  recommendedNights: z.record(z.number()),
+  whyRecommended: z.string(),
+  budgetNote: z.string(),
+  weatherNote: z.string(),
+  crowdNote: z.string(),
+  routeLogic: z.string(),
+  riskWarnings: z.array(z.string()),
+  dataConfidence: z.number().min(0).max(1),
+  sourceLabel: z.enum(['live_provider', 'structured_knowledge', 'ai_estimate', 'fallback_estimate']),
+})
+
+export const seasonMonthStrategySchema = z.object({
+  season: z.string(),
+  months: z.array(z.object({
+    month: z.number().min(1).max(12),
+    monthName: z.string(),
+    options: z.array(monthOptionSchema),
+  })),
+})
+
 export const rankedDestinationSchema = z.object({
   destinationId: z.string(),
   destinationName: z.string(),
@@ -50,6 +250,10 @@ export const rankedDestinationSchema = z.object({
   realisticConsultantNotes: z.string().optional().describe('Practical advice like a travel consultant would give'),
   routeWarnings: z.array(z.string()).optional().describe('Warnings about the route (rushed, expensive, etc.)'),
   routeAlternatives: z.string().optional().describe('Alternative route suggestion if current is not optimal'),
+  // Itinerary Map Plan
+  itineraryMapPlan: itineraryMapPlanSchema.optional().describe('Smart itinerary map with day-by-day plan and route reasoning'),
+  // Travel Strategy Tips
+  travelStrategyTips: travelStrategyTipsSchema.optional().describe('AI travel consultant strategy tips'),
 })
 
 export const routeStopSchema = z.object({
@@ -118,6 +322,7 @@ export const travelAnalysisResponseSchema = z.object({
     explanations: z.array(z.string()).describe('How personalization affected recommendations'),
     feedbackCount: z.number().optional().describe('Number of feedback events used'),
   }).optional().describe('Personalization metadata'),
+  seasonMonthStrategy: seasonMonthStrategySchema.optional().describe('Month-by-month strategy for season-based queries'),
 })
 
 export type UserConstraints = z.infer<typeof userConstraintsSchema>
@@ -127,3 +332,18 @@ export type RouteStop = z.infer<typeof routeStopSchema>
 export type RouteScore = z.infer<typeof routeScoreSchema>
 export type RecommendedRoute = z.infer<typeof recommendedRouteSchema>
 export type TravelAnalysisResponse = z.infer<typeof travelAnalysisResponseSchema>
+export type TravelStrategyTips = z.infer<typeof travelStrategyTipsSchema>
+export type IdealDateScanner = z.infer<typeof idealDateScannerSchema>
+export type AlternativeAirportStrategy = z.infer<typeof alternativeAirportStrategySchema>
+export type SmartRouteOptimizer = z.infer<typeof smartRouteOptimizerSchema>
+export type VerifiedDealsDetector = z.infer<typeof verifiedDealsDetectorSchema>
+export type ExtraFeesBreakdown = z.infer<typeof extraFeesBreakdownSchema>
+export type NegotiationEmail = z.infer<typeof negotiationEmailSchema>
+export type FlexibilityRiskAnalysis = z.infer<typeof flexibilityRiskAnalysisSchema>
+export type NearbyDestinationStrategy = z.infer<typeof nearbyDestinationStrategySchema>
+export type SeasonMonthStrategy = z.infer<typeof seasonMonthStrategySchema>
+export type MonthOption = z.infer<typeof monthOptionSchema>
+export type ItineraryMapPlan = z.infer<typeof itineraryMapPlanSchema>
+export type ItineraryStop = z.infer<typeof itineraryStopSchema>
+export type DayPlan = z.infer<typeof dayPlanSchema>
+export type RouteReasoning = z.infer<typeof routeReasoningSchema>

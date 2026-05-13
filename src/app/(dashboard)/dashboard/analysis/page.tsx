@@ -19,6 +19,7 @@ import { ShareExportDialog } from '@/components/travel/share-export-dialog'
 import { ItineraryView } from '@/components/travel/itinerary-view'
 import { RouteMapView } from '@/components/travel/route-map-view'
 import { RankingExplanation } from '@/components/travel/ranking-explanation'
+import { SeasonMonthStrategyDisplay } from '@/components/travel/season-month-strategy'
 import type { TravelAnalysisResponse, RankedDestination } from '@/lib/analysis/schemas'
 
 export default function AnalysisPage() {
@@ -325,6 +326,11 @@ export default function AnalysisPage() {
                 <ItineraryView route={analysis.recommendedRoutes[0]} />
               </div>
             </div>
+          )}
+
+          {/* Season Month Strategy */}
+          {analysis.seasonMonthStrategy && (
+            <SeasonMonthStrategyDisplay strategy={analysis.seasonMonthStrategy} />
           )}
 
           {/* Ranked Destinations */}

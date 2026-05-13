@@ -7,6 +7,8 @@ import { X, MapPin, Calendar, DollarSign, Shield, Plane, AlertTriangle, Info } f
 import type { RankedDestination } from '@/lib/analysis/schemas'
 import { ScoreBreakdown } from './score-breakdown'
 import { ExternalActions } from './external-actions'
+import { TravelStrategyTipsDisplay } from './travel-strategy-tips'
+import { ItineraryMapDisplay } from './itinerary-map-display'
 
 interface RecommendationDetailProps {
   destination: RankedDestination
@@ -156,6 +158,12 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
               )}
             </CardContent>
           </Card>
+
+          {/* Itinerary Map */}
+          <ItineraryMapDisplay plan={destination.itineraryMapPlan} />
+
+          {/* Travel Strategy Tips */}
+          <TravelStrategyTipsDisplay tips={destination.travelStrategyTips} />
 
           {/* External Actions */}
           <ExternalActions destination={destination} />

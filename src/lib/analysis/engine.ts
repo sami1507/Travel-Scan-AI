@@ -32,6 +32,7 @@ export interface AnalysisRequest {
   destination?: string
   departureCity?: string
   budget?: 'low' | 'moderate' | 'high' | 'luxury'
+  season?: 'Winter' | 'Spring' | 'Summer' | 'Autumn' // Season selection for month strategy
   travelMonths?: number[]
   tripLength?: number // Trip duration in days
   interests?: string[]
@@ -545,29 +546,36 @@ YOUR ROLE (Route-Aware Travel Consultant):
 - Suggest better alternatives when user's preference is not optimal
 - Acknowledge data limitations
 
+CRITICAL: ALWAYS RETURN EXACTLY 3 DISTINCT RECOMMENDATIONS
+
+You must provide 3 different recommendation options in rankedDestinations array.
+Each recommendation should be meaningfully different from the others.
+
 ROUTE REALISM RULES:
 
 Single Country - One City:
-- Recommend ONE strong base city only
-- Explain day trips if useful
-- Focus on depth, comfort, neighborhoods, best areas to stay
-- Do NOT create multi-city routes
+- Provide 3 different base city options OR 3 different itinerary styles for the same city
+- Each option should have different focus: cultural, relaxation, adventure, food-focused, etc.
+- Explain day trips and neighborhoods for each
+- Focus on depth, comfort, best areas to stay
+- Each recommendation gets its own itinerary map plan
 
 Single Country - Multi-City:
-- Recommend ONE country only
-- Suggest 2-4 logical cities/regions depending on trip length
+- Provide 3 different route options within the SAME country
+- Example for Italy: Option 1 (Rome→Florence→Venice), Option 2 (Milan→Verona→Bologna), Option 3 (Naples→Amalfi→Sorrento)
+- Each route should have 2-4 logical cities/regions depending on trip length
 - Prioritize easy transport (train, bus, short drives)
 - Avoid unrealistic city combinations
-- Good examples: Italy (Rome→Florence→Venice), Spain (Madrid→Seville→Granada)
-- Add nights per stop and fatigue level
+- Add nights per stop and fatigue level for each option
 
 Multi-Country:
-- Recommend countries that make geographic and transport sense
+- Provide 3 different multi-country route options
+- Example: Option 1 (Vienna→Budapest), Option 2 (Prague→Vienna), Option 3 (Bratislava→Budapest→Vienna)
+- Each route should make geographic and transport sense
 - Prefer 2 countries for 7-10 days, 2-3 countries for 12-15 days
 - Avoid combining countries far apart unless flights are justified
-- Classic logical routes: Vienna→Bratislava→Budapest, Prague→Vienna→Budapest
 - Add warnings if route is too rushed or expensive
-- If multi-country is illogical, suggest realistic single-country alternative
+- Each option should offer different experiences/pacing/focus
 
 TRIP FATIGUE ASSESSMENT:
 - Low: 1 city or 2 cities with 3+ nights each
@@ -588,6 +596,83 @@ OUTPUT REQUIREMENTS:
 - List warnings about rushed routes, visa issues, transport complexity
 - Suggest alternatives if user's structure choice is not ideal
 - Mark data sources (knowledge-based, estimated, demo)
+
+TRAVEL STRATEGY TIPS (for each recommendation):
+Generate travelStrategyTips object with these sections:
+
+1. idealDateScanner: Suggest better travel timing based on season, month, crowds, weather, estimated price tendency
+2. alternativeAirportStrategy: Find safe alternatives using nearby airports or arrival cities. NEVER recommend hidden-city/skiplagging. Instead suggest: nearby airports, open-jaw routes, land in nearby city + train/bus continuation
+3. smartRouteOptimizer: Improve route order to reduce fatigue and improve realism
+4. verifiedDealsAndPromotionsDetector: Detect possible deal signals. Never invent promo codes. Label as estimated if no real provider data
+5. extraFeesBreakdown: Warn about baggage, seat selection, city tax, resort fees, late check-in, cancellation, airport transfer, payment fees
+6. negotiationEmail: Generate polite email for user to send to hotels/apartments for better rates (useful for long stays, off-season, boutique hotels)
+7. flexibilityAndRiskAnalysis: Analyze trip flexibility, main risks, what can go wrong, safer alternatives
+8. nearbyDestinationStrategy: Suggest nearby destinations that may reduce cost or improve route logic (safe alternative to hidden ticketing)
+
+All strategy tips must:
+- Use sourceLabel: live_provider | structured_knowledge | ai_estimate | fallback_estimate
+- Include dataConfidence score (0-1)
+- Include riskWarnings array where relevant
+- Never fake live prices or deals
+- Never encourage airline policy violations
+
+SEASON MONTH STRATEGY (only if user selected a season, not specific month):
+If user selected Winter/Spring/Summer/Autumn, generate seasonMonthStrategy with:
+- Season name
+- For each month in that season (e.g., Autumn = September, October, November):
+  - Generate exactly 3 options: bestValue, bestExperience, lowestFatigue
+  - Each option includes: title, month, suggestedRoute, recommendedNights, whyRecommended, budgetNote, weatherNote, crowdNote, routeLogic, riskWarnings, dataConfidence, sourceLabel
+
+Season mapping:
+- Winter: December (12), January (1), February (2)
+- Spring: March (3), April (4), May (5)
+- Summer: June (6), July (7), August (8)
+- Autumn: September (9), October (10), November (11)
+
+Do NOT generate seasonMonthStrategy if user selected specific month or dates.
+
+ITINERARY MAP PLAN (for each recommendation):
+Generate itineraryMapPlan object with:
+
+1. routeTitle: Clear title for the route
+2. mapAvailable: true if you have approximate coordinates, false otherwise
+3. polylineSource: 'generated_estimate' (use 'fallback_visual' if no coordinates)
+4. center: approximate lat/lng of route center (only if coordinates available)
+5. zoomLevel: appropriate zoom (city: 12, multi-city: 8, multi-country: 6)
+6. stops: array of places to visit with:
+   - name, city, country
+   - lat/lng (ONLY if you know approximate coordinates for major landmarks/cities)
+   - day number
+   - recommendedTimeOfDay: morning/afternoon/evening/full-day
+   - durationEstimate: how long to spend
+   - type: landmark/museum/food/nature/market/viewpoint/neighborhood/transport/hotel_area/day_trip
+   - whyVisit: why this place matters
+   - whatToDo: specific activities
+   - whatToSee: what to look for
+   - practicalTip: useful advice
+   - costLevel: free/low/moderate/high/unknown
+7. dayPlans: day-by-day itinerary with:
+   - day number and title
+   - areaFocus: which neighborhood/area
+   - whyThisArea: reasoning for area selection
+   - morning/afternoon/evening: what to do each part of day
+   - foodSuggestion: where/what to eat
+   - transportTip: how to get around
+   - walkingIntensity: low/moderate/high
+   - warnings: any day-specific warnings
+8. routeReasoning: explain:
+   - whyThisRoute: overall route logic
+   - whyThisOrder: why this sequence
+   - whyTheseAreas: why these neighborhoods/cities
+   - fatigueReasoning: pacing explanation
+   - transportReasoning: transport logic
+   - budgetReasoning: cost considerations
+
+COORDINATE RULES:
+- ONLY include lat/lng if you know approximate coordinates for major cities/landmarks
+- Do NOT invent precise fake coordinates
+- If coordinates unknown, set mapAvailable=false and polylineSource='fallback_visual'
+- Visual fallback will still show day plans and stops without map
 
 SCORING INTERPRETATION:
 - Total Score 80-100: Excellent match
@@ -620,6 +705,10 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
     sections.push(`Query: ${request.query}`)
     if (request.destination) sections.push(`Destination: ${request.destination}`)
     if (request.budget) sections.push(`Budget: ${request.budget}`)
+    if (request.season) {
+      sections.push(`Season Selected: ${request.season}`)
+      sections.push(`IMPORTANT: User selected season mode. Generate seasonMonthStrategy with month-by-month options.`)
+    }
     if (request.travelMonths) sections.push(`Travel Months: ${request.travelMonths.join(', ')}`)
     if (request.interests) sections.push(`Interests: ${request.interests.join(', ')}`)
     if (request.travelStyle) sections.push(`Travel Style: ${request.travelStyle}`)
@@ -1458,6 +1547,46 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
         routeAlternatives: routeWarnings.length > 0 && request.tripStructure === 'multi_country'
           ? `Consider a single-country multi-city route for ${tripLength} days, or extend to ${route.minDays}+ days for this multi-country route`
           : undefined,
+        // Add basic travel strategy tips for fallback
+        travelStrategyTips: {
+          idealDateScanner: {
+            title: 'Best Travel Timing',
+            suggestedDateWindow: request.season || 'Spring/Autumn',
+            whyThisWindow: 'Moderate weather and fewer crowds',
+            estimatedPriceTendency: 'moderate' as const,
+            weatherNote: 'Pleasant temperatures for sightseeing',
+            crowdNote: 'Moderate tourist levels',
+            flexibilityTip: 'Consider traveling mid-week for better rates',
+            dataConfidence: 0.6,
+            sourceLabel: 'fallback_estimate' as const,
+          },
+          extraFeesBreakdown: {
+            title: 'Common Extra Costs',
+            likelyExtraFees: [
+              { feeType: 'Baggage fees', estimatedAmount: '$30-60', avoidable: true },
+              { feeType: 'City tax', estimatedAmount: '$2-5 per night', avoidable: false },
+              { feeType: 'Airport transfer', estimatedAmount: '$20-40', avoidable: true },
+            ],
+            howToAvoid: ['Pack light for carry-on only', 'Use public transport from airport', 'Book hotels with taxes included'],
+            bookingChecklist: ['Check baggage allowance', 'Verify if breakfast included', 'Confirm cancellation policy'],
+            riskLevel: 'medium' as const,
+            confidence: 0.7,
+          },
+          flexibilityAndRiskAnalysis: {
+            title: 'Trip Flexibility Analysis',
+            flexibilityScore: travelFatigueLevel === 'Low' ? 8 : travelFatigueLevel === 'Medium' ? 6 : 4,
+            mainRisks: routeWarnings.length > 0 ? routeWarnings : ['Weather changes', 'Transport delays'],
+            whatCanGoWrong: ['Missed connections', 'Fully booked accommodation', 'Unexpected closures'],
+            saferAlternative: travelFatigueLevel === 'High' ? 'Reduce number of stops' : 'Current plan is reasonable',
+            changeDateImpact: 'Flexible dates can save 20-30% on flights',
+            routeRisk: travelFatigueLevel === 'High' ? 'High - tight schedule' : 'Moderate',
+            budgetRisk: 'Moderate - prices vary by season',
+            cancellationRisk: 'Book refundable options if uncertain',
+            recommendation: travelFatigueLevel === 'High' ? 'Consider extending trip or reducing stops' : 'Plan looks feasible',
+          },
+        },
+        // Add basic itinerary map plan for fallback
+        itineraryMapPlan: this.generateFallbackItinerary(route, tripLength, travelFatigueLevel),
       }
     })
 
@@ -1530,6 +1659,8 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
         explanations: ['Fallback recommendations - AI provider temporarily unavailable'],
         feedbackCount: 0,
       },
+      // Add season month strategy if season is selected
+      seasonMonthStrategy: request.season ? this.generateFallbackSeasonStrategy(request, selectedRoutes[0]) : undefined,
     }
   }
 
@@ -1537,6 +1668,161 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                     'July', 'August', 'September', 'October', 'November', 'December']
     return months[month - 1] || 'Spring'
+  }
+
+  /**
+   * Generate fallback season month strategy
+   */
+  private generateFallbackSeasonStrategy(request: AnalysisRequest, route: any): any {
+    const seasonMonths: Record<string, number[]> = {
+      'Winter': [12, 1, 2],
+      'Spring': [3, 4, 5],
+      'Summer': [6, 7, 8],
+      'Autumn': [9, 10, 11],
+    }
+
+    const months = seasonMonths[request.season || 'Spring'] || [3, 4, 5]
+    const tripLength = request.tripLength || 7
+
+    return {
+      season: request.season || 'Spring',
+      months: months.map(month => ({
+        month,
+        monthName: this.getMonthName(month),
+        options: [
+          {
+            title: `Best Value - ${this.getMonthName(month)}`,
+            month,
+            optionType: 'bestValue' as const,
+            suggestedRoute: route.cities.slice(0, 2),
+            recommendedNights: route.cities.slice(0, 2).reduce((acc: any, city: string, idx: number) => {
+              acc[city] = idx === 0 ? Math.ceil(tripLength * 0.6) : Math.floor(tripLength * 0.4)
+              return acc
+            }, {}),
+            whyRecommended: `${this.getMonthName(month)} offers good value with moderate prices and decent weather`,
+            budgetNote: 'Mid-range pricing, good deals available',
+            weatherNote: 'Generally pleasant conditions',
+            crowdNote: 'Moderate tourist levels',
+            routeLogic: route.transportMode === 'train' ? 'Easy train connections' : 'Standard transport options',
+            riskWarnings: [],
+            dataConfidence: 0.6,
+            sourceLabel: 'fallback_estimate' as const,
+          },
+          {
+            title: `Best Experience - ${this.getMonthName(month)}`,
+            month,
+            optionType: 'bestExperience' as const,
+            suggestedRoute: route.cities,
+            recommendedNights: route.nightsDistribution,
+            whyRecommended: `${this.getMonthName(month)} provides excellent conditions for experiencing all destinations`,
+            budgetNote: 'Expect higher prices during peak times',
+            weatherNote: 'Optimal weather conditions',
+            crowdNote: 'Popular travel period',
+            routeLogic: `Full ${route.cities.length}-stop route with ${route.transportMode} connections`,
+            riskWarnings: ['Book accommodation early', 'Higher prices expected'],
+            dataConfidence: 0.6,
+            sourceLabel: 'fallback_estimate' as const,
+          },
+          {
+            title: `Lowest Fatigue - ${this.getMonthName(month)}`,
+            month,
+            optionType: 'lowestFatigue' as const,
+            suggestedRoute: [route.cities[0]],
+            recommendedNights: { [route.cities[0]]: tripLength },
+            whyRecommended: `Single-city stay in ${route.cities[0]} for ${this.getMonthName(month)} minimizes travel fatigue`,
+            budgetNote: 'Moderate pricing for extended stay',
+            weatherNote: 'Comfortable for relaxed exploration',
+            crowdNote: 'Manageable crowds',
+            routeLogic: 'No inter-city travel required',
+            riskWarnings: [],
+            dataConfidence: 0.6,
+            sourceLabel: 'fallback_estimate' as const,
+          },
+        ],
+      })),
+    }
+  }
+
+  /**
+   * Generate basic itinerary map plan for fallback
+   */
+  private generateFallbackItinerary(route: any, tripLength: number, fatigueLevel: string): any {
+    const daysPerCity = route.cities.map((city: string, idx: number) => {
+      const nights = route.nightsDistribution[city] || Math.floor(tripLength / route.cities.length)
+      return { city, nights, startDay: idx === 0 ? 1 : route.cities.slice(0, idx).reduce((sum: number, c: string) => sum + (route.nightsDistribution[c] || 0), 0) + 1 }
+    })
+
+    const stops = route.cities.flatMap((city: string, cityIdx: number) => {
+      const cityDay = daysPerCity[cityIdx]
+      return [
+        {
+          id: `${city.toLowerCase().replace(/\s+/g, '-')}-center`,
+          name: `${city} City Center`,
+          city,
+          country: route.countries[cityIdx] || route.countries[0],
+          day: cityDay.startDay,
+          recommendedTimeOfDay: 'morning' as const,
+          durationEstimate: '2-3 hours',
+          type: 'neighborhood' as const,
+          whyVisit: `Explore the heart of ${city}`,
+          whatToDo: 'Walk around main squares, visit local shops',
+          whatToSee: 'Historic architecture and city landmarks',
+          practicalTip: 'Start early to avoid crowds',
+          costLevel: 'free' as const,
+        },
+        {
+          id: `${city.toLowerCase().replace(/\s+/g, '-')}-landmark`,
+          name: `${city} Main Attraction`,
+          city,
+          country: route.countries[cityIdx] || route.countries[0],
+          day: cityDay.startDay,
+          recommendedTimeOfDay: 'afternoon' as const,
+          durationEstimate: '2-4 hours',
+          type: 'landmark' as const,
+          whyVisit: `Must-see attraction in ${city}`,
+          whatToDo: 'Visit, take photos, learn history',
+          whatToSee: 'Main cultural or historical site',
+          practicalTip: 'Book tickets online to skip lines',
+          costLevel: 'moderate' as const,
+        },
+      ]
+    })
+
+    const dayPlans = Array.from({ length: tripLength }, (_, i) => {
+      const day = i + 1
+      const cityData = daysPerCity.find(c => day >= c.startDay && day < c.startDay + c.nights)
+      const city = cityData?.city || route.cities[0]
+      
+      return {
+        day,
+        title: `Day ${day}: ${city}`,
+        areaFocus: `${city} Center`,
+        whyThisArea: `Best area for exploring ${city}'s main attractions`,
+        morning: 'Breakfast and explore city center',
+        afternoon: 'Visit main attractions and museums',
+        evening: 'Dinner at local restaurant, evening walk',
+        foodSuggestion: 'Try local specialties',
+        transportTip: route.transportMode === 'train' ? 'Use metro or walk' : 'Public transport or walking',
+        walkingIntensity: fatigueLevel === 'Low' ? 'low' : fatigueLevel === 'Medium' ? 'moderate' : 'high',
+        warnings: [],
+      }
+    })
+
+    return {
+      routeTitle: `${route.cities.join(' → ')} Route`,
+      mapAvailable: false,
+      polylineSource: 'fallback_visual' as const,
+      stops,
+      dayPlans,
+      routeReasoning: {
+        whyThisRoute: `Classic route combining ${route.cities.length} destinations`,
+        whyThisOrder: `Logical geographic progression with ${route.transportMode} connections`,
+        whyTheseAreas: `Selected for cultural significance and ease of access`,
+        fatigueReasoning: `${fatigueLevel} fatigue level with ${tripLength} days for ${route.cities.length} cities`,
+        transportReasoning: `${route.transportMode === 'train' ? 'Easy train connections' : 'Standard transport options'} between cities`,
+        budgetReasoning: `Moderate budget accommodating standard travel costs`,
+      },
+    }
   }
 
   /**

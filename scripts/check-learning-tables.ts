@@ -9,7 +9,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 async function checkTable(tableName: string): Promise<{ exists: boolean; count: number }> {
   try {
-    const response = await fetch(`${supabaseUrl}/rest/v1/${tableName}?select=id&limit=1`, {
+    // Try with * to handle tables with different primary keys
+    const response = await fetch(`${supabaseUrl}/rest/v1/${tableName}?select=*&limit=1`, {
       headers: {
         'apikey': supabaseServiceKey,
         'Authorization': `Bearer ${supabaseServiceKey}`,
@@ -51,7 +52,7 @@ async function main() {
   // Check ENABLE_AI_LEARNING
   console.log('--- Environment Configuration ---\n')
   const envContent = fs.readFileSync('.env.local', 'utf-8')
-  const learningEnabled = envContent.includes('ENABLE_AI_LEARNING=true')
+  const learningEnabled = envContent.includes('ENABLE_AI_LEARNING=true') || envContent.includes('ENABLE_AI_LEARNING="true"')
   
   if (learningEnabled) {
     console.log('✅ ENABLE_AI_LEARNING=true is set')

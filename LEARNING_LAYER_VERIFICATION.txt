@@ -1,0 +1,132 @@
+PHASE 1 LEARNING LAYER - DATABASE VERIFICATION GUIDE
+====================================================
+
+Since the Supabase environment variables cannot be accessed by scripts,
+please follow these manual verification steps:
+
+STEP 1: APPLY MIGRATION
+------------------------
+1. Go to your Supabase Dashboard: https://supabase.com/dashboard
+2. Select your project
+3. Go to SQL Editor
+4. Create a new query
+5. Copy and paste the contents of:
+   supabase/migrations/20260512_ai_learning_layer.sql
+6. Click "Run" to execute the migration
+7. Verify success message appears
+
+STEP 2: VERIFY TABLES CREATED
+------------------------------
+Run this SQL query in Supabase SQL Editor:
+
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name IN (
+  'ai_recommendation_events',
+  'ai_recommendation_items',
+  'ai_feedback_signals',
+  'user_preference_profiles'
+);
+
+Expected: All 4 tables should be listed
+
+STEP 3: ENABLE LEARNING
+-----------------------
+Add this line to your .env.local file:
+
+ENABLE_AI_LEARNING=true
+
+STEP 4: VERIFY RLS POLICIES
+----------------------------
+Run this SQL query in Supabase SQL Editor:
+
+SELECT schemaname, tablename, policyname 
+FROM pg_policies 
+WHERE tablename IN (
+  'ai_recommendation_events',
+  'ai_recommendation_items',
+  'ai_feedback_signals',
+  'user_preference_profiles'
+);
+
+Expected: Multiple RLS policies should be listed for each table
+
+STEP 5: TEST WITH REAL ANALYSIS
+--------------------------------
+1. Start the dev server: npm run dev
+2. Log in to the application
+3. Run a travel analysis
+4. Check Supabase Dashboard → Table Editor → ai_recommendation_events
+5. Verify a new row was created with your analysis data
+6. Check ai_recommendation_items table
+7. Verify recommendation items were created
+
+STEP 6: TEST FEEDBACK SIGNAL
+-----------------------------
+1. In the UI, perform a feedback action (save, thumbs up, etc.)
+2. Check Supabase Dashboard → Table Editor → ai_feedback_signals
+3. Verify a new row was created
+
+STEP 7: VERIFY PROFILE UPDATES
+-------------------------------
+1. After 5+ feedback signals, check user_preference_profiles table
+2. Verify your user profile was created/updated
+3. Check confidence_score field (should be > 0 after 5 signals)
+
+STEP 8: VERIFY LEARNING CONTEXT
+--------------------------------
+Run this SQL query to see learning data:
+
+SELECT 
+  e.id,
+  e.created_at,
+  e.trip_structure,
+  e.provider_used,
+  e.fallback_used,
+  e.recommendation_count,
+  COUNT(i.id) as items_count,
+  COUNT(f.id) as feedback_count
+FROM ai_recommendation_events e
+LEFT JOIN ai_recommendation_items i ON i.event_id = e.id
+LEFT JOIN ai_feedback_signals f ON f.event_id = e.id
+GROUP BY e.id
+ORDER BY e.created_at DESC
+LIMIT 10;
+
+STEP 9: TEST FAILURE RESILIENCE
+--------------------------------
+1. Temporarily set ENABLE_AI_LEARNING=false
+2. Run an analysis
+3. Verify analysis still works (no errors)
+4. Verify no new rows in learning tables
+5. Set ENABLE_AI_LEARNING=true again
+
+VERIFICATION CHECKLIST
+----------------------
+[ ] Migration applied successfully
+[ ] All 4 tables exist
+[ ] ENABLE_AI_LEARNING=true set
+[ ] RLS policies exist
+[ ] Analysis creates recommendation event
+[ ] Analysis creates recommendation items
+[ ] Feedback action creates signal
+[ ] Profile updates after 5+ signals
+[ ] Analysis works when learning disabled
+[ ] No errors in application logs
+
+TROUBLESHOOTING
+---------------
+If tables don't exist:
+- Verify migration SQL ran without errors
+- Check Supabase logs for migration errors
+
+If no data appears:
+- Verify ENABLE_AI_LEARNING=true in .env.local
+- Check browser console for errors
+- Check Supabase logs for RLS policy errors
+
+If RLS errors occur:
+- Verify you're logged in
+- Check RLS policies were created
+- Verify service role key is correct

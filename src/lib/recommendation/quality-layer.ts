@@ -117,14 +117,14 @@ export class RecommendationQualityLayer {
     let factors = 0
 
     // Budget fit
-    if (userConstraints.budget) {
-      const budgetScore = candidate.categoryScores.budgetFit / 10
+    if (userConstraints.budget && candidate.categoryScores) {
+      const budgetScore = (candidate.categoryScores.budgetFit || 0) / 10
       score += budgetScore
       factors++
     }
 
     // Weather/timing fit
-    if (userConstraints.travelMonths && userConstraints.travelMonths.length > 0) {
+    if (userConstraints.travelMonths && userConstraints.travelMonths.length > 0 && candidate.bestMonths) {
       const hasGoodMonth = candidate.bestMonths.some(month =>
         userConstraints.travelMonths.includes(month)
       )
@@ -290,18 +290,18 @@ export class RecommendationQualityLayer {
     }
 
     // Filter 3: Seasonal mismatch
-    if (userConstraints.travelMonths && userConstraints.travelMonths.length > 0) {
+    if (userConstraints.travelMonths && userConstraints.travelMonths.length > 0 && candidate.bestMonths) {
       const hasAnyGoodMonth = candidate.bestMonths.some(month =>
         userConstraints.travelMonths.includes(month)
       )
-      if (!hasAnyGoodMonth && candidate.possibleDownsides.length === 0) {
+      if (!hasAnyGoodMonth && candidate.possibleDownsides?.length === 0) {
         candidate.filterReason = 'Poor seasonal fit without warnings'
         return false
       }
     }
 
     // Filter 4: Safety concerns without warnings
-    if (candidate.categoryScores.safety < 4 && candidate.possibleDownsides.length === 0) {
+    if (candidate.categoryScores?.safety < 4 && candidate.possibleDownsides?.length === 0) {
       candidate.filterReason = 'Low safety without adequate warnings'
       return false
     }

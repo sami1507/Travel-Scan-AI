@@ -1410,6 +1410,20 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
         ? `Perfect timing for this ${tripType.toLowerCase()} route. You'll have ${tripLength} days to explore comfortably with time for day trips and spontaneous discoveries.`
         : `This is a realistic ${tripType.toLowerCase()} itinerary for ${tripLength} days. The pacing allows for comfortable exploration of each destination.`
 
+      // Create categoryScores for compatibility with ML and other components
+      const baseScore = routeRealismScore / 10
+      const categoryScores = {
+        budgetFit: Math.min(10, Math.max(0, baseScore)),
+        weatherFit: Math.min(10, Math.max(0, baseScore)),
+        passportEase: 8,
+        nightlife: route.travelStyles.includes('nightlife') ? 8 : 5,
+        nature: route.travelStyles.includes('nature') || route.travelStyles.includes('adventure') ? 8 : 5,
+        transport: route.transportMode === 'train' ? 9 : route.transportMode === 'local' ? 8 : 7,
+        hotelValue: Math.min(10, Math.max(0, baseScore)),
+        safety: 8,
+        flightValue: 7,
+      }
+
       return {
         rank: index + 1,
         destinationName: route.cities[0],
@@ -1422,7 +1436,9 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
           `${travelFatigueLevel} travel fatigue with well-paced itinerary`,
         ],
         bestMonth: request.travelMonths?.[0] ? this.getMonthName(request.travelMonths[0]) : 'Spring',
+        bestMonths: request.travelMonths || [3, 4, 5, 9, 10],
         totalMatchScore: routeRealismScore,
+        categoryScores,
         scoreBreakdown: {
           weather: Math.round(routeRealismScore * 0.2),
           budget: Math.round(routeRealismScore * 0.2),

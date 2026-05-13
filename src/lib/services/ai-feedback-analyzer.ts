@@ -134,13 +134,13 @@ RECOMMENDATION SHOWN:
 - Type: ${destination.destinationType}
 
 SCORE BREAKDOWN:
-- Budget Fit: ${destination.categoryScores.budgetFit}/10
-- Weather Fit: ${destination.categoryScores.weatherFit}/10
-- Safety: ${destination.categoryScores.safety}/10
-- Nightlife: ${destination.categoryScores.nightlife}/10
-- Nature: ${destination.categoryScores.nature}/10
-- Transport: ${destination.categoryScores.transport}/10
-- Hotel Value: ${destination.categoryScores.hotelValue}/10
+- Budget Fit: ${destination.categoryScores?.budgetFit || 0}/10
+- Weather Fit: ${destination.categoryScores?.weatherFit || 0}/10
+- Safety: ${destination.categoryScores?.safety || 0}/10
+- Nightlife: ${destination.categoryScores?.nightlife || 0}/10
+- Nature: ${destination.categoryScores?.nature || 0}/10
+- Transport: ${destination.categoryScores?.transport || 0}/10
+- Hotel Value: ${destination.categoryScores?.hotelValue || 0}/10
 
 WHY RECOMMENDED:
 ${destination.whyRecommended.map((r, i) => `${i + 1}. ${r}`).join('\n')}

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-11T14:32:27.518Z",
+  "timestamp": "2026-05-13T09:21:19.404Z",
   "totalScenarios": 8,
   "passed": 8,
   "failed": 0,
@@ -30,9 +30,9 @@
       "routeRealismScore": 85,
       "fatigueLevel": "Medium",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -59,9 +59,9 @@
       "routeRealismScore": 70,
       "fatigueLevel": "Medium",
       "warningsFound": true,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 70, Fatigue: Medium, Warnings: Yes",
+      "actualBehavior": "Returned 1 recommendations. Realism: 70, Fatigue: Medium, Warnings: Yes",
       "notes": "All checks passed"
     },
     {
@@ -88,9 +88,9 @@
       "routeRealismScore": 88,
       "fatigueLevel": "Medium",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 88, Fatigue: Medium, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 88, Fatigue: Medium, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -118,9 +118,9 @@
       "routeRealismScore": 92,
       "fatigueLevel": "Low",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 92, Fatigue: Low, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 92, Fatigue: Low, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -147,9 +147,9 @@
       "routeRealismScore": 85,
       "fatigueLevel": "Low",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Low, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 85, Fatigue: Low, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -177,9 +177,9 @@
       "routeRealismScore": 85,
       "fatigueLevel": "Medium",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -206,9 +206,9 @@
       "routeRealismScore": 85,
       "fatigueLevel": "Medium",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -236,9 +236,9 @@
       "routeRealismScore": 85,
       "fatigueLevel": "Medium",
       "warningsFound": false,
-      "recommendationsCount": 3,
+      "recommendationsCount": 1,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
+      "actualBehavior": "Returned 1 recommendations. Realism: 85, Fatigue: Medium, Warnings: No",
       "notes": "All checks passed"
     }
   ],

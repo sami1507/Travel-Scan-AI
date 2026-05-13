@@ -68,15 +68,15 @@ export class FeatureEngineer {
 
       // Score features
       totalMatchScore: destination.totalMatchScore,
-      budgetFitScore: destination.categoryScores.budgetFit,
-      weatherFitScore: destination.categoryScores.weatherFit,
-      passportEaseScore: destination.categoryScores.passportEase,
-      nightlifeScore: destination.categoryScores.nightlife,
-      natureScore: destination.categoryScores.nature,
-      transportScore: destination.categoryScores.transport,
-      hotelValueScore: destination.categoryScores.hotelValue,
-      safetyScore: destination.categoryScores.safety,
-      flightValueScore: destination.categoryScores.flightValue,
+      budgetFitScore: destination.categoryScores?.budgetFit || 0,
+      weatherFitScore: destination.categoryScores?.weatherFit || 0,
+      passportEaseScore: destination.categoryScores?.passportEase || 0,
+      nightlifeScore: destination.categoryScores?.nightlife || 0,
+      natureScore: destination.categoryScores?.nature || 0,
+      transportScore: destination.categoryScores?.transport || 0,
+      hotelValueScore: destination.categoryScores?.hotelValue || 0,
+      safetyScore: destination.categoryScores?.safety || 0,
+      flightValueScore: destination.categoryScores?.flightValue || 0,
 
       // Route quality features
       routeCoherence: routeQuality?.coherence,

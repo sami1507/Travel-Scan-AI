@@ -1500,22 +1500,26 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
         : `This is a realistic ${tripType.toLowerCase()} itinerary for ${tripLength} days. The pacing allows for comfortable exploration of each destination.`
 
       // Create categoryScores for compatibility with ML and other components
+      // Vary scores based on rank to ensure distinctiveness
       const baseScore = routeRealismScore / 10
+      const rankVariation = index * 0.5 // Add variation based on rank
       const categoryScores = {
-        budgetFit: Math.min(10, Math.max(0, baseScore)),
-        weatherFit: Math.min(10, Math.max(0, baseScore)),
+        budgetFit: Math.min(10, Math.max(0, baseScore + (index === 0 ? 0.5 : index === 1 ? -0.3 : 0.2))),
+        weatherFit: Math.min(10, Math.max(0, baseScore + (index === 0 ? 0.3 : index === 1 ? 0.5 : -0.2))),
         passportEase: 8,
-        nightlife: route.travelStyles.includes('nightlife') ? 8 : 5,
-        nature: route.travelStyles.includes('nature') || route.travelStyles.includes('adventure') ? 8 : 5,
+        nightlife: route.travelStyles.includes('nightlife') ? (8 + (index === 1 ? 0.5 : 0)) : (5 + (index === 2 ? 0.5 : 0)),
+        nature: route.travelStyles.includes('nature') || route.travelStyles.includes('adventure') ? (8 + (index === 2 ? 0.5 : 0)) : (5 + (index === 0 ? 0.5 : 0)),
         transport: route.transportMode === 'train' ? 9 : route.transportMode === 'local' ? 8 : 7,
-        hotelValue: Math.min(10, Math.max(0, baseScore)),
+        hotelValue: Math.min(10, Math.max(0, baseScore + (index === 1 ? 0.4 : index === 2 ? -0.3 : 0.1))),
         safety: 8,
-        flightValue: 7,
+        flightValue: 7 + (index === 0 ? 0.3 : index === 1 ? -0.2 : 0.4),
       }
 
       return {
         rank: index + 1,
+        destinationId: `${route.cities[0].toLowerCase().replace(/\s+/g, '-')}-route-${index + 1}`,
         destinationName: route.cities[0],
+        destinationType: 'city' as const,
         country: route.countries[0],
         destinationSummary: `${route.cities.join(' → ')} offers a perfect ${tripType.toLowerCase()} experience combining ${route.travelStyles.slice(0, 3).join(', ')}`,
         whyRecommended: [

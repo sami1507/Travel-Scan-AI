@@ -31,7 +31,7 @@ export function TravelStrategyTipsDisplay({ tips, onTipInteraction }: TravelStra
     if (tips.negotiationEmail?.emailBody) {
       await navigator.clipboard.writeText(tips.negotiationEmail.emailBody)
       setCopiedEmail(true)
-      onTipInteraction?.('negotiationEmail', 'copied')
+      onTipInteraction?.('negotiationEmail', 'email_copied')
       setTimeout(() => setCopiedEmail(false), 2000)
     }
   }

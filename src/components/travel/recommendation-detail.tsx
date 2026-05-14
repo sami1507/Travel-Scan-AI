@@ -64,11 +64,15 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
   const handleTipInteraction = (tipType: string, action: string) => {
     const signalTypeMap: Record<string, string> = {
       'opened': 'travel_strategy_tip_opened',
+      'expanded': 'travel_strategy_tip_opened',
       'selected': 'travel_strategy_tip_selected',
       'email_copied': 'negotiation_email_copied',
       'extra_fees_viewed': 'extra_fee_warning_viewed',
       'alternative_airport_selected': 'alternative_airport_selected',
     }
+
+    // Skip collapsed events
+    if (action === 'collapsed') return
 
     const signalType = signalTypeMap[action] || 'travel_strategy_tip_opened'
 

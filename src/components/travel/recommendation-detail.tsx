@@ -9,6 +9,7 @@ import { ScoreBreakdown } from './score-breakdown'
 import { ExternalActions } from './external-actions'
 import { TravelStrategyTipsDisplay } from './travel-strategy-tips'
 import { ItineraryMapDisplay } from './itinerary-map-display'
+import { logLearningFeedback } from '@/lib/learning/client-feedback'
 
 interface RecommendationDetailProps {
   destination: RankedDestination
@@ -17,6 +18,74 @@ interface RecommendationDetailProps {
 }
 
 export function RecommendationDetail({ destination, onClose }: RecommendationDetailProps) {
+  const handleMapOpened = () => {
+    logLearningFeedback({
+      signalType: 'itinerary_map_opened',
+      signalValue: {
+        recommendationTitle: destination.destinationName,
+        tripType: destination.tripType,
+        suggestedRoute: destination.suggestedRoute,
+        routeTitle: destination.itineraryMapPlan?.routeTitle,
+        routeRealismScore: destination.routeRealismScore,
+        travelFatigueLevel: destination.travelFatigueLevel,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  }
+
+  const handleStopSelected = (stopId: string, stopName: string, day: number) => {
+    logLearningFeedback({
+      signalType: 'itinerary_stop_selected',
+      signalValue: {
+        recommendationTitle: destination.destinationName,
+        stopId,
+        stopName,
+        day,
+        tripType: destination.tripType,
+        routeTitle: destination.itineraryMapPlan?.routeTitle,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  }
+
+  const handleDayPlanOpened = (day: number) => {
+    logLearningFeedback({
+      signalType: 'itinerary_day_plan_opened',
+      signalValue: {
+        recommendationTitle: destination.destinationName,
+        day,
+        tripType: destination.tripType,
+        routeTitle: destination.itineraryMapPlan?.routeTitle,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  }
+
+  const handleTipInteraction = (tipType: string, action: string) => {
+    const signalTypeMap: Record<string, string> = {
+      'opened': 'travel_strategy_tip_opened',
+      'selected': 'travel_strategy_tip_selected',
+      'email_copied': 'negotiation_email_copied',
+      'extra_fees_viewed': 'extra_fee_warning_viewed',
+      'alternative_airport_selected': 'alternative_airport_selected',
+    }
+
+    const signalType = signalTypeMap[action] || 'travel_strategy_tip_opened'
+
+    logLearningFeedback({
+      signalType,
+      signalValue: {
+        recommendationTitle: destination.destinationName,
+        tipType,
+        action,
+        tripType: destination.tripType,
+        routeRealismScore: destination.routeRealismScore,
+        travelFatigueLevel: destination.travelFatigueLevel,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -160,10 +229,18 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
           </Card>
 
           {/* Itinerary Map */}
-          <ItineraryMapDisplay plan={destination.itineraryMapPlan} />
+          <ItineraryMapDisplay 
+            plan={destination.itineraryMapPlan}
+            onMapOpened={handleMapOpened}
+            onStopSelected={handleStopSelected}
+            onDayPlanOpened={handleDayPlanOpened}
+          />
 
           {/* Travel Strategy Tips */}
-          <TravelStrategyTipsDisplay tips={destination.travelStrategyTips} />
+          <TravelStrategyTipsDisplay 
+            tips={destination.travelStrategyTips}
+            onTipInteraction={handleTipInteraction}
+          />
 
           {/* External Actions */}
           <ExternalActions destination={destination} />

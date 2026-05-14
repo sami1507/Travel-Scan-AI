@@ -21,6 +21,7 @@ import { RouteMapView } from '@/components/travel/route-map-view'
 import { RankingExplanation } from '@/components/travel/ranking-explanation'
 import { SeasonMonthStrategyDisplay } from '@/components/travel/season-month-strategy'
 import type { TravelAnalysisResponse, RankedDestination } from '@/lib/analysis/schemas'
+import { logLearningFeedback } from '@/lib/learning/client-feedback'
 
 export default function AnalysisPage() {
   const [loading, setLoading] = useState(false)
@@ -105,6 +106,24 @@ export default function AnalysisPage() {
     } catch (err) {
       console.error('Failed to save destination:', err)
     }
+  }
+
+  const handleMonthOptionSelected = (month: number, optionType: string, optionData: Record<string, unknown>) => {
+    logLearningFeedback({
+      signalType: 'season_month_option_selected',
+      signalValue: {
+        month,
+        optionType,
+        title: optionData.title,
+        suggestedRoute: optionData.suggestedRoute,
+        recommendedNights: optionData.recommendedNights,
+        dataConfidence: optionData.dataConfidence,
+        sourceLabel: optionData.sourceLabel,
+        season: analysis?.seasonMonthStrategy?.season,
+        tripStructure: queryContext?.query,
+        timestamp: new Date().toISOString(),
+      },
+    })
   }
 
   return (
@@ -330,7 +349,10 @@ export default function AnalysisPage() {
 
           {/* Season Month Strategy */}
           {analysis.seasonMonthStrategy && (
-            <SeasonMonthStrategyDisplay strategy={analysis.seasonMonthStrategy} />
+            <SeasonMonthStrategyDisplay 
+              strategy={analysis.seasonMonthStrategy}
+              onMonthOptionSelected={handleMonthOptionSelected}
+            />
           )}
 
           {/* Ranked Destinations */}

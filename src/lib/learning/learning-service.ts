@@ -46,7 +46,25 @@ interface ProviderInfo {
 }
 
 interface FeedbackSignal {
-  signalType: 'view' | 'select' | 'save' | 'dismiss' | 'thumbs_up' | 'thumbs_down' | 'details_opened' | 'compare' | 'share'
+  signalType: 
+    | 'view' 
+    | 'select' 
+    | 'save' 
+    | 'dismiss' 
+    | 'thumbs_up' 
+    | 'thumbs_down' 
+    | 'details_opened' 
+    | 'compare' 
+    | 'share'
+    | 'itinerary_map_opened'
+    | 'itinerary_stop_selected'
+    | 'itinerary_day_plan_opened'
+    | 'travel_strategy_tip_opened'
+    | 'travel_strategy_tip_selected'
+    | 'season_month_option_selected'
+    | 'negotiation_email_copied'
+    | 'extra_fee_warning_viewed'
+    | 'alternative_airport_selected'
   signalValue?: Record<string, any>
 }
 
@@ -189,7 +207,7 @@ export async function recordRecommendationEvent(
  */
 export async function recordFeedbackSignal(
   userId: string,
-  eventId: string,
+  eventId: string | null,
   recommendationItemId: string | null,
   signal: FeedbackSignal
 ): Promise<boolean> {

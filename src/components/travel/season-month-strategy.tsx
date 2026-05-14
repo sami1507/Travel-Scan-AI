@@ -13,7 +13,7 @@ import type { SeasonMonthStrategy } from '@/lib/analysis/schemas'
 
 interface SeasonMonthStrategyProps {
   strategy?: SeasonMonthStrategy
-  onMonthOptionSelected?: (month: number, optionType: string) => void
+  onMonthOptionSelected?: (month: number, optionType: string, optionData: Record<string, unknown>) => void
 }
 
 export function SeasonMonthStrategyDisplay({ strategy, onMonthOptionSelected }: SeasonMonthStrategyProps) {
@@ -83,7 +83,7 @@ export function SeasonMonthStrategyDisplay({ strategy, onMonthOptionSelected }: 
               <Card 
                 key={idx} 
                 className={`border-l-4 ${getOptionColor(option.optionType)} cursor-pointer hover:shadow-md transition-shadow`}
-                onClick={() => onMonthOptionSelected?.(option.month, option.optionType)}
+                onClick={() => onMonthOptionSelected?.(option.month, option.optionType, option as unknown as Record<string, unknown>)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export function SeasonMonthStrategyDisplay({ strategy, onMonthOptionSelected }: 
                       variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation()
-                        onMonthOptionSelected?.(option.month, option.optionType)
+                        onMonthOptionSelected?.(option.month, option.optionType, option as unknown as Record<string, unknown>)
                       }}
                     >
                       Select This Option

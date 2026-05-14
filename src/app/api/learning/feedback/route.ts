@@ -11,7 +11,7 @@ import { z } from 'zod'
 export const dynamic = 'force-dynamic'
 
 const feedbackSchema = z.object({
-  eventId: z.string().uuid(),
+  eventId: z.string().uuid().optional().nullable(),
   recommendationItemId: z.string().uuid().optional().nullable(),
   signalType: z.enum([
     'view',
@@ -23,6 +23,15 @@ const feedbackSchema = z.object({
     'details_opened',
     'compare',
     'share',
+    'itinerary_map_opened',
+    'itinerary_stop_selected',
+    'itinerary_day_plan_opened',
+    'travel_strategy_tip_opened',
+    'travel_strategy_tip_selected',
+    'season_month_option_selected',
+    'negotiation_email_copied',
+    'extra_fee_warning_viewed',
+    'alternative_airport_selected',
   ]),
   signalValue: z.record(z.any()).optional(),
 })
@@ -56,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Record feedback signal
     const success = await recordFeedbackSignal(
       user.id,
-      eventId,
+      eventId || null,
       recommendationItemId || null,
       {
         signalType,

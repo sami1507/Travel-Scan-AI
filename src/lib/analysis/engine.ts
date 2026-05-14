@@ -53,15 +53,42 @@ export class TravelAnalysisEngine {
   private openaiAvailable: boolean = false
 
   constructor() {
-    const apiKey = process.env.OPENAI_API_KEY
+    // Read and sanitize API key
+    let apiKey = process.env.OPENAI_API_KEY
+    
+    // Trim whitespace and remove surrounding quotes if present
+    if (apiKey) {
+      apiKey = apiKey.trim()
+      if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || 
+          (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+        apiKey = apiKey.slice(1, -1)
+      }
+    }
 
-    if (!apiKey) {
-      logger.warn('OPENAI_API_KEY environment variable not set - AI features will use fallback mode')
+    // Safe diagnostics (never log the actual key)
+    const keyPresent = !!apiKey
+    const keyLengthValid = apiKey ? apiKey.length > 20 : false
+    const keyFormatValid = apiKey ? (apiKey.startsWith('sk-') || apiKey.startsWith('sk-proj-')) : false
+    
+    logger.info('OpenAI Provider Initialization', {
+      keyPresent,
+      keyLengthValid,
+      keyFormatValid,
+      runtime: typeof window === 'undefined' ? 'server' : 'client',
+    })
+
+    if (!apiKey || !keyLengthValid || !keyFormatValid) {
+      logger.warn('OPENAI_API_KEY invalid or not set - AI features will use fallback mode', {
+        keyPresent,
+        keyLengthValid,
+        keyFormatValid,
+      })
       this.openaiAvailable = false
     } else {
       try {
         this.openai = new OpenAI({ apiKey })
         this.openaiAvailable = true
+        logger.info('OpenAI client initialized successfully')
       } catch (error) {
         logger.error('Failed to initialize OpenAI client', error)
         this.openaiAvailable = false

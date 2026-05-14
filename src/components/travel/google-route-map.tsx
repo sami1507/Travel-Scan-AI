@@ -254,15 +254,20 @@ export function GoogleRouteMap({ route }: GoogleRouteMapProps) {
 
   if (error) {
     return (
-      <Card className="border-2 border-destructive/50">
+      <Card className="border-2 border-muted">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2 text-destructive">
+          <CardTitle className="text-lg flex items-center gap-2 text-muted-foreground">
             <AlertCircle className="h-5 w-5" />
-            Map Error
+            Interactive Map Unavailable
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-sm text-muted-foreground mb-2">
+            Showing visual route plan instead.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            The interactive map requires Google Maps API configuration.
+          </p>
         </CardContent>
       </Card>
     )

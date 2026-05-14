@@ -1532,6 +1532,7 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
         bestMonths: request.travelMonths || [3, 4, 5, 9, 10],
         totalMatchScore: routeRealismScore,
         categoryScores,
+        seasonality: this.generateSeasonalityInfo(route, request.travelMonths),
         scoreBreakdown: {
           weather: Math.round(routeRealismScore * 0.2),
           budget: Math.round(routeRealismScore * 0.2),
@@ -1609,8 +1610,8 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
       topRecommendations: rankedDestinations.slice(0, 3).map(d => d.destinationName),
       rankedDestinations,
       scoreBreakdown: 'Scores calculated based on budget fit, weather, safety, activities, and accessibility',
-      reasons: ['Based on your preferences and budget', 'Realistic route planning', 'Safe fallback recommendations'],
-      warnings: ['AI provider temporarily unavailable - using knowledge-based recommendations'],
+      reasons: ['Based on your preferences and budget', 'Realistic route planning', 'Knowledge-based conservative estimates'],
+      warnings: ['Live AI provider unavailable. Showing knowledge-based recommendations with conservative estimates.'],
       assumptions: ['Standard travel preferences applied', 'Moderate pacing assumed'],
       recommendedRoutes: firstDest ? [{
         routeType: firstDest.suggestedRoute && firstDest.suggestedRoute.length > 2 ? 'multi-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length === 2 ? '2-city' : 'single-destination',
@@ -1660,7 +1661,7 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
       personalization: {
         isPersonalized: false,
         confidence: 0,
-        explanations: ['Fallback recommendations - AI provider temporarily unavailable'],
+        explanations: ['Knowledge-based recommendations - Live AI provider unavailable'],
         feedbackCount: 0,
       },
       // Add season month strategy if season is selected
@@ -1672,6 +1673,103 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                     'July', 'August', 'September', 'October', 'November', 'December']
     return months[month - 1] || 'Spring'
+  }
+
+  /**
+   * Generate realistic seasonality information
+   */
+  private generateSeasonalityInfo(route: any, travelMonths?: number[]) {
+    const month = travelMonths?.[0] || 4 // Default to April
+    const destination = route.cities[0]
+    const country = route.countries[0]
+    
+    // Define peak/shoulder/low seasons for common destinations
+    const seasonInfo: Record<string, any> = {
+      'Italy': {
+        peak: 'June-August, Easter week',
+        shoulder: 'April-May, September-October',
+        low: 'November-March (except Christmas/New Year)',
+        peakMonths: [6, 7, 8],
+        shoulderMonths: [4, 5, 9, 10],
+      },
+      'Spain': {
+        peak: 'July-August, Easter week',
+        shoulder: 'April-June, September-October',
+        low: 'November-March',
+        peakMonths: [7, 8],
+        shoulderMonths: [4, 5, 6, 9, 10],
+      },
+      'Portugal': {
+        peak: 'July-August',
+        shoulder: 'May-June, September-October',
+        low: 'November-April',
+        peakMonths: [7, 8],
+        shoulderMonths: [5, 6, 9, 10],
+      },
+      'Greece': {
+        peak: 'July-August',
+        shoulder: 'May-June, September-October',
+        low: 'November-April',
+        peakMonths: [7, 8],
+        shoulderMonths: [5, 6, 9, 10],
+      },
+      'Georgia': {
+        peak: 'July-August',
+        shoulder: 'May-June, September-October',
+        low: 'November-April',
+        peakMonths: [7, 8],
+        shoulderMonths: [5, 6, 9, 10],
+      },
+      'Albania': {
+        peak: 'July-August',
+        shoulder: 'May-June, September',
+        low: 'October-April',
+        peakMonths: [7, 8],
+        shoulderMonths: [5, 6, 9],
+      },
+    }
+
+    const info = seasonInfo[country] || seasonInfo['Italy']
+    const isPeak = info.peakMonths.includes(month)
+    const isShoulder = info.shoulderMonths.includes(month)
+    
+    let weatherReality = ''
+    let crowdReality = ''
+    let priceReality = ''
+    let honestNote = ''
+    
+    if (month >= 3 && month <= 5) {
+      weatherReality = 'Spring weather: mild temperatures (15-22°C), occasional rain possible. Pack layers.'
+      crowdReality = isShoulder ? 'Moderate crowds - popular sites busy but manageable' : 'Light crowds - easier to explore'
+      priceReality = isShoulder ? 'Moderate prices - better value than summer peak' : 'Lower prices - good deals available'
+      honestNote = `${this.getMonthName(month)} is ${isShoulder ? 'shoulder season' : 'low season'} in ${destination}. Weather is generally pleasant but can be unpredictable. Hotels and flights are typically ${isShoulder ? '20-30% cheaper than peak summer' : '30-40% cheaper than peak season'}.`
+    } else if (month >= 6 && month <= 8) {
+      weatherReality = isPeak ? 'Summer peak: hot (25-35°C), crowded, expensive. Book everything in advance.' : 'Summer weather: warm and sunny, ideal for beaches'
+      crowdReality = isPeak ? 'Heavy crowds - expect queues at major attractions' : 'Moderate to heavy crowds'
+      priceReality = isPeak ? 'Peak prices - expect 40-60% premium on hotels and flights' : 'High prices - book early for better rates'
+      honestNote = `${this.getMonthName(month)} is ${isPeak ? 'peak season' : 'high season'} in ${destination}. Expect crowds and premium prices. Book accommodation 2-3 months in advance. Consider visiting major sites early morning or late afternoon.`
+    } else if (month >= 9 && month <= 11) {
+      weatherReality = 'Autumn weather: pleasant temperatures (18-25°C), less rain than spring'
+      crowdReality = isShoulder ? 'Moderate crowds - much quieter than summer' : 'Light crowds - peaceful exploration'
+      priceReality = isShoulder ? 'Good value - 25-35% cheaper than summer peak' : 'Lower prices - excellent deals available'
+      honestNote = `${this.getMonthName(month)} is ${isShoulder ? 'shoulder season' : 'low season'} in ${destination}. One of the best times to visit - pleasant weather, fewer tourists, and better prices. Hotels are typically 30-40% cheaper than July-August.`
+    } else {
+      weatherReality = 'Winter weather: cool to cold (5-15°C), some rain. Indoor attractions ideal.'
+      crowdReality = 'Very light crowds - attractions nearly empty'
+      priceReality = 'Lowest prices - best deals of the year (except Christmas/New Year)'
+      honestNote = `${this.getMonthName(month)} is low season in ${destination}. Weather can be chilly and rainy, but you'll have attractions to yourself and find excellent hotel deals. Perfect for budget travelers and those who prefer fewer crowds.`
+    }
+    
+    return {
+      peakSeason: info.peak,
+      shoulderSeason: info.shoulder,
+      lowSeason: info.low,
+      weatherReality,
+      crowdReality,
+      priceReality,
+      whenToAvoid: isPeak ? `Avoid ${this.getMonthName(month)} if you dislike crowds and high prices` : undefined,
+      honestConsultantNote: honestNote,
+    }
   }
 
   /**

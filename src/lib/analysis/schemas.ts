@@ -221,6 +221,17 @@ export const seasonMonthStrategySchema = z.object({
   })),
 })
 
+const seasonalitySchema = z.object({
+  peakSeason: z.string().optional().describe('Peak season months'),
+  shoulderSeason: z.string().optional().describe('Shoulder season months'),
+  lowSeason: z.string().optional().describe('Low season months'),
+  weatherReality: z.string().optional().describe('Honest weather assessment for selected period'),
+  crowdReality: z.string().optional().describe('Honest crowd level assessment'),
+  priceReality: z.string().optional().describe('Honest price tendency assessment'),
+  whenToAvoid: z.string().optional().describe('Months or periods to avoid'),
+  honestConsultantNote: z.string().optional().describe('Realistic consultant advice about timing'),
+})
+
 export const rankedDestinationSchema = z.object({
   destinationId: z.string(),
   destinationName: z.string(),
@@ -230,6 +241,7 @@ export const rankedDestinationSchema = z.object({
   whyRecommended: z.array(z.string()),
   possibleDownsides: z.array(z.string()),
   bestMonths: z.array(z.number()),
+  seasonality: seasonalitySchema.optional().describe('Realistic seasonality information'),
   estimatedBudgetLevel: z.string(),
   passportEase: z.string(),
   nightlifeLevel: z.number().min(0).max(10),

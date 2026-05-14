@@ -62,7 +62,7 @@ export class FeedbackImprovementLoop {
 
     // Update user preferences
     const { error } = await supabase
-      .from('user_preferences')
+      .from('user_preference_profiles')
       .upsert({
         user_id: userId,
         preference_adjustments: adjustments,

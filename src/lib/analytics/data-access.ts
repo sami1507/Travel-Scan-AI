@@ -332,7 +332,7 @@ export class AnalyticsDataAccess {
     try {
       const supabase = this.getSupabase()
       const { data: preferences } = await supabase
-        .from('user_preferences')
+        .from('user_preference_profiles')
         .select('inferred_preferences, confidence, feedback_count')
 
       if (!preferences || preferences.length === 0) {

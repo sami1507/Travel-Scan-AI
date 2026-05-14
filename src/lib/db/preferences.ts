@@ -10,7 +10,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
-    .from('user_preferences')
+    .from('user_preference_profiles')
     .select('*')
     .eq('user_id', userId)
     .single()
@@ -49,7 +49,7 @@ export async function upsertUserPreferences(
   }
 
   const { data, error } = await supabase
-    .from('user_preferences')
+    .from('user_preference_profiles')
     .upsert(record, { onConflict: 'user_id' })
     .select()
     .single()
@@ -98,7 +98,7 @@ export async function updateInferredPreferences(
   }
 
   const { data, error } = await supabase
-    .from('user_preferences')
+    .from('user_preference_profiles')
     .upsert(record, { onConflict: 'user_id' })
     .select()
     .single()
@@ -130,7 +130,7 @@ export async function deleteUserPreferences(userId: string): Promise<void> {
   const supabase = createAdminClient()
 
   const { error } = await supabase
-    .from('user_preferences')
+    .from('user_preference_profiles')
     .delete()
     .eq('user_id', userId)
 

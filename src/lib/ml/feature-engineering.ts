@@ -95,7 +95,7 @@ export class FeatureEngineer {
 
       // Evidence quality
       dataQuality: destination.dataQuality,
-      sourceCount: destination.sourceLabels.length,
+      sourceCount: (destination.sourceLabels ?? []).length,
       evidenceStrength: this.calculateEvidenceStrength(destination),
       confidence: destination.confidence,
 
@@ -321,11 +321,13 @@ export class FeatureEngineer {
     if (destination.dataQuality === 'knowledge-based') strength += 0.4
     else if (destination.dataQuality === 'estimated') strength += 0.2
 
-    // Source diversity
-    strength += Math.min(destination.sourceLabels.length * 0.15, 0.3)
+    // Source count
+    const sourceLabels = destination.sourceLabels ?? []
+    strength += Math.min(sourceLabels.length * 0.15, 0.3)
 
     // Reason quality
-    const specificReasons = destination.whyRecommended.filter(r => r.length > 30)
+    const whyRecommended = destination.whyRecommended ?? []
+    const specificReasons = whyRecommended.filter(r => r.length > 30)
     strength += Math.min(specificReasons.length * 0.1, 0.3)
 
     return Math.min(strength, 1.0)

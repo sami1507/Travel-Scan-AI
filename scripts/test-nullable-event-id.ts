@@ -3,9 +3,39 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+// Load environment variables from .env.local
+const envPath = join(process.cwd(), '.env.local')
+let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+try {
+  const envFile = readFileSync(envPath, 'utf-8')
+  const lines = envFile.split('\n')
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    if (!trimmedLine || trimmedLine.startsWith('#')) continue
+    
+    const [key, ...valueParts] = trimmedLine.split('=')
+    let value = valueParts.join('=').trim()
+    
+    // Remove quotes if present
+    if ((value.startsWith('"') && value.endsWith('"')) || 
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
+    
+    if (key.trim() === 'NEXT_PUBLIC_SUPABASE_URL') {
+      supabaseUrl = value
+    } else if (key.trim() === 'SUPABASE_SERVICE_ROLE_KEY') {
+      supabaseServiceKey = value
+    }
+  }
+} catch (error) {
+  // .env.local not found, use process.env
+}
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.log('\n⚠️  SUPABASE_SERVICE_ROLE_KEY not configured')
@@ -13,7 +43,22 @@ if (!supabaseUrl || !supabaseServiceKey) {
   process.exit(0)
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 0,
+    },
+  },
+  global: {
+    headers: {
+      'x-client-info': 'test-script',
+    },
+  },
+})
 
 async function testNullableEventId() {
   console.log('\n================================================================================')

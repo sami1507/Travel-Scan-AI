@@ -222,8 +222,9 @@ export class TravelAnalysisEngine {
         topScore: scoredDestinations[0]?.totalScore,
       })
 
-      // Step 4: Gather provider data for top destinations
-      const providerData = await this.gatherProviderData(scoredDestinations.slice(0, 5), userPreferences.budget, request.travelMonths, request.departureCity, request.query)
+      // Step 4: Gather provider data for top destinations (expanded to 12 for diversity)
+      const candidatePoolSize = 12
+      const providerData = await this.gatherProviderData(scoredDestinations.slice(0, candidatePoolSize), userPreferences.budget, request.travelMonths, request.departureCity, request.query)
 
       // Step 5: Re-score top destinations with provider data
       scoredDestinations = scoredDestinations.map(dest => {
@@ -306,7 +307,7 @@ export class TravelAnalysisEngine {
       )
 
       // Step 7: Call OpenAI for structured analysis (with caching, resilience, and fallback)
-      const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, 5))
+      const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, candidatePoolSize))
       
       let analysis: TravelAnalysisResponse
       
@@ -366,6 +367,17 @@ export class TravelAnalysisEngine {
 
             // Track OpenAI cost
             costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
+
+            // Log diversity metrics
+            const countries = parsed.rankedDestinations.map(d => d.destinationName).join(', ')
+            const uniqueCountries = new Set(parsed.rankedDestinations.map(d => d.destinationName)).size
+            logger.info('OpenAI recommendations diversity', {
+              candidatePoolSize,
+              finalRecommendationCount: parsed.rankedDestinations.length,
+              finalRecommendationCountries: countries,
+              uniqueCountries,
+              diversityScore: uniqueCountries / Math.max(parsed.rankedDestinations.length, 1),
+            })
 
             return parsed
           },
@@ -571,39 +583,68 @@ export class TravelAnalysisEngine {
   private getSystemInstructions(): string {
     return `You are a professional Travel Consultant AI providing route-aware, evidence-based recommendations.
 
-CRITICAL: Return EXACTLY 3 DISTINCT recommendations in rankedDestinations array.
+CRITICAL: Return EXACTLY 3 DISTINCT, MEANINGFULLY DIFFERENT recommendations.
+
+DIVERSITY REQUIREMENTS:
+The 3 recommendations MUST be diverse by:
+1. Geography (different regions/countries unless user specified one country)
+2. Travel style (mainstream vs unique, cultural vs nature, etc.)
+3. Price tendency (budget-friendly vs mid-range vs premium)
+4. Route fatigue (relaxed vs moderate vs intense)
+5. Season fit (peak vs shoulder vs off-season timing)
+
+Recommendation Pattern:
+1. Best Overall / Safest Fit (highest score, most reliable)
+2. Best Value / Lower-Cost Alternative (good quality, better price)
+3. More Unique / Less Obvious but Still Realistic (interesting alternative)
+
+AVOID repeating the same countries unless they truly dominate the scores.
+DO NOT always default to Italy, Portugal, Georgia.
+CONSIDER diverse options like Greece, Spain, Balkans, Central Europe, Cyprus, Romania, Slovenia, Croatia, Albania, etc.
 
 CORE RULES:
-1. Base recommendations on provided knowledge base scores
+1. Base on provided knowledge base scores but diversify final 3
 2. Never invent facts or prices
-3. Evaluate route realism, transport, and trip fatigue
-4. Provide confidence scores based on data quality
-5. Keep responses concise but complete
+3. Evaluate route realism, transport, fatigue honestly
+4. Provide specific, professional consultant-level explanations
+5. Keep responses concise but insightful
 
-ROUTE TYPES:
-- Single City: 3 different itinerary styles (cultural/relaxation/adventure)
-- Multi-City: 3 routes within same country, 2-4 cities, easy transport
-- Multi-Country: 3 routes, 2-3 countries max, geographic sense
+TRIP STRUCTURE RULES:
+- single_country_multi_city + NO fixed country → 3 different countries, each with multi-city route
+- single_country_multi_city + fixed country → 3 different routes within SAME country
+- single_country_one_city → 3 different cities OR 3 different itinerary styles for same city
+- multi_country → 3 different multi-country routes
 
-FATIGUE: Low (1-2 cities, 3+ nights), Medium (2-3 cities, 2-3 nights), High (3+ cities)
+PROFESSIONAL EXPLANATIONS (for each recommendation):
+- whyRecommended: 3-4 specific bullets (not generic)
+- possibleDownsides: 2-3 honest limitations
+- realisticConsultantNotes: specific advice about timing, transport, pacing
+- routeWarnings: honest warnings (rushed, expensive, weather, crowds, transport)
 
-REQUIRED FIELDS:
-- Route realism score (0-100)
-- Travel fatigue (Low/Medium/High)
-- Transport logic
-- Warnings (max 3-5 per recommendation)
-- Data source labels
+SEASON REALITY (include in seasonality):
+- peakSeason, shoulderSeason, lowSeason months
+- weatherReality: honest weather assessment
+- crowdReality: honest crowd levels
+- priceReality: honest price tendencies
+- whenToAvoid: specific months/periods
+- honestConsultantNote: realistic timing advice
+
+SCORING HONESTY:
+- Scores should reflect true fit, not inflated
+- If top score < 70, explain why no perfect match exists
+- Vary scores between options (don't give all 75-80)
+- Explain score differences
 
 ITINERARY MAP (for each recommendation):
 - routeTitle, mapAvailable, center, zoomLevel
-- stops (max 4-6): name, city, country, lat/lng (ONLY if you know coordinates for major cities/landmarks), day, time, type, whyVisit, whatToDo, practicalTip, costLevel
+- stops (max 4-6): name, city, country, lat/lng (ONLY if you know coordinates), day, time, type, whyVisit, whatToDo, practicalTip, costLevel
 - dayPlans (max 7): day, title, areaFocus, morning/afternoon/evening, foodSuggestion, transportTip
-- routeReasoning: whyThisRoute, whyThisOrder, fatigueReasoning, transportReasoning
+- routeReasoning: whyThisRoute, whyThisOrder, whyTheseAreas, fatigueReasoning, transportReasoning, budgetReasoning
 
 COORDINATES: Include lat/lng ONLY for major known cities/landmarks. Set mapAvailable=false if unknown.
 
 STRATEGY TIPS (keep concise):
-1. idealDateScanner: timing suggestions
+1. idealDateScanner: specific timing suggestions
 2. alternativeAirportStrategy: nearby airports (NO hidden-city)
 3. smartRouteOptimizer: route improvements
 4. verifiedDealsAndPromotionsDetector: deal signals
@@ -612,11 +653,7 @@ STRATEGY TIPS (keep concise):
 7. flexibilityAndRiskAnalysis: main risks
 8. nearbyDestinationStrategy: nearby alternatives
 
-SEASON STRATEGY (if season selected):
-For each month in season, generate 3 options: bestValue, bestExperience, lowestFatigue
-Include: title, month, suggestedRoute, recommendedNights, whyRecommended, budgetNote, weatherNote, crowdNote, routeLogic, riskWarnings
-
-Be concise, realistic, and professional.`
+Be specific, honest, realistic, and professional like a seasoned travel consultant.`
   }
 
   /**
@@ -972,7 +1009,20 @@ Be concise, realistic, and professional.`
    */
   private buildCacheKey(request: AnalysisRequest, topDestinations: any[]): string {
     const destIds = topDestinations.map(d => d.destinationId).join(',')
-    const key = `${request.query}:${request.budget || 'any'}:${(request.travelMonths || []).join(',')}:${(request.interests || []).join(',')}:${destIds}`
+    const key = [
+      request.query,
+      request.destination || 'any',
+      request.departureCity || 'any',
+      request.budget || 'any',
+      request.tripLength || 'any',
+      request.tripStructure || 'any',
+      request.season || 'any',
+      (request.travelMonths || []).join(','),
+      (request.interests || []).join(','),
+      request.travelStyle || 'any',
+      request.pace || 'any',
+      destIds
+    ].join(':')
     // Hash to keep key length reasonable
     return Buffer.from(key).toString('base64').substring(0, 100)
   }
@@ -1328,11 +1378,43 @@ Be concise, realistic, and professional.`
       return { route, score }
     })
     
-    // Sort by score and return top N
-    return scoredRoutes
-      .sort((a, b) => b.score - a.score)
-      .slice(0, count)
-      .map(sr => sr.route)
+    // Sort by score
+    scoredRoutes.sort((a, b) => b.score - a.score)
+    
+    // Ensure diversity: select top routes from different countries/regions
+    const selected: typeof scoredRoutes = []
+    const usedCountries = new Set<string>()
+    
+    for (const scoredRoute of scoredRoutes) {
+      const country = scoredRoute.route.countries[0]
+      
+      // Add if we haven't used this country yet or if we need more routes
+      if (!usedCountries.has(country) || selected.length < count) {
+        selected.push(scoredRoute)
+        usedCountries.add(country)
+        
+        if (selected.length >= count) break
+      }
+    }
+    
+    // If we still need more routes, add remaining by score
+    if (selected.length < count) {
+      for (const scoredRoute of scoredRoutes) {
+        if (!selected.includes(scoredRoute)) {
+          selected.push(scoredRoute)
+          if (selected.length >= count) break
+        }
+      }
+    }
+    
+    logger.info('Fallback routes selected', {
+      candidateCount: scoredRoutes.length,
+      selectedCount: selected.length,
+      selectedCountries: selected.map(sr => sr.route.countries[0]).join(', '),
+      diversityScore: usedCountries.size / Math.max(selected.length, 1),
+    })
+    
+    return selected.map(sr => sr.route)
   }
 
   private getSeasonFromMonths(months: number[]): string {

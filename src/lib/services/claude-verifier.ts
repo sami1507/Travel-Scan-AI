@@ -115,9 +115,12 @@ export class ClaudeVerifierService {
     tripLength: number,
     tripStructure: string
   ): string {
-    return `You are a travel accuracy verifier. Review this travel recommendation and check for realism issues.
+    const { buildClaudeVerifierSystemPrompt } = require('../analysis/skills')
+    const systemPrompt = buildClaudeVerifierSystemPrompt()
+    
+    return `${systemPrompt}
 
-RECOMMENDATION:
+RECOMMENDATION TO VERIFY:
 Destination: ${recommendation.destinationName}
 Type: ${recommendation.destinationType}
 Trip Type: ${recommendation.tripType || tripStructure}
@@ -130,29 +133,7 @@ Transport: ${recommendation.transportLogic || 'N/A'}
 Consultant Notes: ${recommendation.realisticConsultantNotes || 'N/A'}
 Current Warnings: ${recommendation.routeWarnings?.join(', ') || 'None'}
 
-VERIFICATION CHECKLIST:
-1. Is the route geographically logical?
-2. Is the number of stops realistic for ${tripLength} days?
-3. Is the travel fatigue level accurate?
-4. Is the route realism score reasonable?
-5. Is the transport logic realistic?
-6. Are warnings missing?
-7. Are alternatives needed?
-8. Is the recommendation too rushed or too spread out?
-9. Does it respect the trip structure (${tripStructure})?
-
-Respond in JSON format:
-{
-  "verified": true/false,
-  "accuracyNotes": ["note1", "note2"],
-  "correctedWarnings": ["warning1", "warning2"],
-  "suggestedScoreAdjustment": -10 to +10 or null,
-  "consultantCorrection": "improved consultant note" or null,
-  "shouldSimplifyRoute": true/false,
-  "suggestedAlternative": "alternative suggestion" or null
-}
-
-Keep it concise and practical. Only suggest changes if there are clear accuracy issues.`
+Respond in JSON format only.`
   }
 
   /**

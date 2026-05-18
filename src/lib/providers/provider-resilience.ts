@@ -188,8 +188,8 @@ function sleep(ms: number): Promise<void> {
  */
 export const ProviderConfigs = {
   OPENAI: {
-    timeout: 60000, // 60 seconds for LLM
-    retries: 2,
+    timeout: 30000, // 30 seconds for LLM
+    retries: 1, // Only 1 retry for faster fallback
     retryDelay: 2000,
     provider: 'openai',
     trackCost: true,

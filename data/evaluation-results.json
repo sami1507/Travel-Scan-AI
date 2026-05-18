@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-13T15:16:27.015Z",
+  "timestamp": "2026-05-18T10:37:25.007Z",
   "totalScenarios": 8,
   "passed": 8,
   "failed": 0,
@@ -86,11 +86,11 @@
       },
       "expectedBehavior": "All cities within ONE country only, multiple cities, realism score >75, Low/Medium fatigue",
       "routeRealismScore": 88,
-      "fatigueLevel": "Medium",
+      "fatigueLevel": "Low",
       "warningsFound": false,
       "recommendationsCount": 3,
       "pass": true,
-      "actualBehavior": "Returned 3 recommendations. Realism: 88, Fatigue: Medium, Warnings: No",
+      "actualBehavior": "Returned 3 recommendations. Realism: 88, Fatigue: Low, Warnings: No",
       "notes": "All checks passed"
     },
     {
@@ -245,8 +245,8 @@
   "summary": {
     "avgRealismScore": 84,
     "fatigueDistribution": {
-      "Low": 2,
-      "Medium": 6,
+      "Low": 3,
+      "Medium": 5,
       "High": 0
     },
     "warningRate": 13,

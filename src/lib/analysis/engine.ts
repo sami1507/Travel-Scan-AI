@@ -1692,7 +1692,7 @@ Be helpful, honest, realistic, and precise like a professional travel consultant
         feedbackCount: 0,
       },
       // Add season month strategy if season is selected
-      seasonMonthStrategy: request.season ? this.generateFallbackSeasonStrategy(request, selectedRoutes[0]) : undefined,
+      seasonMonthStrategy: request.season ? this.generateFallbackSeasonStrategy(request, selectedRoutes[0]) : null,
     }
   }
 

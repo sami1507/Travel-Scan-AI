@@ -43,8 +43,10 @@ export class PairwiseRanker {
 
     // Factor 2: Seasonal fit (weight: 0.2)
     if (userConstraints.travelMonths && userConstraints.travelMonths.length > 0) {
-      const monthsA = optionA.bestMonths.filter(m => userConstraints.travelMonths!.includes(m)).length
-      const monthsB = optionB.bestMonths.filter(m => userConstraints.travelMonths!.includes(m)).length
+      const bestMonthsA = optionA.bestMonths ?? []
+      const bestMonthsB = optionB.bestMonths ?? []
+      const monthsA = bestMonthsA.filter(m => userConstraints.travelMonths!.includes(m)).length
+      const monthsB = bestMonthsB.filter(m => userConstraints.travelMonths!.includes(m)).length
       if (monthsA > monthsB) {
         scoreA += 0.2
         reasons.push(`${optionA.destinationName} has better seasonal timing`)
@@ -182,10 +184,12 @@ export class PairwiseRanker {
     else if (destination.dataQuality === 'estimated') quality += 0.2
 
     // Source count
-    quality += Math.min(destination.sourceLabels.length * 0.15, 0.3)
+    const sourceLabels = destination.sourceLabels ?? []
+    quality += Math.min(sourceLabels.length * 0.15, 0.3)
 
     // Reason specificity
-    const specificReasons = destination.whyRecommended.filter(r => r.length > 30)
+    const whyRecommended = destination.whyRecommended ?? []
+    const specificReasons = whyRecommended.filter(r => r.length > 30)
     quality += Math.min(specificReasons.length * 0.1, 0.3)
 
     return quality

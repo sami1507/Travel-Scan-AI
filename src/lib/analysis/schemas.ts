@@ -199,7 +199,7 @@ export const monthOptionSchema = z.object({
   month: z.number().min(1).max(12),
   optionType: z.enum(['bestValue', 'bestExperience', 'lowestFatigue']),
   suggestedRoute: z.array(z.string()),
-  recommendedNights: z.record(z.number()),
+  recommendedNights: z.record(z.number()).nullable(),
   whyRecommended: z.string(),
   budgetNote: z.string(),
   weatherNote: z.string(),

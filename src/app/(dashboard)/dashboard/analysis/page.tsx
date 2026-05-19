@@ -241,38 +241,49 @@ export default function AnalysisPage() {
           {/* Personalization Indicator */}
           <PersonalizationIndicator personalization={analysis.personalization} />
 
-          {/* Summary Card */}
+          {/* Consultant Brief */}
           <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 shadow-xl">
             <CardHeader className="pb-5">
               <div className="flex items-start justify-between gap-6">
                 <div className="flex-1">
-                  <CardTitle className="text-2xl font-bold mb-3">Analysis Summary</CardTitle>
+                  <CardTitle className="text-2xl font-bold mb-3">Consultant Brief</CardTitle>
                   <CardDescription className="text-base leading-relaxed">
-                    {analysis.querySummary}
+                    {analysis.querySummary || 'Analysis complete. Review your personalized recommendations below.'}
                   </CardDescription>
                 </div>
                 <div className="text-right">
                   <div className={`text-4xl font-bold ${getConfidenceColor(analysis.confidence)}`}>
                     {Math.round(analysis.confidence * 100)}%
                   </div>
-                  <div className="text-sm text-muted-foreground mt-1 font-medium">Confidence</div>
+                  <div className="text-sm text-muted-foreground mt-1 font-medium">Analysis Confidence</div>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Top Recommendations */}
-              {analysis.topRecommendations && analysis.topRecommendations.length > 0 && (
+              {/* Top Recommendations with Routes */}
+              {analysis.rankedDestinations && analysis.rankedDestinations.length > 0 && (
                 <div>
                   <h4 className="font-bold text-base mb-3 flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
                     Top Recommendations
                   </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {analysis.topRecommendations.map((rec, idx) => (
-                      <Badge key={idx} variant="default" className="text-sm px-4 py-1.5 font-medium">
-                        <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                        {rec}
-                      </Badge>
+                  <div className="space-y-3">
+                    {analysis.rankedDestinations.slice(0, 3).map((dest, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        {dest.diversityLabel && (
+                          <Badge variant="secondary" className="text-xs px-2 py-1 shrink-0">
+                            {dest.diversityLabel}
+                          </Badge>
+                        )}
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm">{dest.destinationName}</div>
+                          {dest.suggestedRoute && dest.suggestedRoute.length > 1 && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {dest.suggestedRoute.join(' → ')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>

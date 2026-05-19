@@ -14,6 +14,20 @@ interface RankingExplanationProps {
 }
 
 export function RankingExplanation({ topDestination, alternatives = [], scoreBreakdown }: RankingExplanationProps) {
+  const getScoreLabel = (score: number): string => {
+    if (score >= 80) return 'Strong Match'
+    if (score >= 70) return 'Good Compromise'
+    if (score >= 60) return 'Acceptable Fit'
+    return 'Moderate Fit'
+  }
+
+  const getScoreTitle = (score: number, name: string): string => {
+    if (score >= 80) return `Why ${name} is a strong match`
+    if (score >= 70) return `Why ${name} is a good compromise`
+    if (score >= 60) return `Why ${name} is an acceptable fit`
+    return `Why ${name} is the strongest available option`
+  }
+
   const getCategoryLabel = (key: string): string => {
     const labels: Record<string, string> = {
       budgetFit: 'Budget Fit',
@@ -35,27 +49,32 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
     return 'text-orange-600'
   }
 
+  const scoreLabel = getScoreLabel(topDestination.totalMatchScore)
+  const scoreTitle = getScoreTitle(topDestination.totalMatchScore, topDestination.destinationName)
+
   return (
     <Card className="border-2 border-primary/20">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Award className="h-5 w-5 text-primary" />
-          <CardTitle className="text-xl">Why {topDestination.destinationName} Ranked #1</CardTitle>
+          <CardTitle className="text-xl">{scoreTitle}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Overall Score */}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="font-semibold">Overall Match Score</p>
+            <p className="font-semibold">Match Score: {scoreLabel}</p>
             <Badge className="bg-primary text-primary-foreground">
               {topDestination.totalMatchScore.toFixed(1)}/100
             </Badge>
           </div>
           <Progress value={topDestination.totalMatchScore} className="h-3" />
-          <p className="text-xs text-muted-foreground mt-2">
-            Based on {Object.keys(topDestination.categoryScores).length} factors matched to your preferences
-          </p>
+          {topDestination.totalMatchScore < 70 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              No option is a perfect match. This is the strongest compromise based on your inputs.
+            </p>
+          )}
         </div>
 
         <Separator />

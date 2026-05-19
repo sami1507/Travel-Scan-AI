@@ -1,5 +1,5 @@
-// Production Caching Layer with Vercel KV
-import { kv } from '@vercel/kv'
+// Production Caching Layer with Upstash Redis (compatible with Vercel KV)
+import { Redis } from '@upstash/redis'
 import { logger } from '../utils'
 import { errorTracker } from '../monitoring/error-tracker'
 
@@ -17,16 +17,21 @@ export interface CacheStats {
 
 class CacheManager {
   private enabled: boolean
+  private redis: Redis | null = null
   private stats: Map<string, CacheStats> = new Map()
 
   constructor() {
-    // Check if KV is configured
+    // Check if Redis/KV is configured (uses same Vercel KV env vars)
     this.enabled = !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN
     
     if (!this.enabled) {
-      logger.warn('Cache: Vercel KV not configured, caching disabled')
+      logger.warn('Cache: Redis/KV not configured, caching disabled')
     } else {
-      logger.info('Cache: Vercel KV enabled')
+      this.redis = new Redis({
+        url: process.env.KV_REST_API_URL!,
+        token: process.env.KV_REST_API_TOKEN!,
+      })
+      logger.info('Cache: Upstash Redis enabled (Vercel KV compatible)')
     }
   }
 
@@ -34,14 +39,14 @@ class CacheManager {
    * Get from cache
    */
   async get<T>(key: string, namespace: string = 'default'): Promise<T | null> {
-    if (!this.enabled) {
+    if (!this.enabled || !this.redis) {
       this.recordMiss(namespace)
       return null
     }
 
     try {
       const fullKey = this.buildKey(key, namespace)
-      const value = await kv.get<T>(fullKey)
+      const value = await this.redis.get<T>(fullKey)
       
       if (value !== null) {
         this.recordHit(namespace)
@@ -66,13 +71,13 @@ class CacheManager {
    * Set in cache
    */
   async set<T>(key: string, value: T, config: CacheConfig): Promise<boolean> {
-    if (!this.enabled) {
+    if (!this.enabled || !this.redis) {
       return false
     }
 
     try {
       const fullKey = this.buildKey(key, config.namespace)
-      await kv.set(fullKey, value, { ex: config.ttl })
+      await this.redis.set(fullKey, value, { ex: config.ttl })
       logger.info('Cache: SET', { 
         namespace: config.namespace, 
         key: this.sanitizeKey(key),
@@ -93,13 +98,13 @@ class CacheManager {
    * Delete from cache
    */
   async delete(key: string, namespace: string = 'default'): Promise<boolean> {
-    if (!this.enabled) {
+    if (!this.enabled || !this.redis) {
       return false
     }
 
     try {
       const fullKey = this.buildKey(key, namespace)
-      await kv.del(fullKey)
+      await this.redis.del(fullKey)
       logger.info('Cache: DELETE', { namespace, key: this.sanitizeKey(key) })
       return true
     } catch (error) {

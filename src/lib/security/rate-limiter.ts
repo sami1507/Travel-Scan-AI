@@ -1,7 +1,15 @@
 // Rate limiter for API routes
-// Uses Vercel KV if configured, falls back to in-memory for development
+// Uses Upstash Redis (Vercel KV compatible) if configured, falls back to in-memory for development
 
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
+
+// Initialize Redis client (uses Vercel KV env vars)
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    })
+  : null
 
 interface RateLimitConfig {
   maxRequests: number
@@ -41,23 +49,28 @@ export async function checkRateLimit(
   const resetTime = now + config.windowMs
 
   try {
-    // Try Vercel KV first
-    const count = await kv.incr(key)
+    // Try Redis/KV first if available
+    if (redis) {
+      const count = await redis.incr(key)
+      
+      if (count === 1) {
+        // First request in window, set expiry
+        await redis.pexpire(key, config.windowMs)
+      }
+
+      const ttl = await redis.pttl(key)
+      const reset = now + (ttl > 0 ? ttl : config.windowMs)
+
+      return {
+        success: count <= config.maxRequests,
+        limit: config.maxRequests,
+        remaining: Math.max(0, config.maxRequests - count),
+        reset: Math.floor(reset / 1000),
+      }
+    }
     
-    if (count === 1) {
-      // First request in window, set expiry
-      await kv.pexpire(key, config.windowMs)
-    }
-
-    const ttl = await kv.pttl(key)
-    const reset = now + (ttl > 0 ? ttl : config.windowMs)
-
-    return {
-      success: count <= config.maxRequests,
-      limit: config.maxRequests,
-      remaining: Math.max(0, config.maxRequests - count),
-      reset: Math.floor(reset / 1000),
-    }
+    // If Redis not configured, fall through to in-memory
+    throw new Error('Redis not configured')
   } catch (error) {
     // Fallback to in-memory store for development
     const stored = memoryStore.get(key)

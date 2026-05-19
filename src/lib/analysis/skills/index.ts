@@ -13,9 +13,10 @@ import { fallbackControlSkill } from './fallback-control-skill'
 
 /**
  * Build complete system prompt for OpenAI travel analysis
+ * @param fastMode - If true, use fast core analysis mode with compact output
  */
-export function buildTravelAnalysisSystemPrompt(): string {
-  return `You are TravelScan AI - a professional travel consultant providing route-aware, evidence-based recommendations.
+export function buildTravelAnalysisSystemPrompt(fastMode: boolean = true): string {
+  const corePrompt = `You are TravelScan AI - a professional travel consultant providing route-aware, evidence-based recommendations.
 
 ${travelConsultantCoreSkill}
 
@@ -29,7 +30,47 @@ ${seasonalitySkill}
 
 ${routeAndMapSkill}
 
-${fallbackControlSkill}
+${fallbackControlSkill}`
+
+  if (fastMode) {
+    return `${corePrompt}
+
+FAST CORE MODE - CRITICAL INSTRUCTIONS:
+Return EXACTLY 3 recommendations with COMPACT output to ensure fast response.
+
+REQUIRED (keep concise):
+1. destinationName, totalMatchScore, categoryScores
+2. whyRecommended: 2-3 specific bullets (not generic)
+3. possibleDownsides: 1-2 honest limitations
+4. realisticConsultantNotes: 1-2 sentences max
+5. seasonality: peakSeason, shoulderSeason, weatherReality, crowdReality (1 sentence each)
+6. suggestedRoute: 2-4 cities max
+7. routeWarnings: max 3 warnings
+8. itineraryMapPlan: 
+   - routeTitle, mapAvailable
+   - stops: 2-5 stops max with lat/lng for major known cities
+   - dayPlans: 3-5 days max (not full trip)
+   - routeReasoning: 1 sentence per field
+
+COMPACT/DEFER (minimal or null):
+- travelStrategyTips: ALL null (defer to detail endpoint)
+- seasonMonthStrategy: null (defer to detail endpoint)
+- dayPlans: max 5 days, brief descriptions
+- negotiationEmail: null
+- extraFeesBreakdown: null
+- long alternatives: keep brief
+
+COORDINATE RULES:
+- Include lat/lng ONLY for major known cities/landmarks
+- Examples: Rome (41.90, 12.50), Athens (37.98, 23.73), Budapest (47.50, 19.04)
+- If unsure, set null
+
+OUTPUT PRIORITY:
+Speed > Detail. User can request more details later.
+Be specific but concise. Professional but brief.`
+  }
+
+  return `${corePrompt}
 
 OUTPUT FORMAT:
 - Return structured JSON matching the provided schema

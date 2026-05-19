@@ -321,10 +321,16 @@ export class TravelAnalysisEngine {
           cacheKey,
           async () => {
             const startTime = Date.now()
+            const fastMode = true // Use fast core analysis mode
+            const systemPrompt = this.getSystemInstructions(fastMode)
+            
             logger.info('OpenAI analysis request started', {
               model: this.model,
               timeout: ProviderConfigs.OPENAI.timeout,
               promptLength: analysisContext.length,
+              systemPromptLength: systemPrompt.length,
+              fastMode,
+              estimatedOutputMode: 'fast_core',
             })
 
             const completion = await withResilience(
@@ -338,7 +344,7 @@ export class TravelAnalysisEngine {
                   messages: [
                     {
                       role: 'system',
-                      content: this.getSystemInstructions(),
+                      content: systemPrompt,
                     },
                     {
                       role: 'user',
@@ -347,7 +353,7 @@ export class TravelAnalysisEngine {
                   ],
                   response_format: zodResponseFormat(travelAnalysisResponseSchema, 'travel_analysis'),
                   temperature: 0.3,
-                  max_completion_tokens: 6000, // Limit response size for faster completion
+                  max_completion_tokens: 4000, // Reduced from 6000 for faster completion
                 })
               },
               ProviderConfigs.OPENAI
@@ -357,6 +363,9 @@ export class TravelAnalysisEngine {
             logger.info('OpenAI analysis completed', {
               duration,
               tokensUsed: completion.usage?.total_tokens,
+              promptTokens: completion.usage?.prompt_tokens,
+              completionTokens: completion.usage?.completion_tokens,
+              fastMode,
             })
 
             const parsed = completion.choices[0].message.parsed
@@ -384,22 +393,29 @@ export class TravelAnalysisEngine {
           CachePresets.OPENAI_ANALYSIS
         )
       } catch (aiError) {
+        // Determine if this was a timeout or other error
+        const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
+        const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('timed out')
+        
         // Log the AI provider error clearly
         logger.error('OpenAI provider failed, using fallback recommendations', {
-          error: aiError instanceof Error ? aiError.message : String(aiError),
+          error: errorMessage,
+          errorType: isTimeout ? 'timeout' : 'other',
           errorStack: aiError instanceof Error ? aiError.stack : undefined,
           query: request.query,
-          tripStructure: request.tripStructure,
+          userId: request.userId,
+          timeoutMs: isTimeout ? ProviderConfigs.OPENAI.timeout : undefined,
         })
 
         // Track the error
         errorTracker.trackProviderError('openai', aiError, 'gpt4-analysis', { 
           fallbackUsed: true,
+          isTimeout,
           query: request.query,
         })
 
         // Use fallback recommendations
-        analysis = this.generateFallbackRecommendations(request, scoredDestinations)
+        analysis = this.generateFallbackRecommendations(request, scoredDestinations, isTimeout)
       }
 
       // Add personalization metadata to response
@@ -601,9 +617,9 @@ export class TravelAnalysisEngine {
   /**
    * Get system instructions for AI
    */
-  private getSystemInstructions(): string {
+  private getSystemInstructions(fastMode: boolean = true): string {
     const { buildTravelAnalysisSystemPrompt } = require('./skills')
-    return buildTravelAnalysisSystemPrompt()
+    return buildTravelAnalysisSystemPrompt(fastMode)
   }
 
   /**
@@ -1379,10 +1395,11 @@ export class TravelAnalysisEngine {
   /**
    * Generate deterministic fallback recommendations when AI provider fails
    */
-  private generateFallbackRecommendations(request: AnalysisRequest, scoredDestinations: any[]): TravelAnalysisResponse {
+  private generateFallbackRecommendations(request: AnalysisRequest, scoredDestinations: any[], isTimeout: boolean = false): TravelAnalysisResponse {
     logger.warn('Generating fallback recommendations due to provider failure', {
       query: request.query,
       tripStructure: request.tripStructure,
+      isTimeout,
     })
 
     // Select best routes from curated library
@@ -1575,7 +1592,9 @@ export class TravelAnalysisEngine {
       rankedDestinations,
       scoreBreakdown: 'Scores calculated based on budget fit, weather, safety, activities, and accessibility',
       reasons: ['Based on your preferences and budget', 'Realistic route planning', 'Knowledge-based conservative estimates'],
-      warnings: ['Live AI provider unavailable. Showing knowledge-based recommendations with conservative estimates.'],
+      warnings: [isTimeout 
+        ? 'Live AI took too long to respond. Showing knowledge-based recommendations with conservative estimates.'
+        : 'Live AI provider unavailable. Showing knowledge-based recommendations with conservative estimates.'],
       assumptions: ['Standard travel preferences applied', 'Moderate pacing assumed'],
       recommendedRoutes: firstDest ? [{
         routeType: firstDest.suggestedRoute && firstDest.suggestedRoute.length > 2 ? 'multi-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length === 2 ? '2-city' : 'single-destination',

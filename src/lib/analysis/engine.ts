@@ -24,6 +24,9 @@ import type { UserPreferenceProfile } from '../types/preferences'
 import { errorTracker } from '../monitoring/error-tracker'
 import { costTracker } from '../monitoring/cost-tracker'
 import { cacheManager, CachePresets } from '../cache/cache-manager'
+
+// Analysis cache version - increment to invalidate all cached results after algorithm changes
+const ANALYSIS_CACHE_VERSION = 'consultant-v4-diversity-route-2026-05-19'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
 
@@ -31,6 +34,7 @@ export interface AnalysisRequest {
   query: string
   destination?: string
   departureCity?: string
+  passportCountry?: string
   budget?: 'low' | 'moderate' | 'high' | 'luxury'
   season?: 'Winter' | 'Spring' | 'Summer' | 'Autumn' // Season selection for month strategy
   travelMonths?: number[]
@@ -39,6 +43,7 @@ export interface AnalysisRequest {
   travelStyle?: 'solo' | 'couple' | 'family' | 'friends'
   pace?: 'relaxed' | 'moderate' | 'fast'
   tripStructure?: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
+  accommodationPreference?: string
   userId?: string // For personalization
 }
 
@@ -283,6 +288,7 @@ export class TravelAnalysisEngine {
           interests: request.interests,
           travelStyle: request.travelStyle,
           pace: request.pace,
+          tripStructure: request.tripStructure,
         }
       )
 
@@ -309,6 +315,15 @@ export class TravelAnalysisEngine {
       // Step 7: Call OpenAI for structured analysis (with caching, resilience, and fallback)
       const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, candidatePoolSize))
       
+      // Check if cache should be bypassed
+      const bypassCache = process.env.DISABLE_ANALYSIS_CACHE === 'true' || (request as any).forceFresh === true
+      
+      if (bypassCache) {
+        logger.info('Travel Analysis Cache: BYPASSED', {
+          reason: process.env.DISABLE_ANALYSIS_CACHE === 'true' ? 'env_flag' : 'force_fresh',
+        })
+      }
+      
       let analysis: TravelAnalysisResponse
       
       try {
@@ -317,9 +332,7 @@ export class TravelAnalysisEngine {
           throw new Error('OpenAI client not available - API key missing or invalid')
         }
 
-        analysis = await cacheManager.getOrSet(
-          cacheKey,
-          async () => {
+        const fetchFresh = async () => {
             const startTime = Date.now()
             const fastMode = true // Use fast core analysis mode
             const systemPrompt = this.getSystemInstructions(fastMode)
@@ -389,9 +402,18 @@ export class TravelAnalysisEngine {
             })
 
             return parsed
-          },
-          CachePresets.OPENAI_ANALYSIS
-        )
+        }
+
+        // Use cache or fetch fresh based on bypass flag
+        if (bypassCache) {
+          analysis = await fetchFresh()
+        } else {
+          analysis = await cacheManager.getOrSet(
+            cacheKey,
+            fetchFresh,
+            CachePresets.OPENAI_ANALYSIS
+          )
+        }
       } catch (aiError) {
         // Determine if this was a timeout or other error
         const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
@@ -1004,23 +1026,38 @@ export class TravelAnalysisEngine {
    * Build cache key for analysis results
    */
   private buildCacheKey(request: AnalysisRequest, topDestinations: any[]): string {
-    const destIds = topDestinations.map(d => d.destinationId).join(',')
+    const destIds = topDestinations.map(d => d.destinationId).slice(0, 5).join(',')
     const key = [
+      ANALYSIS_CACHE_VERSION,
       request.query,
       request.destination || 'any',
       request.departureCity || 'any',
+      request.passportCountry || 'any',
       request.budget || 'any',
       request.tripLength || 'any',
       request.tripStructure || 'any',
       request.season || 'any',
-      (request.travelMonths || []).join(','),
-      (request.interests || []).join(','),
+      (request.travelMonths || []).sort().join(','),
+      (request.interests || []).sort().join(','),
       request.travelStyle || 'any',
       request.pace || 'any',
-      destIds
+      request.accommodationPreference || 'any',
+      destIds || 'none'
     ].join(':')
+    
     // Hash to keep key length reasonable
-    return Buffer.from(key).toString('base64').substring(0, 100)
+    const cacheKey = Buffer.from(key).toString('base64').substring(0, 100)
+    
+    logger.info('Travel Analysis Cache Key Built', {
+      cacheVersion: ANALYSIS_CACHE_VERSION,
+      tripStructure: request.tripStructure,
+      interests: request.interests?.length || 0,
+      travelMonths: request.travelMonths?.length || 0,
+      fixedDestination: request.destination || 'none',
+      candidateCount: topDestinations.length,
+    })
+    
+    return cacheKey
   }
 
   /**

@@ -70,10 +70,12 @@ export class RouteIntelligenceService {
       interests?: string[]
       travelStyle?: string
       pace?: string
+      tripStructure?: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
     }
   ): RouteAnalysis {
     logger.info('Route Intelligence: Analyzing routes', {
       destinationCount: destinations.length,
+      tripStructure: userPreferences.tripStructure,
       preferences: userPreferences,
     })
 
@@ -348,8 +350,33 @@ export class RouteIntelligenceService {
       return this.createFallbackRoute(userPreferences)
     }
 
-    // Default to single destination if it's strong
+    const tripStructure = userPreferences.tripStructure
     const singleDest = routes.find(r => r.routeType === 'single-destination')
+    const multiCity = routes.find(r => r.routeType === '2-city' || r.routeType === '3-city' || r.routeType === 'multi-city')
+
+    // Respect user's tripStructure preference
+    if (tripStructure === 'single_country_one_city') {
+      // Prefer single destination
+      if (singleDest) {
+        logger.info('Route Intelligence: Selecting single-destination per tripStructure', {
+          tripStructure,
+          routeType: singleDest.routeType,
+        })
+        return singleDest
+      }
+    } else if (tripStructure === 'single_country_multi_city' || tripStructure === 'multi_country') {
+      // Prefer multi-city routes
+      if (multiCity) {
+        logger.info('Route Intelligence: Selecting multi-city per tripStructure', {
+          tripStructure,
+          routeType: multiCity.routeType,
+        })
+        return multiCity
+      }
+    }
+
+    // Fallback to score-based selection
+    // Default to single destination if it's strong
     if (singleDest && singleDest.routeScore.totalRouteQuality >= 75) {
       return singleDest
     }

@@ -5,12 +5,14 @@
 
 import type { RankedDestination } from './schemas'
 import type { AnalysisRequest } from './engine'
+import type { RouteCandidate } from './route-candidate-pool'
 import { logger } from '../utils'
 
 export interface DiversityContext {
   request: AnalysisRequest
   candidatePool?: RankedDestination[]
   fixedCountry?: string
+  routeCandidatePool?: RouteCandidate[]
 }
 
 export interface DiversityResult {
@@ -140,7 +142,8 @@ export function enforceRecommendationDiversity(
   const diversified = applyDiversityLogic(
     recommendations,
     candidatePool || recommendations,
-    request
+    request,
+    context.routeCandidatePool || []
   )
   
   const postDiversityCountries = diversified.map(r => r.destinationName)
@@ -190,11 +193,18 @@ export function enforceRecommendationDiversity(
 function applyDiversityLogic(
   recommendations: RankedDestination[],
   candidatePool: RankedDestination[],
-  request: AnalysisRequest
+  request: AnalysisRequest,
+  routeCandidatePool: RouteCandidate[]
 ): RankedDestination[] {
   const selected: RankedDestination[] = []
   const usedCountries = new Set<string>()
   const usedRegions = new Set<string>()
+  
+  logger.info('Diversity logic: Starting', {
+    recommendationsCount: recommendations.length,
+    candidatePoolCount: candidatePool.length,
+    routeCandidatePoolCount: routeCandidatePool.length,
+  })
   
   // Step 1: Keep the top recommendation (Best Overall)
   if (recommendations[0]) {

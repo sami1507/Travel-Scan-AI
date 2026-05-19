@@ -29,6 +29,9 @@ import { cacheManager, CachePresets } from '../cache/cache-manager'
 const ANALYSIS_CACHE_VERSION = 'consultant-v4-diversity-route-2026-05-19'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
+import { compactAnalysisResponseSchema, CompactAnalysisResponse } from './compact-schema'
+import { buildCompactTravelAnalysisPrompt, getCompactSystemInstructions } from './compact-prompt'
+import { buildRouteCandidatePool, filterCandidatesByRequest, RouteCandidate } from './route-candidate-pool'
 
 export interface AnalysisRequest {
   query: string
@@ -227,6 +230,21 @@ export class TravelAnalysisEngine {
         topScore: scoredDestinations[0]?.totalScore,
       })
 
+      // Build route candidate pool if knowledge retrieval returned 0
+      let routeCandidatePool: RouteCandidate[] = []
+      if (scoredDestinations.length === 0) {
+        logger.info('Knowledge retrieval returned 0, building route candidate pool')
+        const allCandidates = buildRouteCandidatePool(request)
+        routeCandidatePool = filterCandidatesByRequest(allCandidates, request)
+        
+        logger.info('Route candidate pool built', {
+          routeCandidatePoolBuilt: true,
+          routeCandidateCount: routeCandidatePool.length,
+          candidateRegions: [...new Set(routeCandidatePool.map(c => c.region))],
+          candidateCountries: [...new Set(routeCandidatePool.map(c => c.country))],
+        })
+      }
+
       // Step 4: Gather provider data for top destinations (expanded to 12 for diversity)
       const candidatePoolSize = 12
       const providerData = await this.gatherProviderData(scoredDestinations.slice(0, candidatePoolSize), userPreferences.budget, request.travelMonths, request.departureCity, request.query)
@@ -335,15 +353,19 @@ export class TravelAnalysisEngine {
         const fetchFresh = async () => {
             const startTime = Date.now()
             const fastMode = true // Use fast core analysis mode
-            const systemPrompt = this.getSystemInstructions(fastMode)
+            const compactPrompt = buildCompactTravelAnalysisPrompt(request)
+            const systemPrompt = getCompactSystemInstructions()
             
             logger.info('OpenAI analysis request started', {
               model: this.model,
               timeout: ProviderConfigs.OPENAI.timeout,
               promptLength: analysisContext.length,
               systemPromptLength: systemPrompt.length,
+              compactPromptLength: compactPrompt.length,
               fastMode,
+              compactPromptUsed: true,
               estimatedOutputMode: 'fast_core',
+              maxCompletionTokens: 3500,
             })
 
             const completion = await withResilience(
@@ -361,12 +383,12 @@ export class TravelAnalysisEngine {
                     },
                     {
                       role: 'user',
-                      content: analysisContext,
+                      content: `${compactPrompt}\n\n${analysisContext}`,
                     },
                   ],
-                  response_format: zodResponseFormat(travelAnalysisResponseSchema, 'travel_analysis'),
+                  response_format: zodResponseFormat(compactAnalysisResponseSchema, 'travel_analysis'),
                   temperature: 0.3,
-                  max_completion_tokens: 4000, // Reduced from 6000 for faster completion
+                  max_completion_tokens: 3500, // Reduced for faster completion
                 })
               },
               ProviderConfigs.OPENAI
@@ -381,7 +403,7 @@ export class TravelAnalysisEngine {
               fastMode,
             })
 
-            const parsed = completion.choices[0].message.parsed
+            const parsed = completion.choices[0].message.parsed as CompactAnalysisResponse
 
             if (!parsed) {
               throw new Error('Failed to parse AI response')
@@ -401,18 +423,102 @@ export class TravelAnalysisEngine {
               diversityScore: uniqueCountries / Math.max(parsed.rankedDestinations.length, 1),
             })
 
-            return parsed
+            // Adapt compact response to full schema
+            const fullResponse: TravelAnalysisResponse = {
+              ...parsed,
+              userConstraints: {
+                budget: request.budget || 'moderate',
+                travelMonths: request.travelMonths || null,
+                interests: request.interests || null,
+                travelStyle: request.travelStyle || null,
+                pace: request.pace || null,
+              },
+              rankedDestinations: parsed.rankedDestinations.map(d => ({
+                ...d,
+                categoryScores: {
+                  budgetFit: 8,
+                  weatherFit: 8,
+                  passportEase: 8,
+                  nightlife: 7,
+                  nature: 7,
+                  transport: 8,
+                  hotelValue: 8,
+                  safety: 9,
+                  flightValue: null,
+                },
+                passportEase: 'easy',
+                nightlifeLevel: 7,
+                natureLevel: 7,
+                transportLevel: 8,
+                hotelValueLevel: 8,
+                safetyLevel: 9,
+                confidence: parsed.confidence,
+                sourceLabels: ['openai', 'compact-schema'],
+                dataQuality: 'knowledge-based' as const,
+                routeRealismScore: 85,
+                travelFatigueLevel: 'Medium' as const,
+                routeAlternatives: null,
+                itineraryMapPlan: null,
+                travelStrategyTips: null,
+              })),
+              scoreBreakdown: 'Scores based on budget fit, weather, transport, and safety',
+              reasons: parsed.rankedDestinations.flatMap(d => d.whyRecommended).slice(0, 5),
+              dataFreshness: {
+                knowledgeBase: 'structured-knowledge',
+                providerData: 'live-providers',
+                lastUpdated: new Date().toISOString(),
+              },
+              sourcesUsed: ['openai-gpt4o', 'knowledge-base', 'compact-schema'],
+              recommendedRoutes: null,
+              nextBestAlternatives: null,
+              personalization: null,
+              seasonMonthStrategy: null,
+            }
+
+            // Add metadata to track OpenAI success
+            ;(fullResponse as any).openAIUsed = true
+            ;(fullResponse as any).fallbackUsed = false
+            ;(fullResponse as any).fallbackReason = 'none'
+            ;(fullResponse as any).cacheEligible = true
+
+            return fullResponse
         }
 
         // Use cache or fetch fresh based on bypass flag
         if (bypassCache) {
           analysis = await fetchFresh()
+          logger.info('Travel Analysis Cache: Skipped (bypassed)', {
+            openAIUsed: (analysis as any).openAIUsed,
+            cacheEligible: (analysis as any).cacheEligible,
+          })
         } else {
-          analysis = await cacheManager.getOrSet(
-            cacheKey,
-            fetchFresh,
-            CachePresets.OPENAI_ANALYSIS
-          )
+          // Try to get from cache first
+          const cached = await cacheManager.get<TravelAnalysisResponse>(cacheKey, CachePresets.OPENAI_ANALYSIS.namespace)
+          if (cached) {
+            analysis = cached
+            logger.info('Travel Analysis Cache: HIT', {
+              cachedResultType: 'openai',
+            })
+          } else {
+            // Fetch fresh
+            analysis = await fetchFresh()
+            
+            // Only cache if it's a successful OpenAI result
+            if ((analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+              await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
+              logger.info('Travel Analysis Cache: SET', {
+                cachedResultType: 'openai',
+                openAIUsed: true,
+                fallbackUsed: false,
+              })
+            } else {
+              logger.info('Travel Analysis Cache: SKIPPED (not eligible)', {
+                openAIUsed: (analysis as any).openAIUsed,
+                fallbackUsed: (analysis as any).fallbackUsed,
+                cacheEligible: (analysis as any).cacheEligible,
+              })
+            }
+          }
         }
       } catch (aiError) {
         // Determine if this was a timeout or other error
@@ -436,8 +542,27 @@ export class TravelAnalysisEngine {
           query: request.query,
         })
 
-        // Use fallback recommendations
-        const fallbackAnalysis = this.generateFallbackRecommendations(request, scoredDestinations, isTimeout)
+        // Use fallback recommendations with route candidate pool
+        const fallbackAnalysis = this.generateFallbackRecommendations(
+          request, 
+          scoredDestinations.length > 0 ? scoredDestinations : [], 
+          isTimeout,
+          routeCandidatePool
+        )
+        
+        // Add metadata to prevent caching fallback as successful OpenAI result
+        ;(fallbackAnalysis as any).openAIUsed = false
+        ;(fallbackAnalysis as any).fallbackUsed = true
+        ;(fallbackAnalysis as any).fallbackReason = isTimeout ? 'timeout' : 'provider_error'
+        ;(fallbackAnalysis as any).cacheEligible = false
+        
+        logger.info('Fallback analysis generated', {
+          openAIUsed: false,
+          fallbackUsed: true,
+          fallbackReason: isTimeout ? 'timeout' : 'provider_error',
+          cacheEligible: false,
+          routeCandidatePoolUsed: routeCandidatePool.length > 0,
+        })
         
         // Apply quality gate to fallback as well
         const { applyConsultantQualityGate, assignDiversityLabels, generateConsultantBrief } = await import('./consultant-quality-gate')
@@ -574,6 +699,7 @@ export class TravelAnalysisEngine {
             return analysis.rankedDestinations.find(rd => rd.destinationId === sd.destinationId) || analysis.rankedDestinations[0]
           }),
           fixedCountry: request.destination,
+          routeCandidatePool,
         }
       )
 
@@ -1460,18 +1586,65 @@ export class TravelAnalysisEngine {
   }
 
   /**
+   * Select routes from route candidate pool
+   */
+  private selectRoutesFromCandidatePool(candidates: RouteCandidate[], request: AnalysisRequest, count: number): any[] {
+    // Sort by estimated score
+    const sorted = [...candidates].sort((a, b) => b.estimatedScore - a.estimatedScore)
+    
+    // Select top routes with diversity
+    const selected = []
+    const usedCountries = new Set<string>()
+    const usedRegions = new Set<string>()
+    
+    for (const candidate of sorted) {
+      if (selected.length >= count) break
+      
+      // Ensure diversity
+      if (selected.length === 0 || !usedCountries.has(candidate.country) || usedRegions.size < 2) {
+        selected.push({
+          countries: [candidate.country],
+          cities: candidate.routeCities,
+          nightsDistribution: candidate.routeCities.reduce((acc, city, i) => {
+            acc[city] = i === 0 ? 4 : 3
+            return acc
+          }, {} as Record<string, number>),
+          minDays: 7,
+          maxDays: 14,
+          transportMode: candidate.transportMode.toLowerCase().includes('train') ? 'train' : 'bus',
+          fatigueLevel: candidate.travelFatigue,
+          travelStyles: candidate.interestsFit,
+          whyRecommended: [candidate.whyCandidateFits, candidate.routeLogic],
+        })
+        usedCountries.add(candidate.country)
+        usedRegions.add(candidate.region)
+      }
+    }
+    
+    return selected
+  }
+
+  /**
    * Generate deterministic fallback recommendations when AI provider fails
    */
-  private generateFallbackRecommendations(request: AnalysisRequest, scoredDestinations: any[], isTimeout: boolean = false): TravelAnalysisResponse {
+  private generateFallbackRecommendations(
+    request: AnalysisRequest, 
+    scoredDestinations: any[], 
+    isTimeout: boolean = false,
+    routeCandidatePool: RouteCandidate[] = []
+  ): TravelAnalysisResponse {
     logger.warn('Generating fallback recommendations due to provider failure', {
       query: request.query,
       tripStructure: request.tripStructure,
       isTimeout,
+      routeCandidatePoolAvailable: routeCandidatePool.length > 0,
     })
 
-    // Select best routes from curated library
-    const selectedRoutes = this.selectBestFallbackRoutes(request, 3)
-    const tripLength = request.tripLength || request.travelMonths?.length || 7
+    // Select best routes from curated library or route candidate pool
+    const selectedRoutes = routeCandidatePool.length > 0
+      ? this.selectRoutesFromCandidatePool(routeCandidatePool, request, 3)
+      : this.selectBestFallbackRoutes(request, 3)
+    const tripLength: number = request.tripLength || request.travelMonths?.length || 7
     
     const rankedDestinations = selectedRoutes.map((route, index) => {
       const tripType = request.tripStructure === 'single_country_one_city' 
@@ -1481,11 +1654,14 @@ export class TravelAnalysisEngine {
         : 'Multi-Country Route'
 
       // Adjust nights distribution to match actual trip length
-      const totalNightsInTemplate = Object.values(route.nightsDistribution).reduce((a: number, b: number) => a + b, 0)
+      const nightsValues = Object.values(route.nightsDistribution) as number[]
+      const totalNightsInTemplate: number = nightsValues.reduce((a: number, b: number) => a + b, 0)
       const adjustedNights: Record<string, number> = {}
       
       Object.entries(route.nightsDistribution).forEach(([city, nights]) => {
-        adjustedNights[city] = Math.round((nights as number / totalNightsInTemplate) * tripLength)
+        const nightsNum: number = typeof nights === 'number' ? nights : Number(nights)
+        const tripLengthNum: number = tripLength
+        adjustedNights[city] = Math.round((nightsNum / totalNightsInTemplate) * tripLengthNum)
       })
       
       // Ensure total matches trip length

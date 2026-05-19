@@ -6,6 +6,7 @@
 import type { RankedDestination } from './schemas'
 import type { AnalysisRequest } from './engine'
 import { logger } from '../utils'
+import { normalizeRecommendation } from './text-normalization'
 
 // Banned generic phrases that sound scripted
 const GENERIC_PHRASES = [
@@ -78,10 +79,14 @@ export function applyConsultantQualityGate(
       issues: issues.slice(0, 5), // Log first 5
     })
 
-    repairedRecommendations = recommendations.map((rec, index) => 
-      repairRecommendation(rec, request, index)
-    )
+    repairedRecommendations = recommendations.map((rec, index) => {
+      const normalized = normalizeRecommendation(rec)
+      return repairRecommendation(normalized, request, index)
+    })
     repaired = true
+  } else {
+    // Always apply text normalization even if no other issues
+    repairedRecommendations = recommendations.map(rec => normalizeRecommendation(rec))
   }
 
   const passed = issues.length === 0

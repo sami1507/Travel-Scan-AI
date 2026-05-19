@@ -512,6 +512,24 @@ export class TravelAnalysisEngine {
         })
       }
 
+      // Step 9.5: Enforce recommendation diversity
+      const { enforceRecommendationDiversity } = await import('./diversity-enforcement')
+      const diversityResult = enforceRecommendationDiversity(
+        analysis.rankedDestinations,
+        {
+          request,
+          candidatePool: scoredDestinations.slice(0, candidatePoolSize).map(sd => {
+            // Convert scored destination to ranked destination format if needed
+            return analysis.rankedDestinations.find(rd => rd.destinationId === sd.destinationId) || analysis.rankedDestinations[0]
+          }),
+          fixedCountry: request.destination,
+        }
+      )
+
+      // Update with diversity-enforced recommendations
+      analysis.rankedDestinations = diversityResult.recommendations
+      analysis.topRecommendations = diversityResult.recommendations.map(d => d.destinationName)
+
       logger.info('Travel Analysis Engine: Analysis complete', {
         recommendations: analysis.topRecommendations.length,
         rankedDestinations: analysis.rankedDestinations.length,
@@ -519,6 +537,9 @@ export class TravelAnalysisEngine {
         personalizationConfidence: analysis.personalization.confidence,
         routeType: routeAnalysis.recommendedRoute.routeType,
         routeScore: routeAnalysis.recommendedRoute.routeScore.totalRouteQuality,
+        diversityApplied: diversityResult.diversityApplied,
+        diversityScore: diversityResult.diversityScore,
+        fixedCountryMode: diversityResult.fixedCountryMode,
       })
 
       // Step 10: Record learning event (non-blocking)

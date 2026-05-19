@@ -80,20 +80,22 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
         <Separator />
 
         {/* Key Strengths */}
-        <div className="space-y-3">
-          <h3 className="font-semibold flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Key Strengths
-          </h3>
-          <ul className="space-y-2">
-            {topDestination.whyRecommended.slice(0, 5).map((reason, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <span className="text-green-600 mt-0.5 font-bold">✓</span>
-                <span>{reason}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {topDestination.whyRecommended && topDestination.whyRecommended.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Key Strengths
+            </h3>
+            <ul className="space-y-2">
+              {topDestination.whyRecommended.slice(0, 5).map((reason, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-green-600 mt-0.5 font-bold">✓</span>
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <Separator />
 

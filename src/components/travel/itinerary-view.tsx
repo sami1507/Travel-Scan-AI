@@ -146,7 +146,7 @@ export function ItineraryView({ route }: ItineraryViewProps) {
         )}
 
         {/* Warnings */}
-        {route.routeWarnings && route.routeWarnings.length > 0 && (
+        {route.routeWarnings && Array.isArray(route.routeWarnings) && route.routeWarnings.length > 0 && (
           <>
             <Separator />
             <div className="space-y-3">

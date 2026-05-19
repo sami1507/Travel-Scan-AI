@@ -95,7 +95,7 @@ export function ShareExportDialog({ open, onOpenChange, analysis, query }: Share
               <p><strong>Type:</strong> ${dest.destinationType}</p>
               <p><strong>Why recommended:</strong></p>
               <ul>
-                ${dest.whyRecommended.slice(0, 3).map(reason => `<li>${reason}</li>`).join('')}
+                ${(dest.whyRecommended || []).slice(0, 3).map(reason => `<li>${reason}</li>`).join('')}
               </ul>
             </div>
           `).join('')}

@@ -22,6 +22,8 @@ import { RankingExplanation } from '@/components/travel/ranking-explanation'
 import { SeasonMonthStrategyDisplay } from '@/components/travel/season-month-strategy'
 import type { TravelAnalysisResponse, RankedDestination } from '@/lib/analysis/schemas'
 import { logLearningFeedback } from '@/lib/learning/client-feedback'
+import { normalizeAnalysisForUI } from '@/lib/analysis/normalize-analysis-for-ui'
+import { AnalysisErrorBoundary } from '@/components/ui/analysis-error-boundary'
 
 export default function AnalysisPage() {
   const [loading, setLoading] = useState(false)
@@ -63,7 +65,9 @@ export default function AnalysisPage() {
       }
 
       const result = await response.json()
-      setAnalysis(result.analysis)
+      // Normalize analysis for safe UI rendering
+      const normalizedAnalysis = normalizeAnalysisForUI(result.analysis)
+      setAnalysis(normalizedAnalysis)
       setQueryContext({
         query: data.query,
         budget: data.budget,
@@ -207,7 +211,8 @@ export default function AnalysisPage() {
 
       {/* Results */}
       {analysis && !loading && (
-        <div className="space-y-6">
+        <AnalysisErrorBoundary onReset={() => setAnalysis(null)}>
+          <div className="space-y-6">
           {/* Action Bar */}
           <div className="flex flex-wrap items-center gap-3 animate-fade-in">
             <Button onClick={() => setSaveDialogOpen(true)} className="group shadow-lg shadow-primary/20 hover:shadow-xl transition-all hover:-translate-y-0.5">
@@ -439,7 +444,8 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
           )}
-        </div>
+          </div>
+        </AnalysisErrorBoundary>
       )}
 
       {/* Detail Modal */}

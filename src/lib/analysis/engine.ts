@@ -415,7 +415,20 @@ export class TravelAnalysisEngine {
         })
 
         // Use fallback recommendations
-        analysis = this.generateFallbackRecommendations(request, scoredDestinations, isTimeout)
+        const fallbackAnalysis = this.generateFallbackRecommendations(request, scoredDestinations, isTimeout)
+        
+        // Apply quality gate to fallback as well
+        const { applyConsultantQualityGate, assignDiversityLabels, generateConsultantBrief } = await import('./consultant-quality-gate')
+        const fallbackQualityResult = applyConsultantQualityGate(fallbackAnalysis.rankedDestinations, request)
+        fallbackAnalysis.rankedDestinations = assignDiversityLabels(fallbackQualityResult.recommendations)
+        fallbackAnalysis.topRecommendations = fallbackAnalysis.rankedDestinations.map(d => d.destinationName)
+        fallbackAnalysis.querySummary = generateConsultantBrief(
+          fallbackAnalysis.rankedDestinations, 
+          request, 
+          isTimeout ? 'timeout' : 'fallback'
+        )
+        
+        analysis = fallbackAnalysis
       }
 
       // Add personalization metadata to response
@@ -546,6 +559,18 @@ export class TravelAnalysisEngine {
       analysis.rankedDestinations = diversityResult.recommendations
       analysis.topRecommendations = diversityResult.recommendations.map(d => d.destinationName)
 
+      // Step 9.6: Apply consultant quality gate
+      const { applyConsultantQualityGate, assignDiversityLabels, generateConsultantBrief } = await import('./consultant-quality-gate')
+      const qualityResult = applyConsultantQualityGate(analysis.rankedDestinations, request)
+      
+      // Update with quality-checked recommendations
+      analysis.rankedDestinations = assignDiversityLabels(qualityResult.recommendations)
+      analysis.topRecommendations = analysis.rankedDestinations.map(d => d.destinationName)
+      
+      // Generate consultant brief for query summary
+      const dataSource = this.openaiAvailable ? 'openai' : 'fallback'
+      analysis.querySummary = generateConsultantBrief(analysis.rankedDestinations, request, dataSource)
+
       logger.info('Travel Analysis Engine: Analysis complete', {
         recommendations: analysis.topRecommendations.length,
         rankedDestinations: analysis.rankedDestinations.length,
@@ -556,6 +581,11 @@ export class TravelAnalysisEngine {
         diversityApplied: diversityResult.diversityApplied,
         diversityScore: diversityResult.diversityScore,
         fixedCountryMode: diversityResult.fixedCountryMode,
+        regionSpread: diversityResult.regionSpread,
+        mainstreamCount: diversityResult.mainstreamCount,
+        uniqueOptionIncluded: diversityResult.uniqueOptionIncluded,
+        qualityGatePassed: qualityResult.passed,
+        qualityGateRepaired: qualityResult.repaired,
       })
 
       // Step 10: Record learning event (non-blocking)
@@ -1496,15 +1526,24 @@ export class TravelAnalysisEngine {
         flightValue: 7 + (index === 0 ? 0.3 : index === 1 ? -0.2 : 0.4),
       }
 
+      // Generate consultant-grade labels
+      const diversityLabel = index === 0 ? 'Best Overall' : index === 1 ? 'Best Value' : 'Unique Discovery'
+      
+      // Generate specific summary based on route
+      const routeDisplay = route.cities.join(' → ')
+      const primaryInterest = route.travelStyles[0] || 'exploration'
+      const destinationSummary = `${routeDisplay} route for ${primaryInterest} with ${route.transportMode} connections and ${route.fatigueLevel.toLowerCase()} fatigue`
+
       return {
         rank: index + 1,
         destinationId: `${route.cities[0].toLowerCase().replace(/\s+/g, '-')}-route-${index + 1}`,
         destinationName: route.cities[0],
         destinationType: 'city' as const,
         country: route.countries[0],
-        destinationSummary: `${route.cities.join(' → ')} offers a perfect ${tripType.toLowerCase()} experience combining ${route.travelStyles.slice(0, 3).join(', ')}`,
+        destinationSummary,
+        diversityLabel,
         whyRecommended: [
-          `Ideal ${tripType.toLowerCase()} for ${tripLength} days`,
+          `${diversityLabel}: ${routeRealismScore}/100 match for ${tripLength}-day ${tripType.toLowerCase()}`,
           `Matches your ${request.budget || 'moderate'} budget and ${route.travelStyles.slice(0, 2).join(', ')} interests`,
           `${transportLogic}`,
           `${travelFatigueLevel} travel fatigue with well-paced itinerary`,

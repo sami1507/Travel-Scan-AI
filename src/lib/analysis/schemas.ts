@@ -234,6 +234,8 @@ export const rankedDestinationSchema = z.object({
   destinationId: z.string(),
   destinationName: z.string(),
   destinationType: z.enum(['country', 'city']),
+  destinationSummary: z.string().optional().describe('Consultant-grade summary of the route'),
+  diversityLabel: z.string().optional().describe('Best Overall, Best Value, or Unique Discovery'),
   totalMatchScore: z.number().min(0).max(100),
   categoryScores: categoryScoresSchema,
   whyRecommended: z.array(z.string()),

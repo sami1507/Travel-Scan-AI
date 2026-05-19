@@ -20,6 +20,11 @@ export interface DiversityResult {
   preDiversityCountries: string[]
   postDiversityCountries: string[]
   fixedCountryMode: boolean
+  diversityLabels: string[]
+  regionSpread: number
+  mainstreamCount: number
+  uniqueOptionIncluded: boolean
+  diversityAppliedReason: string
 }
 
 /**
@@ -52,6 +57,11 @@ export function enforceRecommendationDiversity(
       preDiversityCountries,
       postDiversityCountries: preDiversityCountries,
       fixedCountryMode: true,
+      diversityLabels: ['Classic Route', 'Budget Route', 'Slower Pace'],
+      regionSpread: 1,
+      mainstreamCount: 0,
+      uniqueOptionIncluded: false,
+      diversityAppliedReason: 'Fixed country mode - showing route variations',
     }
   }
   
@@ -68,6 +78,11 @@ export function enforceRecommendationDiversity(
       preDiversityCountries,
       postDiversityCountries: recommendations.map(r => r.destinationName),
       fixedCountryMode: false,
+      diversityLabels: [],
+      regionSpread: 0,
+      mainstreamCount: 0,
+      uniqueOptionIncluded: false,
+      diversityAppliedReason: 'Insufficient recommendations',
     }
   }
   
@@ -77,9 +92,14 @@ export function enforceRecommendationDiversity(
   
   // If already diverse, no enforcement needed
   if (currentDiversityScore >= 0.9) {
+    const regions = new Set(preDiversityCountries.map(getRegion))
+    const mainstreamCount = preDiversityCountries.filter(c => !isLessMainstream(c)).length
+    
     logger.info('Diversity enforcement: Already diverse', {
       countries: preDiversityCountries.join(', '),
       diversityScore: currentDiversityScore,
+      regionSpread: regions.size,
+      mainstreamCount,
     })
     
     return {
@@ -89,6 +109,11 @@ export function enforceRecommendationDiversity(
       preDiversityCountries,
       postDiversityCountries: preDiversityCountries,
       fixedCountryMode: false,
+      diversityLabels: ['Best Overall', 'Best Value', 'Unique Discovery'],
+      regionSpread: regions.size,
+      mainstreamCount,
+      uniqueOptionIncluded: preDiversityCountries.some(isLessMainstream),
+      diversityAppliedReason: 'Already diverse',
     }
   }
   
@@ -101,12 +126,18 @@ export function enforceRecommendationDiversity(
   
   const postDiversityCountries = diversified.map(r => r.destinationName)
   const finalDiversityScore = new Set(postDiversityCountries).size / 3
+  const regions = new Set(postDiversityCountries.map(getRegion))
+  const mainstreamCount = postDiversityCountries.filter(c => !isLessMainstream(c)).length
+  const uniqueOptionIncluded = postDiversityCountries.some(isLessMainstream)
   
   logger.info('Diversity enforcement: Applied', {
     preDiversity: preDiversityCountries.join(', '),
     postDiversity: postDiversityCountries.join(', '),
     diversityScore: finalDiversityScore,
     improved: finalDiversityScore > currentDiversityScore,
+    regionSpread: regions.size,
+    mainstreamCount,
+    uniqueOptionIncluded,
   })
   
   return {
@@ -116,6 +147,11 @@ export function enforceRecommendationDiversity(
     preDiversityCountries,
     postDiversityCountries,
     fixedCountryMode: false,
+    diversityLabels: ['Best Overall', 'Best Value', 'Unique Discovery'],
+    regionSpread: regions.size,
+    mainstreamCount,
+    uniqueOptionIncluded,
+    diversityAppliedReason: `Enforced diversity: ${regions.size} regions, ${mainstreamCount} mainstream, unique=${uniqueOptionIncluded}`,
   }
 }
 

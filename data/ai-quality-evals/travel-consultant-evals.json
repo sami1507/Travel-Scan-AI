@@ -1,0 +1,434 @@
+{
+  "version": "1.0.0",
+  "description": "AI Travel Consultant Quality Evaluation Dataset",
+  "testCases": [
+    {
+      "id": "eval-001",
+      "name": "City + History + Food, 7 days, Autumn, Moderate",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "autumn",
+        "months": [9, 10, 11],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["history", "food", "city"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Core use case - should demonstrate diversity and consultant quality"
+    },
+    {
+      "id": "eval-002",
+      "name": "Nature + Hiking + Quiet, 7 days, Spring, Moderate",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "spring",
+        "months": [4, 5, 6],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["nature", "hiking", "quiet"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": false,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "bannedCountries": ["Italy", "Spain"],
+      "notes": "Should favor Balkans, Alps, less mainstream nature destinations"
+    },
+    {
+      "id": "eval-003",
+      "name": "Budget + Markets + Culture, 10 days, Autumn",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 10,
+        "season": "autumn",
+        "months": [9, 10, 11],
+        "budget": "budget",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["markets", "culture", "food"],
+        "accommodationPreference": "hostel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Budget constraint should favor Eastern Europe, Balkans, Morocco"
+    },
+    {
+      "id": "eval-004",
+      "name": "Winter Christmas Markets, 10 days",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 10,
+        "season": "winter",
+        "months": [12],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["markets", "city", "culture"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": false,
+        "mustNotAllBeMainstreamMediterranean": false,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Should favor Germany, Austria, Czech Republic for Christmas markets"
+    },
+    {
+      "id": "eval-005",
+      "name": "Fixed Country: Greece, Multi-City",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "summer",
+        "months": [7, 8],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["history", "beach", "food"],
+        "accommodationPreference": "hotel",
+        "fixedCountry": "Greece"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": false,
+        "mustHaveUniqueOption": false,
+        "mustNotAllBeMainstreamMediterranean": false,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 70
+      },
+      "notes": "Fixed country - should show diverse routes within Greece"
+    },
+    {
+      "id": "eval-006",
+      "name": "Fixed Country: Italy, Lower Fatigue",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "spring",
+        "months": [5, 6],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["food", "art", "history"],
+        "accommodationPreference": "hotel",
+        "fixedCountry": "Italy",
+        "pace": "slow"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": false,
+        "mustHaveUniqueOption": false,
+        "mustNotAllBeMainstreamMediterranean": false,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 70
+      },
+      "notes": "Slow pace should result in Low fatigue routes"
+    },
+    {
+      "id": "eval-007",
+      "name": "Single City Only",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 5,
+        "season": "autumn",
+        "months": [10, 11],
+        "budget": "moderate",
+        "tripStructure": "single-city-one-location",
+        "interests": ["museums", "food", "nightlife"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": false,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 70
+      },
+      "notes": "Single city - should recommend diverse cities across regions"
+    },
+    {
+      "id": "eval-008",
+      "name": "Multi-Country Route",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 14,
+        "season": "summer",
+        "months": [7, 8],
+        "budget": "moderate",
+        "tripStructure": "multi-country",
+        "interests": ["history", "culture", "city"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Multi-country should show realistic cross-border routes"
+    },
+    {
+      "id": "eval-009",
+      "name": "Family Comfort",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 10,
+        "season": "summer",
+        "months": [7, 8],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["family", "beach", "culture"],
+        "accommodationPreference": "apartment",
+        "travelStyle": "comfort"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": false,
+        "mustNotAllBeMainstreamMediterranean": false,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 70
+      },
+      "notes": "Family travel should prioritize low fatigue and comfort"
+    },
+    {
+      "id": "eval-010",
+      "name": "Friends Social Trip",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "summer",
+        "months": [7, 8],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["nightlife", "beach", "social"],
+        "accommodationPreference": "hostel",
+        "travelStyle": "social"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": false,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Social trip should favor party destinations and hostels"
+    },
+    {
+      "id": "eval-011",
+      "name": "Strict Budget",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 14,
+        "season": "autumn",
+        "months": [9, 10],
+        "budget": "budget",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["culture", "food", "markets"],
+        "accommodationPreference": "hostel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "bannedCountries": ["Switzerland", "Norway", "Iceland"],
+      "notes": "Budget should exclude expensive destinations"
+    },
+    {
+      "id": "eval-012",
+      "name": "Nature-First Balkans",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 10,
+        "season": "spring",
+        "months": [5, 6],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["nature", "hiking", "quiet"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Should favor Albania, Montenegro, Slovenia for nature"
+    },
+    {
+      "id": "eval-013",
+      "name": "Food/History Portugal vs Alternatives",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "spring",
+        "months": [4, 5, 6],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["food", "history", "wine"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "notes": "Should include Portugal but also alternatives like Georgia, Hungary"
+    },
+    {
+      "id": "eval-014",
+      "name": "Avoid Italy/Spain/Greece",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "summer",
+        "months": [7, 8],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": ["beach", "food", "culture"],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": true,
+        "maxGenericPhraseCount": 1,
+        "fallbackAllowed": false,
+        "minQualityScore": 75
+      },
+      "bannedCountries": ["Italy", "Spain", "Greece"],
+      "notes": "Should show Croatia, Portugal, Cyprus, Turkey as alternatives"
+    },
+    {
+      "id": "eval-015",
+      "name": "Weak Input - No Interests",
+      "input": {
+        "departureCity": "Tel Aviv",
+        "passportCountry": "Israel",
+        "tripLength": 7,
+        "season": "autumn",
+        "months": [9, 10, 11],
+        "budget": "moderate",
+        "tripStructure": "single-country-multi-city",
+        "interests": [],
+        "accommodationPreference": "hotel"
+      },
+      "expectedBehavior": {
+        "mustHave3Recommendations": true,
+        "mustHaveRoutes": true,
+        "mustHaveAtLeast2Regions": true,
+        "mustHaveUniqueOption": true,
+        "mustNotAllBeMainstreamMediterranean": true,
+        "mustExplainWhy": true,
+        "mustIncludeBeforeYouBookWarnings": false,
+        "maxGenericPhraseCount": 2,
+        "fallbackAllowed": true,
+        "minQualityScore": 65
+      },
+      "notes": "Weak input - fallback allowed, lower quality threshold"
+    }
+  ]
+}

@@ -63,11 +63,11 @@ function normalizeDestination(dest: RankedDestination): RankedDestination {
     sourceLabels: Array.isArray(dest.sourceLabels) ? dest.sourceLabels : [],
     
     // Handle nullable route fields
-    suggestedRoute: Array.isArray(dest.suggestedRoute) ? dest.suggestedRoute : null,
+    suggestedRoute: Array.isArray(dest.suggestedRoute) ? dest.suggestedRoute : [],
     recommendedNights: dest.recommendedNights && typeof dest.recommendedNights === 'object' 
       ? dest.recommendedNights 
-      : null,
-    routeWarnings: Array.isArray(dest.routeWarnings) ? dest.routeWarnings : null,
+      : {},
+    routeWarnings: Array.isArray(dest.routeWarnings) ? dest.routeWarnings : [],
     
     // Handle nullable text fields from compact schema
     destinationSummary: dest.destinationSummary || null,

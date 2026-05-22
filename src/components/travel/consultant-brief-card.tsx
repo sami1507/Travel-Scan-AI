@@ -124,7 +124,7 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
         </div>
 
         {/* Top Recommendations with Routes */}
-        {analysis.rankedDestinations && analysis.rankedDestinations.length > 0 && (
+        {Array.isArray(analysis.rankedDestinations) && analysis.rankedDestinations.length > 0 && (
           <div>
             <h4 className="font-bold text-base mb-3 flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -139,14 +139,14 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
                     </Badge>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm">{dest.destinationName}</div>
-                    {dest.suggestedRoute && dest.suggestedRoute.length > 1 && (
+                    <div className="font-semibold text-sm">{dest.destinationName || 'Unknown'}</div>
+                    {Array.isArray(dest.suggestedRoute) && dest.suggestedRoute.length > 1 && (
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {dest.suggestedRoute.join(' → ')}
                       </div>
                     )}
                     <div className="text-xs text-muted-foreground mt-1">
-                      Score: {dest.totalMatchScore}/100
+                      Score: {typeof dest.totalMatchScore === 'number' ? dest.totalMatchScore : 0}/100
                     </div>
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
         )}
 
         {/* Key Insights */}
-        {analysis.reasons && analysis.reasons.length > 0 && (
+        {Array.isArray(analysis.reasons) && analysis.reasons.length > 0 && (
           <div>
             <h4 className="font-bold text-base mb-3">Why These Routes</h4>
             <ul className="space-y-2">

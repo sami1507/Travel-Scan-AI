@@ -332,6 +332,107 @@ test('Preserves valid data', () => {
   }
 })
 
+// Test 11: Handles consultant component edge cases
+test('Handles consultant component edge cases', () => {
+  const badAnalysis: any = {
+    querySummary: 'Test',
+    rankedDestinations: [
+      {
+        destinationId: 'test',
+        destinationName: 'Test Destination',
+        // Missing whyRecommended
+        // Missing possibleDownsides
+        // Missing suggestedRoute
+        // Missing totalMatchScore
+        // Missing bestMonths
+        // Missing seasonality
+        // Missing travelFatigueLevel
+      },
+    ],
+    // Missing reasons
+    // Missing openAIUsed
+    // Missing fallbackUsed
+  }
+
+  const result = normalizeAnalysisForUI(badAnalysis)
+  
+  const dest = result.rankedDestinations[0]
+  
+  // Check arrays are safe
+  if (!Array.isArray(dest.whyRecommended)) {
+    throw new Error('whyRecommended should be array')
+  }
+  
+  if (!Array.isArray(dest.possibleDownsides)) {
+    throw new Error('possibleDownsides should be array')
+  }
+  
+  if (!Array.isArray(dest.suggestedRoute)) {
+    throw new Error('suggestedRoute should be array')
+  }
+  
+  if (!Array.isArray(dest.bestMonths)) {
+    throw new Error('bestMonths should be array')
+  }
+  
+  if (!Array.isArray(dest.routeWarnings)) {
+    throw new Error('routeWarnings should be array')
+  }
+  
+  // Check numbers have defaults
+  if (typeof dest.totalMatchScore !== 'number') {
+    throw new Error('totalMatchScore should be number')
+  }
+  
+  // Check recommendedNights is object
+  if (typeof dest.recommendedNights !== 'object') {
+    throw new Error('recommendedNights should be object')
+  }
+  
+  // Check reasons is array
+  if (!Array.isArray(result.reasons)) {
+    throw new Error('reasons should be array')
+  }
+})
+
+// Test 12: Handles undefined totalMatchScore
+test('Handles undefined totalMatchScore', () => {
+  const analysis: any = {
+    rankedDestinations: [
+      {
+        destinationId: 'test',
+        destinationName: 'Test',
+        totalMatchScore: undefined,
+      },
+    ],
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  const dest = result.rankedDestinations[0]
+  
+  if (typeof dest.totalMatchScore !== 'number') {
+    throw new Error('totalMatchScore should be number')
+  }
+  
+  if (dest.totalMatchScore !== 0) {
+    throw new Error('totalMatchScore should default to 0')
+  }
+})
+
+// Test 13: Handles missing queryContext interests
+test('Handles missing queryContext interests', () => {
+  const analysis: any = {
+    rankedDestinations: [],
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  
+  // Should not crash when accessing interests
+  if (!Array.isArray(result.rankedDestinations)) {
+    throw new Error('rankedDestinations should be array')
+  }
+})
+
 console.log(`\n📊 Results: ${passed} passed, ${failed} failed`)
 
 if (failed > 0) {

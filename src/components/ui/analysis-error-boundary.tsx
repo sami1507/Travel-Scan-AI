@@ -28,7 +28,10 @@ export class AnalysisErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Analysis Error Boundary caught an error:', error, errorInfo)
+      console.error('Analysis Error Boundary caught an error:')
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+      console.error('Component stack:', errorInfo.componentStack)
     }
   }
 

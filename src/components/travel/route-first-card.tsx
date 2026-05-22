@@ -42,18 +42,20 @@ export function RouteFirstCard({
   const [saved, setSaved] = useState(false)
   const [watched, setWatched] = useState(false)
 
-  const getScoreLabel = (score: number) => {
-    if (score >= 85) return 'Excellent Match'
-    if (score >= 75) return 'Strong Match'
-    if (score >= 65) return 'Good Compromise'
-    if (score >= 55) return 'Acceptable Option'
+  const getScoreLabel = (score: number | undefined) => {
+    const s = typeof score === 'number' ? score : 0
+    if (s >= 85) return 'Excellent Match'
+    if (s >= 75) return 'Strong Match'
+    if (s >= 65) return 'Good Compromise'
+    if (s >= 55) return 'Acceptable Option'
     return 'Consider Alternatives'
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 85) return 'text-green-600'
-    if (score >= 75) return 'text-blue-600'
-    if (score >= 65) return 'text-yellow-600'
+  const getScoreColor = (score: number | undefined) => {
+    const s = typeof score === 'number' ? score : 0
+    if (s >= 85) return 'text-green-600'
+    if (s >= 75) return 'text-blue-600'
+    if (s >= 65) return 'text-yellow-600'
     return 'text-orange-600'
   }
 
@@ -67,9 +69,9 @@ export function RouteFirstCard({
     if (destination.seasonality?.honestConsultantNote) {
       return destination.seasonality.honestConsultantNote.substring(0, 100)
     }
-    if (destination.bestMonths && destination.bestMonths.length > 0) {
+    if (Array.isArray(destination.bestMonths) && destination.bestMonths.length > 0) {
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      const months = destination.bestMonths.slice(0, 3).map(m => monthNames[m - 1]).join(', ')
+      const months = destination.bestMonths.slice(0, 3).map(m => monthNames[m - 1] || 'Unknown').join(', ')
       return `Best in ${months}`
     }
     return 'Check seasonal conditions before booking'
@@ -171,7 +173,7 @@ export function RouteFirstCard({
           
           <div>
             <h3 className="text-xl font-bold">{destination.destinationName}</h3>
-            {destination.suggestedRoute && destination.suggestedRoute.length > 1 && (
+            {Array.isArray(destination.suggestedRoute) && destination.suggestedRoute.length > 1 && (
               <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                 <Route className="h-4 w-4" />
                 <span>{destination.suggestedRoute.join(' → ')}</span>
@@ -184,7 +186,7 @@ export function RouteFirstCard({
         <div className="flex items-center justify-between">
           <div>
             <div className={`text-2xl font-bold ${getScoreColor(destination.totalMatchScore)}`}>
-              {destination.totalMatchScore}/100
+              {typeof destination.totalMatchScore === 'number' ? destination.totalMatchScore : 0}/100
             </div>
             <div className="text-xs text-muted-foreground">{getScoreLabel(destination.totalMatchScore)}</div>
           </div>
@@ -209,7 +211,7 @@ export function RouteFirstCard({
         </div>
 
         {/* Why It Fits */}
-        {destination.whyRecommended && destination.whyRecommended.length > 0 && (
+        {Array.isArray(destination.whyRecommended) && destination.whyRecommended.length > 0 && (
           <div className="space-y-1">
             <div className="text-xs font-semibold text-muted-foreground uppercase">Why it fits</div>
             <ul className="space-y-1">
@@ -224,7 +226,7 @@ export function RouteFirstCard({
         )}
 
         {/* Watch Out */}
-        {destination.possibleDownsides && destination.possibleDownsides.length > 0 && (
+        {Array.isArray(destination.possibleDownsides) && destination.possibleDownsides.length > 0 && (
           <div className="flex items-start gap-2 p-2 bg-orange-50 border border-orange-200 rounded">
             <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
             <div className="flex-1">

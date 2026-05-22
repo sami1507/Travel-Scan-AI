@@ -12,6 +12,9 @@ import { TravelLoading } from '@/components/ui/travel-loading'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { EnhancedRecommendationCard } from '@/components/travel/enhanced-recommendation-card'
+import { RouteFirstCard } from '@/components/travel/route-first-card'
+import { ConsultantBriefCard } from '@/components/travel/consultant-brief-card'
+import { BeforeYouBookChecklist } from '@/components/travel/before-you-book-checklist'
 import { RecommendationDetail } from '@/components/travel/recommendation-detail'
 import { PersonalizationIndicator } from '@/components/travel/personalization-indicator'
 import { SaveAnalysisDialog } from '@/components/travel/save-analysis-dialog'
@@ -246,70 +249,12 @@ export default function AnalysisPage() {
           {/* Personalization Indicator */}
           <PersonalizationIndicator personalization={analysis.personalization} />
 
-          {/* Consultant Brief */}
-          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 shadow-xl">
-            <CardHeader className="pb-5">
-              <div className="flex items-start justify-between gap-6">
-                <div className="flex-1">
-                  <CardTitle className="text-2xl font-bold mb-3">Consultant Brief</CardTitle>
-                  <CardDescription className="text-base leading-relaxed">
-                    {analysis.querySummary || 'Analysis complete. Review your personalized recommendations below.'}
-                  </CardDescription>
-                </div>
-                <div className="text-right">
-                  <div className={`text-4xl font-bold ${getConfidenceColor(analysis.confidence)}`}>
-                    {Math.round(analysis.confidence * 100)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1 font-medium">Analysis Confidence</div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Top Recommendations with Routes */}
-              {analysis.rankedDestinations && analysis.rankedDestinations.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-base mb-3 flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    Top Recommendations
-                  </h4>
-                  <div className="space-y-3">
-                    {analysis.rankedDestinations.slice(0, 3).map((dest, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        {dest.diversityLabel && (
-                          <Badge variant="secondary" className="text-xs px-2 py-1 shrink-0">
-                            {dest.diversityLabel}
-                          </Badge>
-                        )}
-                        <div className="flex-1">
-                          <div className="font-semibold text-sm">{dest.destinationName}</div>
-                          {dest.suggestedRoute && dest.suggestedRoute.length > 1 && (
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {dest.suggestedRoute.join(' → ')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Key Reasons */}
-              {analysis.reasons.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-base mb-3">Key Insights</h4>
-                  <ul className="space-y-2">
-                    {analysis.reasons.slice(0, 3).map((reason, i) => (
-                      <li key={i} className="text-sm flex items-start gap-3">
-                        <span className="text-primary mt-0.5 font-bold">•</span>
-                        <span className="leading-relaxed">{reason}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* AI Travel Consultant Brief */}
+          <ConsultantBriefCard 
+            analysis={analysis}
+            queryContext={queryContext}
+            confidence={analysis.confidence}
+          />
 
           {/* Warnings & Assumptions */}
           {(analysis.warnings.length > 0 || analysis.assumptions.length > 0) && (
@@ -371,10 +316,10 @@ export default function AnalysisPage() {
             />
           )}
 
-          {/* Ranked Destinations */}
+          {/* Route-First Recommendations */}
           <div>
             <h2 className="text-3xl font-bold mb-6 animate-fade-up opacity-0">
-              All Destinations ({analysis.rankedDestinations.length})
+              Route Recommendations ({analysis.rankedDestinations.length})
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {analysis.rankedDestinations.slice(0, 3).map((destination, index) => {
@@ -384,10 +329,11 @@ export default function AnalysisPage() {
                     key={destination.destinationId}
                     className={`animate-scale-in opacity-0 ${delayClass}`}
                   >
-                    <EnhancedRecommendationCard
+                    <RouteFirstCard
                       destination={destination}
                       rank={index + 1}
                       onViewDetails={() => setSelectedDestination(destination)}
+                      onSaveRoute={() => handleSaveDestination(destination)}
                       queryContext={queryContext || undefined}
                     />
                   </div>

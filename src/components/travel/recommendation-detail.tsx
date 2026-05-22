@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { X, MapPin, Calendar, DollarSign, Shield, Plane, AlertTriangle, Info } from 'lucide-react'
+import { BeforeYouBookChecklist } from './before-you-book-checklist'
 import type { RankedDestination } from '@/lib/analysis/schemas'
 import { ScoreBreakdown } from './score-breakdown'
 import { ExternalActions } from './external-actions'
@@ -231,6 +232,9 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
               )}
             </CardContent>
           </Card>
+
+          {/* Before You Book Checklist */}
+          <BeforeYouBookChecklist destination={destination} />
 
           {/* Itinerary Map */}
           <ItineraryMapDisplay 

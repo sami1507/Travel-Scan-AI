@@ -123,6 +123,8 @@ export class TravelAnalysisEngine {
    * Analyze travel request and return structured recommendations
    */
   async analyze(request: AnalysisRequest): Promise<TravelAnalysisResponse> {
+    const analysisStartTime = Date.now()
+    
     try {
       logger.info('Travel Analysis Engine: Starting analysis', request)
 
@@ -351,10 +353,11 @@ export class TravelAnalysisEngine {
         }
 
         const fetchFresh = async () => {
-            const startTime = Date.now()
+            const openAIStartTime = Date.now()
             const fastMode = true // Use fast core analysis mode
             const compactPrompt = buildCompactTravelAnalysisPrompt(request)
             const systemPrompt = getCompactSystemInstructions()
+            const systemPromptLength = systemPrompt.length
             
             logger.info('OpenAI analysis request started', {
               model: this.model,
@@ -394,9 +397,9 @@ export class TravelAnalysisEngine {
               ProviderConfigs.OPENAI
             )
 
-            const duration = Date.now() - startTime
+            const openAIDurationMs = Date.now() - openAIStartTime
             logger.info('OpenAI analysis completed', {
-              duration,
+              duration: openAIDurationMs,
               tokensUsed: completion.usage?.total_tokens,
               promptTokens: completion.usage?.prompt_tokens,
               completionTokens: completion.usage?.completion_tokens,
@@ -480,6 +483,11 @@ export class TravelAnalysisEngine {
             ;(fullResponse as any).fallbackUsed = false
             ;(fullResponse as any).fallbackReason = 'none'
             ;(fullResponse as any).cacheEligible = true
+            ;(fullResponse as any).openAIDurationMs = openAIDurationMs
+            ;(fullResponse as any).systemPromptLength = systemPromptLength
+            ;(fullResponse as any).promptTokens = completion.usage?.prompt_tokens ?? null
+            ;(fullResponse as any).completionTokens = completion.usage?.completion_tokens ?? null
+            ;(fullResponse as any).totalTokens = completion.usage?.total_tokens ?? null
 
             return fullResponse
         }
@@ -487,35 +495,47 @@ export class TravelAnalysisEngine {
         // Use cache or fetch fresh based on bypass flag
         if (bypassCache) {
           analysis = await fetchFresh()
+          ;(analysis as any).cacheStatus = 'BYPASSED'
+          ;(analysis as any).cachedResultType = null
           logger.info('Travel Analysis Cache: Skipped (bypassed)', {
             openAIUsed: (analysis as any).openAIUsed,
             cacheEligible: (analysis as any).cacheEligible,
+            cacheStatus: 'BYPASSED',
           })
         } else {
           // Try to get from cache first
           const cached = await cacheManager.get<TravelAnalysisResponse>(cacheKey, CachePresets.OPENAI_ANALYSIS.namespace)
           if (cached) {
             analysis = cached
+            ;(analysis as any).cacheStatus = 'HIT'
+            ;(analysis as any).cachedResultType = 'openai'
             logger.info('Travel Analysis Cache: HIT', {
               cachedResultType: 'openai',
+              cacheStatus: 'HIT',
             })
           } else {
             // Fetch fresh
             analysis = await fetchFresh()
+            ;(analysis as any).cacheStatus = 'MISS'
             
             // Only cache if it's a successful OpenAI result
             if ((analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
               await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
+              ;(analysis as any).cacheStatus = 'SET'
+              ;(analysis as any).cachedResultType = 'openai'
               logger.info('Travel Analysis Cache: SET', {
                 cachedResultType: 'openai',
                 openAIUsed: true,
                 fallbackUsed: false,
+                cacheStatus: 'SET',
               })
             } else {
+              ;(analysis as any).cachedResultType = null
               logger.info('Travel Analysis Cache: SKIPPED (not eligible)', {
                 openAIUsed: (analysis as any).openAIUsed,
                 fallbackUsed: (analysis as any).fallbackUsed,
                 cacheEligible: (analysis as any).cacheEligible,
+                cacheStatus: 'MISS',
               })
             }
           }
@@ -555,12 +575,15 @@ export class TravelAnalysisEngine {
         ;(fallbackAnalysis as any).fallbackUsed = true
         ;(fallbackAnalysis as any).fallbackReason = isTimeout ? 'timeout' : 'provider_error'
         ;(fallbackAnalysis as any).cacheEligible = false
+        ;(fallbackAnalysis as any).cacheStatus = 'SKIPPED_FALLBACK'
+        ;(fallbackAnalysis as any).cachedResultType = null
         
         logger.info('Fallback analysis generated', {
           openAIUsed: false,
           fallbackUsed: true,
           fallbackReason: isTimeout ? 'timeout' : 'provider_error',
           cacheEligible: false,
+          cacheStatus: 'SKIPPED_FALLBACK',
           routeCandidatePoolUsed: routeCandidatePool.length > 0,
         })
         
@@ -795,6 +818,9 @@ export class TravelAnalysisEngine {
           interests: request.interests,
         })
 
+        // Calculate total duration
+        const durationMs = Date.now() - analysisStartTime
+
         // Add complete analysis metadata
         const analysisWithMeta = analysis as any
         analysisWithMeta._meta = {
@@ -802,13 +828,16 @@ export class TravelAnalysisEngine {
           openAIUsed: analysisWithMeta.openAIUsed || false,
           fallbackUsed: analysisWithMeta.fallbackUsed || false,
           fallbackReason: analysisWithMeta.fallbackReason || null,
-          modelUsed: this.openaiAvailable ? this.model : null,
-          durationMs: null, // TODO: Track actual duration
-          cacheStatus: analysisWithMeta.cacheEligible === false ? 'SKIPPED' : 'UNKNOWN',
-          cachedResultType: analysisWithMeta.openAIUsed ? 'openai' : analysisWithMeta.fallbackUsed ? 'fallback' : null,
+          modelUsed: analysisWithMeta.openAIUsed ? this.model : null,
+          durationMs,
+          openAIDurationMs: analysisWithMeta.openAIDurationMs ?? null,
+          cacheStatus: analysisWithMeta.cacheStatus || 'UNKNOWN',
+          cachedResultType: analysisWithMeta.cachedResultType ?? null,
           compactPromptUsed: true,
-          systemPromptLength: null, // TODO: Track actual prompt length
-          completionTokens: null, // TODO: Track from OpenAI response
+          systemPromptLength: analysisWithMeta.systemPromptLength ?? null,
+          promptTokens: analysisWithMeta.promptTokens ?? null,
+          completionTokens: analysisWithMeta.completionTokens ?? null,
+          totalTokens: analysisWithMeta.totalTokens ?? null,
           candidatePoolUsed: routeCandidatePool.length > 0,
           candidatePoolCount: routeCandidatePool.length,
           diversityScore: diversityResult.diversityScore,
@@ -825,14 +854,26 @@ export class TravelAnalysisEngine {
           scoreHonestyPassed: qualityResult.passed,
         }
 
-        // Log quality score
-        const source = analysisWithMeta.openAIUsed ? 'OPENAI_SUCCESS' : analysisWithMeta.fallbackUsed ? 'FALLBACK_USED' : 'UNKNOWN'
-        logger.info(`Travel Analysis Source: ${source}`, {
-          model: analysisWithMeta._meta.modelUsed,
+        // Log comprehensive final metadata
+        const source = analysisWithMeta.openAIUsed ? 'openai' : analysisWithMeta.fallbackUsed ? 'fallback' : analysisWithMeta.cacheStatus === 'HIT' ? 'cache' : 'unknown'
+        logger.info('Travel Analysis Final Metadata', {
+          analysisId: analysisWithMeta._meta.analysisId,
+          source,
+          openAIUsed: analysisWithMeta._meta.openAIUsed,
+          fallbackUsed: analysisWithMeta._meta.fallbackUsed,
+          fallbackReason: analysisWithMeta._meta.fallbackReason,
+          modelUsed: analysisWithMeta._meta.modelUsed,
+          durationMs: analysisWithMeta._meta.durationMs,
+          openAIDurationMs: analysisWithMeta._meta.openAIDurationMs,
+          systemPromptLength: analysisWithMeta._meta.systemPromptLength,
+          promptTokens: analysisWithMeta._meta.promptTokens,
+          completionTokens: analysisWithMeta._meta.completionTokens,
+          totalTokens: analysisWithMeta._meta.totalTokens,
+          cacheStatus: analysisWithMeta._meta.cacheStatus,
+          cachedResultType: analysisWithMeta._meta.cachedResultType,
           consultantQualityScore: analysisWithMeta._meta.consultantQualityScore,
           consultantQualityGrade: analysisWithMeta._meta.consultantQualityGrade,
           genericPhraseCount: analysisWithMeta._meta.genericPhraseCount,
-          diversityScore: analysisWithMeta._meta.diversityScore,
           regionSpread: analysisWithMeta._meta.regionSpread,
           uniqueOptionIncluded: analysisWithMeta._meta.uniqueOptionIncluded,
           candidatePoolUsed: analysisWithMeta._meta.candidatePoolUsed,

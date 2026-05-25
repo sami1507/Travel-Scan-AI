@@ -785,6 +785,65 @@ export class TravelAnalysisEngine {
         logger.warn('Failed to record learning event, continuing', learningError)
       }
 
+      // Step 11: Score consultant quality and add complete metadata
+      try {
+        const { scoreConsultantQuality } = await import('./consultant-quality-score')
+        const qualityScore = scoreConsultantQuality(analysis, {
+          query: request.query,
+          budget: request.budget,
+          travel_months: request.travelMonths,
+          interests: request.interests,
+        })
+
+        // Add complete analysis metadata
+        const analysisWithMeta = analysis as any
+        analysisWithMeta._meta = {
+          analysisId: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          openAIUsed: analysisWithMeta.openAIUsed || false,
+          fallbackUsed: analysisWithMeta.fallbackUsed || false,
+          fallbackReason: analysisWithMeta.fallbackReason || null,
+          modelUsed: this.openaiAvailable ? this.model : null,
+          durationMs: null, // TODO: Track actual duration
+          cacheStatus: analysisWithMeta.cacheEligible === false ? 'SKIPPED' : 'UNKNOWN',
+          cachedResultType: analysisWithMeta.openAIUsed ? 'openai' : analysisWithMeta.fallbackUsed ? 'fallback' : null,
+          compactPromptUsed: true,
+          systemPromptLength: null, // TODO: Track actual prompt length
+          completionTokens: null, // TODO: Track from OpenAI response
+          candidatePoolUsed: routeCandidatePool.length > 0,
+          candidatePoolCount: routeCandidatePool.length,
+          diversityScore: diversityResult.diversityScore,
+          regionSpread: diversityResult.regionSpread,
+          mainstreamCount: diversityResult.mainstreamCount,
+          uniqueOptionIncluded: diversityResult.uniqueOptionIncluded,
+          consultantQualityScore: qualityScore.totalScore,
+          consultantQualityGrade: qualityScore.totalScore >= 90 ? 'Excellent' : qualityScore.totalScore >= 80 ? 'Good' : qualityScore.totalScore >= 70 ? 'Acceptable' : 'Needs Improvement',
+          consultantQualityIssues: qualityScore.issues,
+          consultantQualityRecommendations: qualityScore.recommendations,
+          genericPhraseCount: qualityScore.genericPhrases.length,
+          genericPhrases: qualityScore.genericPhrases,
+          routeCompletenessScore: (analysis.rankedDestinations.filter((d: any) => d.suggestedRoute && d.suggestedRoute.length > 1).length / Math.max(1, analysis.rankedDestinations.length)) * 100,
+          scoreHonestyPassed: qualityResult.passed,
+        }
+
+        // Log quality score
+        const source = analysisWithMeta.openAIUsed ? 'OPENAI_SUCCESS' : analysisWithMeta.fallbackUsed ? 'FALLBACK_USED' : 'UNKNOWN'
+        logger.info(`Travel Analysis Source: ${source}`, {
+          model: analysisWithMeta._meta.modelUsed,
+          consultantQualityScore: analysisWithMeta._meta.consultantQualityScore,
+          consultantQualityGrade: analysisWithMeta._meta.consultantQualityGrade,
+          genericPhraseCount: analysisWithMeta._meta.genericPhraseCount,
+          diversityScore: analysisWithMeta._meta.diversityScore,
+          regionSpread: analysisWithMeta._meta.regionSpread,
+          uniqueOptionIncluded: analysisWithMeta._meta.uniqueOptionIncluded,
+          candidatePoolUsed: analysisWithMeta._meta.candidatePoolUsed,
+          candidatePoolCount: analysisWithMeta._meta.candidatePoolCount,
+          finalCountries: analysis.rankedDestinations.map((d: any) => d.destinationName),
+          finalRoutes: analysis.rankedDestinations.map((d: any) => d.suggestedRoute?.join(' → ') || d.destinationName),
+        })
+      } catch (qualityError) {
+        logger.warn('Failed to score consultant quality, continuing', qualityError)
+      }
+
       return analysis
     } catch (error) {
       logger.error('Travel Analysis Engine: Analysis failed', error)

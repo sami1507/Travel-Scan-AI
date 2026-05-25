@@ -335,6 +335,7 @@ export default function AnalysisPage() {
                       onViewDetails={() => setSelectedDestination(destination)}
                       onSaveRoute={() => handleSaveDestination(destination)}
                       queryContext={queryContext || undefined}
+                      analysisMeta={(analysis as any)?._meta}
                     />
                   </div>
                 )

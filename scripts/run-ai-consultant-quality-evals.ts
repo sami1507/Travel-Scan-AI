@@ -265,9 +265,33 @@ async function runEvaluation(testCase: EvalTestCase): Promise<EvalResult> {
   let analysis: TravelAnalysisResponse | null = null
 
   if (RUN_LIVE) {
-    // TODO: Call actual analysis engine
-    warnings.push('Live mode not yet implemented - using mock')
-    analysis = createMockAnalysis(testCase)
+    try {
+      // Call real analysis engine
+      const { TravelAnalysisEngine } = await import('../src/lib/analysis/engine')
+      const engine = new TravelAnalysisEngine()
+      
+      const request = {
+        query: `${testCase.input.tripLength}-day ${testCase.input.tripStructure} trip with ${testCase.input.interests.join(', ')} interests`,
+        departureCity: testCase.input.departureCity,
+        passportCountry: testCase.input.passportCountry,
+        budget: testCase.input.budget as any,
+        travelMonths: testCase.input.months,
+        tripLength: testCase.input.tripLength,
+        interests: testCase.input.interests,
+        tripStructure: testCase.input.tripStructure as any,
+        accommodationPreference: testCase.input.accommodationPreference,
+        pace: testCase.input.pace as any,
+        travelStyle: testCase.input.travelStyle as any,
+        destination: testCase.input.fixedCountry,
+      }
+      
+      analysis = await engine.analyze(request)
+      console.log('  ✓ Live analysis completed')
+    } catch (error) {
+      warnings.push(`Live analysis failed: ${error instanceof Error ? error.message : String(error)}`)
+      console.log('  ⚠️  Falling back to mock')
+      analysis = createMockAnalysis(testCase)
+    }
   } else {
     analysis = createMockAnalysis(testCase)
   }
@@ -291,10 +315,11 @@ async function runEvaluation(testCase: EvalTestCase): Promise<EvalResult> {
     }
   }
 
-  // Extract metadata
+  // Extract metadata (check both top-level and _meta)
   const metadata = analysis as any
-  const openAIUsed = metadata.openAIUsed === true
-  const fallbackUsed = metadata.fallbackUsed === true
+  const metaData = metadata._meta || metadata
+  const openAIUsed = metaData.openAIUsed === true
+  const fallbackUsed = metaData.fallbackUsed === true
 
   // Score quality
   const qualityResult = scoreConsultantQuality(analysis, {

@@ -228,18 +228,19 @@ export function scoreConsultantQuality(
 
   dataHonesty = Math.min(15, dataHonesty)
 
-  // Calculate total score
-  const totalScore = Math.round(
+  // Calculate total score (max 100)
+  const rawTotal =
     routeSpecificity +
-      seasonReality +
-      budgetHonesty +
-      diversity +
-      fatigueLogic +
-      userFit +
-      warningQuality +
-      genericLanguagePenalty * 0.15 + // Scale down to 15 points max
-      dataHonesty
-  )
+    seasonReality +
+    budgetHonesty +
+    diversity +
+    fatigueLogic +
+    userFit +
+    warningQuality +
+    genericLanguagePenalty * 0.15 + // Scale down to 15 points max
+    dataHonesty
+
+  const totalScore = Math.min(100, Math.max(0, Math.round(rawTotal)))
 
   // Add recommendations based on scores
   if (routeSpecificity < 10) {

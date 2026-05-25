@@ -26,6 +26,7 @@ interface RouteFirstCardProps {
     travel_months?: number[]
     interests?: string[]
   }
+  analysisMeta?: any
 }
 
 export function RouteFirstCard({
@@ -37,7 +38,8 @@ export function RouteFirstCard({
   onMakeCheaper,
   onReduceFatigue,
   onGroupPlanning,
-  queryContext
+  queryContext,
+  analysisMeta
 }: RouteFirstCardProps) {
   const [saved, setSaved] = useState(false)
   const [watched, setWatched] = useState(false)
@@ -89,11 +91,17 @@ export function RouteFirstCard({
       signalValue: {
         destinationId: destination.destinationId,
         destinationName: destination.destinationName,
+        routeCities: destination.suggestedRoute,
+        diversityLabel: destination.diversityLabel,
         rank,
         score: destination.totalMatchScore,
         query: queryContext?.query,
         budget: queryContext?.budget,
         travel_months: queryContext?.travel_months,
+        analysisId: analysisMeta?.analysisId,
+        consultantQualityScore: analysisMeta?.consultantQualityScore,
+        openAIUsed: analysisMeta?.openAIUsed,
+        fallbackUsed: analysisMeta?.fallbackUsed,
       },
     })
   }
@@ -110,8 +118,11 @@ export function RouteFirstCard({
       signalValue: {
         destinationId: destination.destinationId,
         destinationName: destination.destinationName,
+        routeCities: destination.suggestedRoute,
+        diversityLabel: destination.diversityLabel,
         rank,
         query: queryContext?.query,
+        analysisId: analysisMeta?.analysisId,
       },
     })
   }
@@ -127,6 +138,7 @@ export function RouteFirstCard({
         destinationId: destination.destinationId,
         action: 'make-cheaper',
         query: queryContext?.query,
+        analysisId: analysisMeta?.analysisId,
       },
     })
   }
@@ -142,6 +154,7 @@ export function RouteFirstCard({
         destinationId: destination.destinationId,
         currentFatigue: destination.travelFatigueLevel,
         query: queryContext?.query,
+        analysisId: analysisMeta?.analysisId,
       },
     })
   }
@@ -156,6 +169,7 @@ export function RouteFirstCard({
       signalValue: {
         destinationId: destination.destinationId,
         query: queryContext?.query,
+        analysisId: analysisMeta?.analysisId,
       },
     })
   }

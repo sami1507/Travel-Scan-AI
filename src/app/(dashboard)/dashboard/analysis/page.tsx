@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route } from 'lucide-react'
+import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route, RefreshCw } from 'lucide-react'
 import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
 import { TravelLoading } from '@/components/ui/travel-loading'
@@ -275,6 +275,39 @@ export default function AnalysisPage() {
 
       {/* Results */}
       {analysis && !loading && (
+        <>
+          {/* Emergency check for malformed analysis */}
+          {!Array.isArray(analysis.rankedDestinations) || analysis.rankedDestinations.length === 0 ? (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-orange-900 mb-2">
+                      Incompatible Analysis Format
+                    </p>
+                    <p className="text-sm text-orange-800 leading-relaxed mb-4">
+                      We could not display this saved analysis because it uses an older format or is incomplete. 
+                      Run a fresh analysis to generate a clean result.
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        clearAnalysisClientState()
+                        setAnalysis(null)
+                        setSelectedDestination(null)
+                        setCompareSelections([])
+                        setCompareMode(false)
+                      }}
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Run Fresh Analysis
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
         <AnalysisErrorBoundary onReset={() => {
           clearAnalysisClientState()
           setAnalysis(null)
@@ -314,7 +347,9 @@ export default function AnalysisPage() {
           </div>
 
           {/* Personalization Indicator */}
-          <PersonalizationIndicator personalization={analysis.personalization} />
+          {analysis.personalization && (
+            <PersonalizationIndicator personalization={analysis.personalization} />
+          )}
 
           {/* AI Travel Consultant Brief */}
           <SectionErrorBoundary 
@@ -329,9 +364,9 @@ export default function AnalysisPage() {
           </SectionErrorBoundary>
 
           {/* Warnings & Assumptions */}
-          {(analysis.warnings.length > 0 || analysis.assumptions.length > 0) && (
+          {(Array.isArray(analysis.warnings) && analysis.warnings.length > 0) || (Array.isArray(analysis.assumptions) && analysis.assumptions.length > 0) ? (
             <div className="grid gap-6 md:grid-cols-2">
-              {analysis.warnings.length > 0 && (
+              {Array.isArray(analysis.warnings) && analysis.warnings.length > 0 && (
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
@@ -344,7 +379,7 @@ export default function AnalysisPage() {
                   </AlertDescription>
                 </Alert>
               )}
-              {analysis.assumptions.length > 0 && (
+              {Array.isArray(analysis.assumptions) && analysis.assumptions.length > 0 && (
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
@@ -358,10 +393,10 @@ export default function AnalysisPage() {
                 </Alert>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* Phase 3: Ranking Explanation */}
-          {analysis.rankedDestinations.length > 0 && (
+          {Array.isArray(analysis.rankedDestinations) && analysis.rankedDestinations.length > 0 && (
             <RankingExplanation
               topDestination={analysis.rankedDestinations[0]}
               alternatives={analysis.rankedDestinations.slice(1, 3)}
@@ -370,7 +405,7 @@ export default function AnalysisPage() {
           )}
 
           {/* Phase 3: Route Visualization & Itinerary */}
-          {analysis.recommendedRoutes && analysis.recommendedRoutes.length > 0 && (
+          {analysis.recommendedRoutes && Array.isArray(analysis.recommendedRoutes) && analysis.recommendedRoutes.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Recommended Itinerary</h2>
               <div className="grid gap-4 lg:grid-cols-2">
@@ -436,28 +471,32 @@ export default function AnalysisPage() {
           </SectionErrorBoundary>
 
           {/* Data Sources */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Data Sources & Freshness</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {analysis.sourcesUsed.map((source, idx) => (
-                  <Badge key={idx} variant="secondary" className="px-3 py-1">
-                    {source}
-                  </Badge>
-                ))}
-              </div>
-              <div className="text-sm text-muted-foreground space-y-1.5">
-                <p><span className="font-medium">Knowledge Base:</span> {analysis.dataFreshness.knowledgeBase}</p>
-                <p><span className="font-medium">Provider Data:</span> {analysis.dataFreshness.providerData}</p>
-                <p><span className="font-medium">Last Updated:</span> {new Date(analysis.dataFreshness.lastUpdated).toLocaleString()}</p>
-              </div>
-            </CardContent>
-          </Card>
+          {Array.isArray(analysis.sourcesUsed) && analysis.sourcesUsed.length > 0 && analysis.dataFreshness && (
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold">Data Sources & Freshness</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {analysis.sourcesUsed.map((source, idx) => (
+                    <Badge key={idx} variant="secondary" className="px-3 py-1">
+                      {source}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="text-sm text-muted-foreground space-y-1.5">
+                  <p><span className="font-medium">Knowledge Base:</span> {analysis.dataFreshness.knowledgeBase || 'Unknown'}</p>
+                  <p><span className="font-medium">Provider Data:</span> {analysis.dataFreshness.providerData || 'Unknown'}</p>
+                  {analysis.dataFreshness.lastUpdated && (
+                    <p><span className="font-medium">Last Updated:</span> {new Date(analysis.dataFreshness.lastUpdated).toLocaleString()}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Next Best Alternatives */}
-          {analysis.nextBestAlternatives && analysis.nextBestAlternatives.length > 0 && (
+          {analysis.nextBestAlternatives && Array.isArray(analysis.nextBestAlternatives) && analysis.nextBestAlternatives.length > 0 && (
             <Card className="border-2">
               <CardHeader>
                 <CardTitle className="text-lg font-bold">Alternative Destinations</CardTitle>
@@ -475,6 +514,8 @@ export default function AnalysisPage() {
           )}
           </div>
         </AnalysisErrorBoundary>
+          )}
+        </>
       )}
 
       {/* Detail Modal */}

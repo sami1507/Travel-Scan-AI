@@ -28,28 +28,70 @@ export class AnalysisErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Analysis Error Boundary caught an error:')
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-      console.error('Component stack:', errorInfo.componentStack)
+      console.error('[AnalysisErrorBoundary] CAUGHT ERROR:', {
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      })
       
       // Try to log analysis shape if available
       try {
-        const analysisElement = (this.props.children as any)?.props?.children
-        if (analysisElement) {
-          console.log('Analysis data shape check:')
-          const analysis = analysisElement?.props?.analysis
-          if (analysis) {
-            console.log('- has rankedDestinations:', Array.isArray(analysis.rankedDestinations))
-            console.log('- rankedDestinations length:', analysis.rankedDestinations?.length)
-            console.log('- has _meta:', !!analysis._meta)
-            console.log('- fallbackUsed:', analysis.fallbackUsed || analysis._meta?.fallbackUsed)
-            console.log('- openAIUsed:', analysis.openAIUsed || analysis._meta?.openAIUsed)
-            console.log('- cacheStatus:', analysis._meta?.cacheStatus)
+        // Try multiple paths to find analysis object
+        let analysis = null
+        
+        // Path 1: Direct children props
+        const childrenProps = (this.props.children as any)?.props
+        if (childrenProps?.analysis) {
+          analysis = childrenProps.analysis
+        }
+        
+        // Path 2: Nested children
+        if (!analysis && childrenProps?.children) {
+          const nestedProps = (childrenProps.children as any)?.props
+          if (nestedProps?.analysis) {
+            analysis = nestedProps.analysis
           }
         }
+        
+        if (analysis) {
+          console.error('[AnalysisErrorBoundary] Analysis shape:', {
+            hasAnalysis: !!analysis,
+            rankedDestinationsType: typeof analysis.rankedDestinations,
+            rankedDestinationsIsArray: Array.isArray(analysis.rankedDestinations),
+            rankedDestinationsLength: analysis.rankedDestinations?.length,
+            topRecommendationsType: typeof analysis.topRecommendations,
+            topRecommendationsIsArray: Array.isArray(analysis.topRecommendations),
+            hasMeta: !!analysis._meta,
+            cacheStatus: analysis._meta?.cacheStatus,
+            openAIUsed: analysis.openAIUsed || analysis._meta?.openAIUsed,
+            fallbackUsed: analysis.fallbackUsed || analysis._meta?.fallbackUsed,
+            querySummaryType: typeof analysis.querySummary,
+            scoreBreakdownType: typeof analysis.scoreBreakdown,
+            confidenceType: typeof analysis.confidence,
+            confidenceValue: analysis.confidence,
+          })
+          
+          // Log first destination if available
+          if (Array.isArray(analysis.rankedDestinations) && analysis.rankedDestinations.length > 0) {
+            const firstDest = analysis.rankedDestinations[0]
+            console.error('[AnalysisErrorBoundary] First destination shape:', {
+              destinationId: firstDest.destinationId,
+              destinationName: firstDest.destinationName,
+              suggestedRouteType: typeof firstDest.suggestedRoute,
+              suggestedRouteIsArray: Array.isArray(firstDest.suggestedRoute),
+              whyRecommendedType: typeof firstDest.whyRecommended,
+              whyRecommendedIsArray: Array.isArray(firstDest.whyRecommended),
+              bestMonthsType: typeof firstDest.bestMonths,
+              bestMonthsIsArray: Array.isArray(firstDest.bestMonths),
+              totalMatchScoreType: typeof firstDest.totalMatchScore,
+              totalMatchScoreValue: firstDest.totalMatchScore,
+            })
+          }
+        } else {
+          console.error('[AnalysisErrorBoundary] Could not find analysis object in component tree')
+        }
       } catch (diagError) {
-        console.log('Could not log analysis diagnostics')
+        console.error('[AnalysisErrorBoundary] Diagnostics failed:', diagError)
       }
     }
   }

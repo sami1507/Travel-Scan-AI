@@ -12,7 +12,11 @@ export function normalizeAnalysisForUI(analysis: TravelAnalysisResponse | null |
     return createEmptyAnalysis()
   }
 
-  return {
+  // Safely extract _meta if it exists
+  const rawMeta = (analysis as any)._meta
+  const normalizedMeta = normalizeMeta(rawMeta)
+
+  const normalized = {
     ...analysis,
     // Ensure arrays are never null/undefined
     rankedDestinations: normalizeDestinations(analysis.rankedDestinations || []),
@@ -44,9 +48,66 @@ export function normalizeAnalysisForUI(analysis: TravelAnalysisResponse | null |
     seasonMonthStrategy: analysis.seasonMonthStrategy || null,
     
     // Ensure required fields have defaults
-    querySummary: analysis.querySummary || 'Analysis summary not available',
-    scoreBreakdown: analysis.scoreBreakdown || 'Score breakdown not available',
-    confidence: typeof analysis.confidence === 'number' ? analysis.confidence : 0.5,
+    querySummary: typeof analysis.querySummary === 'string' ? analysis.querySummary : 'Analysis summary not available',
+    scoreBreakdown: typeof analysis.scoreBreakdown === 'string' ? analysis.scoreBreakdown : 'Score breakdown not available',
+    confidence: typeof analysis.confidence === 'number' && isFinite(analysis.confidence) ? analysis.confidence : 0.5,
+  }
+
+  // Attach normalized _meta
+  ;(normalized as any)._meta = normalizedMeta
+  
+  // Preserve backend metadata flags for compatibility
+  ;(normalized as any).openAIUsed = normalizedMeta.openAIUsed
+  ;(normalized as any).fallbackUsed = normalizedMeta.fallbackUsed
+  ;(normalized as any).fallbackReason = normalizedMeta.fallbackReason
+
+  return normalized
+}
+
+/**
+ * Normalize _meta object for safe rendering
+ */
+function normalizeMeta(meta: any): any {
+  if (!meta || typeof meta !== 'object') {
+    return {
+      analysisId: null,
+      openAIUsed: false,
+      fallbackUsed: false,
+      fallbackReason: null,
+      modelUsed: null,
+      durationMs: null,
+      openAIDurationMs: null,
+      systemPromptLength: null,
+      promptTokens: null,
+      completionTokens: null,
+      totalTokens: null,
+      cacheStatus: null,
+      cachedResultType: null,
+      consultantQualityScore: null,
+      genericPhraseCount: null,
+      regionSpread: null,
+      uniqueOptionIncluded: false,
+    }
+  }
+
+  return {
+    analysisId: meta.analysisId || null,
+    openAIUsed: Boolean(meta.openAIUsed),
+    fallbackUsed: Boolean(meta.fallbackUsed),
+    fallbackReason: meta.fallbackReason || null,
+    modelUsed: meta.modelUsed || null,
+    durationMs: typeof meta.durationMs === 'number' && isFinite(meta.durationMs) ? meta.durationMs : null,
+    openAIDurationMs: typeof meta.openAIDurationMs === 'number' && isFinite(meta.openAIDurationMs) ? meta.openAIDurationMs : null,
+    systemPromptLength: typeof meta.systemPromptLength === 'number' && isFinite(meta.systemPromptLength) ? meta.systemPromptLength : null,
+    promptTokens: typeof meta.promptTokens === 'number' && isFinite(meta.promptTokens) ? meta.promptTokens : null,
+    completionTokens: typeof meta.completionTokens === 'number' && isFinite(meta.completionTokens) ? meta.completionTokens : null,
+    totalTokens: typeof meta.totalTokens === 'number' && isFinite(meta.totalTokens) ? meta.totalTokens : null,
+    cacheStatus: meta.cacheStatus || null,
+    cachedResultType: meta.cachedResultType || null,
+    consultantQualityScore: typeof meta.consultantQualityScore === 'number' && isFinite(meta.consultantQualityScore) ? meta.consultantQualityScore : null,
+    genericPhraseCount: typeof meta.genericPhraseCount === 'number' && isFinite(meta.genericPhraseCount) ? meta.genericPhraseCount : null,
+    regionSpread: typeof meta.regionSpread === 'number' && isFinite(meta.regionSpread) ? meta.regionSpread : null,
+    uniqueOptionIncluded: Boolean(meta.uniqueOptionIncluded),
   }
 }
 
@@ -54,20 +115,39 @@ export function normalizeAnalysisForUI(analysis: TravelAnalysisResponse | null |
  * Normalize individual destination for safe rendering
  */
 function normalizeDestination(dest: RankedDestination): RankedDestination {
+  if (!dest || typeof dest !== 'object') {
+    return createEmptyDestination()
+  }
+
+  // Handle suggestedRoute which might be string or array
+  let normalizedRoute: string[] = []
+  const routeValue = (dest as any).suggestedRoute
+  if (Array.isArray(routeValue)) {
+    normalizedRoute = routeValue.filter(r => typeof r === 'string')
+  } else if (typeof routeValue === 'string') {
+    normalizedRoute = routeValue.split(',').map(s => s.trim()).filter(Boolean)
+  }
+
+  // Handle bestMonths which must be valid month numbers
+  let normalizedMonths: number[] = []
+  if (Array.isArray(dest.bestMonths)) {
+    normalizedMonths = dest.bestMonths.filter(m => typeof m === 'number' && m >= 1 && m <= 12)
+  }
+
   return {
     ...dest,
     // Ensure arrays are never null/undefined
-    whyRecommended: Array.isArray(dest.whyRecommended) ? dest.whyRecommended : [],
-    possibleDownsides: Array.isArray(dest.possibleDownsides) ? dest.possibleDownsides : [],
-    bestMonths: Array.isArray(dest.bestMonths) ? dest.bestMonths : [],
-    sourceLabels: Array.isArray(dest.sourceLabels) ? dest.sourceLabels : [],
+    whyRecommended: Array.isArray(dest.whyRecommended) ? dest.whyRecommended.filter(r => typeof r === 'string') : [],
+    possibleDownsides: Array.isArray(dest.possibleDownsides) ? dest.possibleDownsides.filter(d => typeof d === 'string') : [],
+    bestMonths: normalizedMonths,
+    sourceLabels: Array.isArray(dest.sourceLabels) ? dest.sourceLabels.filter(l => typeof l === 'string') : [],
     
     // Handle nullable route fields
-    suggestedRoute: Array.isArray(dest.suggestedRoute) ? dest.suggestedRoute : [],
-    recommendedNights: dest.recommendedNights && typeof dest.recommendedNights === 'object' 
+    suggestedRoute: normalizedRoute,
+    recommendedNights: dest.recommendedNights && typeof dest.recommendedNights === 'object' && !Array.isArray(dest.recommendedNights)
       ? dest.recommendedNights 
       : {},
-    routeWarnings: Array.isArray(dest.routeWarnings) ? dest.routeWarnings : [],
+    routeWarnings: Array.isArray(dest.routeWarnings) ? dest.routeWarnings.filter(w => typeof w === 'string') : [],
     
     // Handle nullable text fields from compact schema
     destinationSummary: dest.destinationSummary || null,
@@ -184,4 +264,54 @@ export function getCompactFieldMessage(fieldName: string): string {
   }
   
   return messages[fieldName] || 'This detailed information is not available in fast mode.'
+}
+
+/**
+ * Create empty destination for error states
+ */
+function createEmptyDestination(): RankedDestination {
+  return {
+    destinationId: `dest-${Date.now()}`,
+    destinationName: 'Unknown Destination',
+    destinationType: 'country',
+    destinationSummary: null,
+    diversityLabel: null,
+    totalMatchScore: 0,
+    estimatedBudgetLevel: 'moderate',
+    passportEase: 'unknown',
+    confidence: 0,
+    dataQuality: 'estimated',
+    categoryScores: {
+      budgetFit: 5,
+      weatherFit: 5,
+      passportEase: 5,
+      nightlife: 5,
+      nature: 5,
+      transport: 5,
+      hotelValue: 5,
+      safety: 5,
+      flightValue: null,
+    },
+    nightlifeLevel: 5,
+    natureLevel: 5,
+    transportLevel: 5,
+    hotelValueLevel: 5,
+    safetyLevel: 5,
+    whyRecommended: [],
+    possibleDownsides: [],
+    bestMonths: [],
+    sourceLabels: [],
+    suggestedRoute: [],
+    recommendedNights: {},
+    routeWarnings: [],
+    realisticConsultantNotes: null,
+    transportLogic: null,
+    routeAlternatives: null,
+    itineraryMapPlan: null,
+    travelStrategyTips: null,
+    seasonality: null,
+    tripType: null,
+    routeRealismScore: null,
+    travelFatigueLevel: null,
+  }
 }

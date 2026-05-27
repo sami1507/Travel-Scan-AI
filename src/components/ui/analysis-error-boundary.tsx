@@ -32,6 +32,25 @@ export class AnalysisErrorBoundary extends React.Component<Props, State> {
       console.error('Error message:', error.message)
       console.error('Error stack:', error.stack)
       console.error('Component stack:', errorInfo.componentStack)
+      
+      // Try to log analysis shape if available
+      try {
+        const analysisElement = (this.props.children as any)?.props?.children
+        if (analysisElement) {
+          console.log('Analysis data shape check:')
+          const analysis = analysisElement?.props?.analysis
+          if (analysis) {
+            console.log('- has rankedDestinations:', Array.isArray(analysis.rankedDestinations))
+            console.log('- rankedDestinations length:', analysis.rankedDestinations?.length)
+            console.log('- has _meta:', !!analysis._meta)
+            console.log('- fallbackUsed:', analysis.fallbackUsed || analysis._meta?.fallbackUsed)
+            console.log('- openAIUsed:', analysis.openAIUsed || analysis._meta?.openAIUsed)
+            console.log('- cacheStatus:', analysis._meta?.cacheStatus)
+          }
+        }
+      } catch (diagError) {
+        console.log('Could not log analysis diagnostics')
+      }
     }
   }
 

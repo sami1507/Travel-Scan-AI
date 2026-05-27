@@ -28,6 +28,7 @@ import type { TravelAnalysisResponse, RankedDestination } from '@/lib/analysis/s
 import { logLearningFeedback } from '@/lib/learning/client-feedback'
 import { normalizeAnalysisForUI } from '@/lib/analysis/normalize-analysis-for-ui'
 import { AnalysisErrorBoundary } from '@/components/ui/analysis-error-boundary'
+import { clearAnalysisClientState } from '@/lib/analysis/clear-analysis-state'
 
 export default function AnalysisPage() {
   const [loading, setLoading] = useState(false)
@@ -213,7 +214,13 @@ export default function AnalysisPage() {
 
       {/* Results */}
       {analysis && !loading && (
-        <AnalysisErrorBoundary onReset={() => setAnalysis(null)}>
+        <AnalysisErrorBoundary onReset={() => {
+          clearAnalysisClientState()
+          setAnalysis(null)
+          setSelectedDestination(null)
+          setCompareSelections([])
+          setCompareMode(false)
+        }}>
           <div className="space-y-6">
           {/* Action Bar */}
           <div className="flex flex-wrap items-center gap-3 animate-fade-in">

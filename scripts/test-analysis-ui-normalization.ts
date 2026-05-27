@@ -433,6 +433,108 @@ test('Handles missing queryContext interests', () => {
   }
 })
 
+// Test 14: Handles analysis with missing _meta
+test('Handles analysis with missing _meta', () => {
+  const analysis: any = {
+    querySummary: 'Test',
+    rankedDestinations: [],
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  const meta = (result as any)._meta
+  
+  if (!meta) {
+    throw new Error('Should have _meta object')
+  }
+  if (typeof meta.openAIUsed !== 'boolean') {
+    throw new Error('_meta.openAIUsed should be boolean')
+  }
+})
+
+// Test 15: Handles destination with suggestedRoute as string
+test('Handles destination with suggestedRoute as string', () => {
+  const analysis: any = {
+    rankedDestinations: [{
+      destinationId: 'test',
+      destinationName: 'Test',
+      suggestedRoute: 'Athens,Santorini,Mykonos', // String instead of array
+      totalMatchScore: 80,
+    }],
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  const route = result.rankedDestinations[0].suggestedRoute
+  
+  if (!Array.isArray(route)) {
+    throw new Error('suggestedRoute should be normalized to array')
+  }
+  if (route.length !== 3) {
+    throw new Error('Should split string into array')
+  }
+})
+
+// Test 16: Handles destination with invalid bestMonths
+test('Handles destination with invalid bestMonths', () => {
+  const analysis: any = {
+    rankedDestinations: [{
+      destinationId: 'test',
+      destinationName: 'Test',
+      bestMonths: [0, 13, 'invalid', 6], // Invalid month numbers
+      totalMatchScore: 80,
+    }],
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  const months = result.rankedDestinations[0].bestMonths
+  
+  if (!Array.isArray(months)) {
+    throw new Error('bestMonths should be array')
+  }
+  if (months.some(m => m < 1 || m > 12)) {
+    throw new Error('Should filter out invalid month numbers')
+  }
+})
+
+// Test 17: Handles destination with malformed scoreBreakdown
+test('Handles destination with malformed scoreBreakdown', () => {
+  const analysis: any = {
+    rankedDestinations: [{
+      destinationId: 'test',
+      destinationName: 'Test',
+      totalMatchScore: 80,
+      scoreBreakdown: null, // Should be object
+    }],
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  // Should not crash
+  if (!result.rankedDestinations[0]) {
+    throw new Error('Should have destination')
+  }
+})
+
+// Test 18: Handles _meta with non-finite numbers
+test('Handles _meta with non-finite numbers', () => {
+  const analysis: any = {
+    rankedDestinations: [],
+    _meta: {
+      durationMs: Infinity,
+      promptTokens: NaN,
+      totalTokens: 'not a number',
+    },
+  }
+
+  const result = normalizeAnalysisForUI(analysis)
+  const meta = (result as any)._meta
+  
+  if (meta.durationMs !== null) {
+    throw new Error('Infinity should be normalized to null')
+  }
+  if (meta.promptTokens !== null) {
+    throw new Error('NaN should be normalized to null')
+  }
+})
+
 console.log(`\n📊 Results: ${passed} passed, ${failed} failed`)
 
 if (failed > 0) {

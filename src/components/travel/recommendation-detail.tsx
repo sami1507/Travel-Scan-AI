@@ -10,6 +10,8 @@ import { ScoreBreakdown } from './score-breakdown'
 import { ExternalActions } from './external-actions'
 import { TravelStrategyTipsDisplay } from './travel-strategy-tips'
 import { ItineraryMapDisplay } from './itinerary-map-display'
+import { SafeItineraryMap } from './safe-itinerary-map'
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary'
 import { logLearningFeedback } from '@/lib/learning/client-feedback'
 
 interface RecommendationDetailProps {
@@ -237,12 +239,25 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
           <BeforeYouBookChecklist destination={destination} />
 
           {/* Itinerary Map */}
-          <ItineraryMapDisplay 
-            plan={destination.itineraryMapPlan}
-            onMapOpened={handleMapOpened}
-            onStopSelected={handleStopSelected}
-            onDayPlanOpened={handleDayPlanOpened}
-          />
+          <SectionErrorBoundary
+            sectionName="Interactive Map"
+            fallbackMessage="Interactive map is unavailable right now. You can still use the route plan and travel tips below."
+          >
+            {destination.itineraryMapPlan ? (
+              <ItineraryMapDisplay 
+                plan={destination.itineraryMapPlan}
+                onMapOpened={handleMapOpened}
+                onStopSelected={handleStopSelected}
+                onDayPlanOpened={handleDayPlanOpened}
+              />
+            ) : (
+              <SafeItineraryMap
+                route={destination.suggestedRoute}
+                itineraryMapPlan={destination.itineraryMapPlan}
+                destinationName={destination.destinationName}
+              />
+            )}
+          </SectionErrorBoundary>
 
           {/* Travel Strategy Tips */}
           <TravelStrategyTipsDisplay 

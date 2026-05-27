@@ -9,6 +9,7 @@ import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, 
 import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
 import { TravelLoading } from '@/components/ui/travel-loading'
+import { AnalysisLoadingExperience } from '@/components/ui/travelscan/analysis-loading-experience'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { EnhancedRecommendationCard } from '@/components/travel/enhanced-recommendation-card'
@@ -158,9 +159,9 @@ export default function AnalysisPage() {
             </Badge>
           </div>
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Travel Analysis</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AI Travel Consultant</h1>
             <p className="text-lg text-foreground/80 max-w-3xl">
-              Get evidence-based destination recommendations with intelligent route planning, budget optimization, and visa-aware suggestions
+              Understand where to go, why, when, and how — before you book
             </p>
           </div>
         </div>
@@ -196,11 +197,9 @@ export default function AnalysisPage() {
 
       {/* Loading State */}
       {loading && (
-        <Card className="border-0 shadow-premium-xl">
-          <CardContent className="p-0">
-            <TravelLoading />
-          </CardContent>
-        </Card>
+        <div className="py-12">
+          <AnalysisLoadingExperience />
+        </div>
       )}
 
       {/* Empty State */}
@@ -263,7 +262,7 @@ export default function AnalysisPage() {
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    <h4 className="font-semibold mb-2">Important Warnings</h4>
+                    <h4 className="font-semibold mb-2">Before You Book: Watch Outs</h4>
                     <ul className="space-y-1 text-sm">
                       {analysis.warnings.map((warning, i) => (
                         <li key={i}>• {warning}</li>
@@ -319,7 +318,7 @@ export default function AnalysisPage() {
           {/* Route-First Recommendations */}
           <div>
             <h2 className="text-3xl font-bold mb-6 animate-fade-up opacity-0">
-              Route Recommendations ({analysis.rankedDestinations.length})
+              Recommended Routes ({analysis.rankedDestinations.length})
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {analysis.rankedDestinations.slice(0, 3).map((destination, index) => {

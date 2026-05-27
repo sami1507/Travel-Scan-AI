@@ -28,11 +28,15 @@ import type { TravelAnalysisResponse, RankedDestination } from '@/lib/analysis/s
 import { logLearningFeedback } from '@/lib/learning/client-feedback'
 import { normalizeAnalysisForUI } from '@/lib/analysis/normalize-analysis-for-ui'
 import { AnalysisErrorBoundary } from '@/components/ui/analysis-error-boundary'
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary'
 import { clearAnalysisClientState } from '@/lib/analysis/clear-analysis-state'
+import { validateAnalysisRequest, sanitizeAnalysisRequest } from '@/lib/analysis/validate-analysis-request'
 
 export default function AnalysisPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [retryCount, setRetryCount] = useState(0)
   const [analysis, setAnalysis] = useState<TravelAnalysisResponse | null>(null)
   const [selectedDestination, setSelectedDestination] = useState<RankedDestination | null>(null)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -52,16 +56,39 @@ export default function AnalysisPage() {
     travelMonths: number[]
     interests: string[]
     tripStructure: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
-  }) => {
+  }, isRetry = false) => {
+    // Client-side validation
+    const validation = validateAnalysisRequest({
+      query: data.query,
+      travelMonths: data.travelMonths,
+      interests: data.interests,
+      budget: data.budget,
+      tripStructure: data.tripStructure,
+    })
+
+    if (!validation.valid) {
+      setValidationErrors(validation.errors)
+      return
+    }
+
+    setValidationErrors([])
     setLoading(true)
     setError(null)
-    setAnalysis(null)
+    
+    // Only clear analysis if not retrying
+    if (!isRetry) {
+      setAnalysis(null)
+      setRetryCount(0)
+    }
 
     try {
+      // Sanitize request before sending
+      const sanitizedData = sanitizeAnalysisRequest(data)
+      
       const response = await fetch('/api/travel/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(sanitizedData),
       })
 
       if (!response.ok) {
@@ -70,17 +97,35 @@ export default function AnalysisPage() {
       }
 
       const result = await response.json()
+      
       // Normalize analysis for safe UI rendering
       const normalizedAnalysis = normalizeAnalysisForUI(result.analysis)
-      setAnalysis(normalizedAnalysis)
-      setQueryContext({
-        query: data.query,
-        budget: data.budget,
-        travel_months: data.travelMonths,
-        interests: data.interests,
-      })
+      
+      // Only set analysis if normalization succeeded
+      if (normalizedAnalysis && Array.isArray(normalizedAnalysis.rankedDestinations)) {
+        setAnalysis(normalizedAnalysis)
+        setQueryContext({
+          query: data.query,
+          budget: data.budget,
+          travel_months: data.travelMonths,
+          interests: data.interests,
+        })
+        setRetryCount(0) // Reset retry count on success
+      } else {
+        throw new Error('Invalid analysis response received')
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      
+      // Retry logic: up to 2 retries
+      if (retryCount < 2) {
+        console.log(`Analysis failed, retrying (attempt ${retryCount + 1}/2)...`)
+        setRetryCount(prev => prev + 1)
+        setTimeout(() => handleAnalyze(data, true), 2000)
+      } else {
+        setError(errorMessage + ' (Failed after 3 attempts)')
+        setRetryCount(0)
+      }
     } finally {
       setLoading(false)
     }
@@ -168,6 +213,21 @@ export default function AnalysisPage() {
         </div>
       </div>
 
+      {/* Validation Errors */}
+      {validationErrors.length > 0 && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription>
+            <h4 className="font-semibold mb-2 text-orange-900">Please fix the following:</h4>
+            <ul className="space-y-1 text-sm text-orange-800">
+              {validationErrors.map((error, i) => (
+                <li key={i}>• {error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Error State */}
       {error && (
         <ErrorState
@@ -175,6 +235,7 @@ export default function AnalysisPage() {
           message={error}
           retry={() => {
             setError(null)
+            setRetryCount(0)
             if (queryContext) {
               handleAnalyze({
                 query: queryContext.query,
@@ -256,11 +317,16 @@ export default function AnalysisPage() {
           <PersonalizationIndicator personalization={analysis.personalization} />
 
           {/* AI Travel Consultant Brief */}
-          <ConsultantBriefCard 
-            analysis={analysis}
-            queryContext={queryContext}
-            confidence={analysis.confidence}
-          />
+          <SectionErrorBoundary 
+            sectionName="Consultant Brief"
+            fallbackMessage="Consultant brief is temporarily unavailable, but your route recommendations are still available below."
+          >
+            <ConsultantBriefCard 
+              analysis={analysis}
+              queryContext={queryContext}
+              confidence={analysis.confidence}
+            />
+          </SectionErrorBoundary>
 
           {/* Warnings & Assumptions */}
           {(analysis.warnings.length > 0 || analysis.assumptions.length > 0) && (
@@ -323,41 +389,51 @@ export default function AnalysisPage() {
           )}
 
           {/* Route-First Recommendations */}
-          <div>
-            <h2 className="text-3xl font-bold mb-6 animate-fade-up opacity-0">
-              Recommended Routes ({analysis.rankedDestinations.length})
-            </h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {analysis.rankedDestinations.slice(0, 3).map((destination, index) => {
-                const delayClass = index === 0 ? 'delay-100' : index === 1 ? 'delay-200' : 'delay-300'
-                return (
-                  <div
-                    key={destination.destinationId}
-                    className={`animate-scale-in opacity-0 ${delayClass}`}
-                  >
-                    <RouteFirstCard
-                      destination={destination}
-                      rank={index + 1}
-                      onViewDetails={() => setSelectedDestination(destination)}
-                      onSaveRoute={() => handleSaveDestination(destination)}
-                      queryContext={queryContext || undefined}
-                      analysisMeta={(analysis as any)?._meta}
-                    />
-                  </div>
-                )
-              })}
+          <SectionErrorBoundary 
+            sectionName="Route Recommendations"
+            fallbackMessage="Route recommendations are temporarily unavailable. Please try refreshing the analysis."
+          >
+            <div>
+              <h2 className="text-3xl font-bold mb-6 animate-fade-up opacity-0">
+                Recommended Routes ({analysis.rankedDestinations.length})
+              </h2>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {analysis.rankedDestinations.slice(0, 3).map((destination, index) => {
+                  const delayClass = index === 0 ? 'delay-100' : index === 1 ? 'delay-200' : 'delay-300'
+                  return (
+                    <div
+                      key={destination.destinationId}
+                      className={`animate-scale-in opacity-0 ${delayClass}`}
+                    >
+                      <RouteFirstCard
+                        destination={destination}
+                        rank={index + 1}
+                        onViewDetails={() => setSelectedDestination(destination)}
+                        onSaveRoute={() => handleSaveDestination(destination)}
+                        queryContext={queryContext || undefined}
+                        analysisMeta={(analysis as any)?._meta}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          </SectionErrorBoundary>
 
           {/* Score Breakdown Explanation */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">How Scores Are Calculated</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground leading-relaxed">{analysis.scoreBreakdown}</p>
-            </CardContent>
-          </Card>
+          <SectionErrorBoundary 
+            sectionName="Score Breakdown"
+            fallbackMessage="Score breakdown is unavailable for this result."
+          >
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold">How Scores Are Calculated</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">{analysis.scoreBreakdown}</p>
+              </CardContent>
+            </Card>
+          </SectionErrorBoundary>
 
           {/* Data Sources */}
           <Card className="border-2">
@@ -403,10 +479,15 @@ export default function AnalysisPage() {
 
       {/* Detail Modal */}
       {selectedDestination && (
-        <RecommendationDetail
-          destination={selectedDestination}
-          onClose={() => setSelectedDestination(null)}
-        />
+        <SectionErrorBoundary 
+          sectionName="Route Details"
+          fallbackMessage="Route details are temporarily unavailable. Please try selecting another route."
+        >
+          <RecommendationDetail
+            destination={selectedDestination}
+            onClose={() => setSelectedDestination(null)}
+          />
+        </SectionErrorBoundary>
       )}
 
       {/* Save Dialog */}

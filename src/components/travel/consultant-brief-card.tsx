@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Brain, Info, TrendingUp, AlertCircle } from 'lucide-react'
 import type { TravelAnalysisResponse } from '@/lib/analysis/schemas'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface ConsultantBriefCardProps {
   analysis: TravelAnalysisResponse
@@ -146,7 +147,7 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
                       </div>
                     )}
                     <div className="text-xs text-muted-foreground mt-1">
-                      Score: {typeof dest.totalMatchScore === 'number' ? dest.totalMatchScore : 0}/100
+                      Score: {formatScore(dest.totalMatchScore)}/100
                     </div>
                   </div>
                 </div>

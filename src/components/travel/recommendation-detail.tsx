@@ -13,6 +13,7 @@ import { ItineraryMapDisplay } from './itinerary-map-display'
 import { SafeItineraryMap } from './safe-itinerary-map'
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary'
 import { logLearningFeedback } from '@/lib/learning/client-feedback'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface RecommendationDetailProps {
   destination: RankedDestination
@@ -103,7 +104,7 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
               {destination.destinationName}
             </h2>
             <p className="text-sm text-muted-foreground capitalize">
-              {destination.destinationType} · Match Score: {destination.totalMatchScore}/100
+              {destination.destinationType} · Match Score: {formatScore(destination.totalMatchScore)}/100
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>

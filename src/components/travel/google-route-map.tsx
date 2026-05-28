@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MapPin, Navigation, Loader2, AlertCircle } from 'lucide-react'
 import type { RecommendedRoute } from '@/lib/analysis/schemas'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface GoogleRouteMapProps {
   route: RecommendedRoute
@@ -146,7 +147,7 @@ export function GoogleRouteMap({ route }: GoogleRouteMapProps) {
                 <div style="padding: 8px; min-width: 150px;">
                   <h3 style="margin: 0 0 8px 0; font-weight: 600; font-size: 14px;">${stop.destinationName}</h3>
                   <p style="margin: 0; font-size: 12px; color: #666;">Stop ${stop.orderInRoute} • ${stop.daysRecommended} days</p>
-                  <p style="margin: 4px 0 0 0; font-size: 11px; color: #888;">Score: ${stop.totalScore.toFixed(1)}/100</p>
+                  <p style="margin: 4px 0 0 0; font-size: 11px; color: #888;">Score: ${formatScore(stop.totalScore)}/100</p>
                 </div>
               `,
             })

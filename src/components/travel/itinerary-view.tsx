@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { MapPin, Clock, TrendingUp, AlertCircle } from 'lucide-react'
 import type { RecommendedRoute } from '@/lib/analysis/schemas'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface ItineraryViewProps {
   route: RecommendedRoute
@@ -64,7 +65,7 @@ export function ItineraryView({ route }: ItineraryViewProps) {
             </div>
             <div>
               <p className="text-muted-foreground">Route Quality</p>
-              <p className="font-medium">{route.routeScore.totalRouteQuality.toFixed(0)}/100</p>
+              <p className="font-medium">{formatScore(route.routeScore.totalRouteQuality)}/100</p>
             </div>
             <div>
               <p className="text-muted-foreground">Estimated Cost</p>
@@ -173,27 +174,27 @@ export function ItineraryView({ route }: ItineraryViewProps) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Coherence</span>
-              <span className="font-medium">{route.routeScore.coherence.toFixed(1)}/10</span>
+              <span className="font-medium">{formatScore(route.routeScore.coherence)}/10</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Transfer Ease</span>
-              <span className="font-medium">{route.routeScore.transferSimplicity.toFixed(1)}/10</span>
+              <span className="font-medium">{formatScore(route.routeScore.transferSimplicity)}/10</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Transport</span>
-              <span className="font-medium">{route.routeScore.transportConvenience.toFixed(1)}/10</span>
+              <span className="font-medium">{formatScore(route.routeScore.transportConvenience)}/10</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Budget Efficiency</span>
-              <span className="font-medium">{route.routeScore.budgetEfficiency.toFixed(1)}/10</span>
+              <span className="font-medium">{formatScore(route.routeScore.budgetEfficiency)}/10</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Seasonal Fit</span>
-              <span className="font-medium">{route.routeScore.seasonalCompatibility.toFixed(1)}/10</span>
+              <span className="font-medium">{formatScore(route.routeScore.seasonalCompatibility)}/10</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Synergy</span>
-              <span className="font-medium">{route.routeScore.destinationSynergy.toFixed(1)}/10</span>
+              <span className="font-medium">{formatScore(route.routeScore.destinationSynergy)}/10</span>
             </div>
           </div>
         </div>

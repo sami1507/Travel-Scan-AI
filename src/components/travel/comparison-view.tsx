@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import type { RankedDestination, RecommendedRoute } from '@/lib/analysis/schemas'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface DestinationComparisonProps {
   destinationA: RankedDestination
@@ -59,7 +60,7 @@ export function DestinationComparison({ destinationA, destinationB }: Destinatio
                   <TrendingDown className="h-8 w-8 mx-auto text-blue-600 mb-2" />
                 )}
                 <p className="text-sm font-medium">
-                  {Math.abs(scoreDiff).toFixed(1)} point difference
+                  {formatScore(Math.abs(scoreDiff))} point difference
                 </p>
               </>
             )}
@@ -99,17 +100,17 @@ export function DestinationComparison({ destinationA, destinationB }: Destinatio
                     Math.abs(diff) < 1 ? 'text-muted-foreground' :
                     diff > 0 ? 'text-green-600' : 'text-blue-600'
                   }`}>
-                    {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)}
+                    {diff > 0 ? `+${formatScore(diff)}` : formatScore(diff)}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Progress value={scoreA * 10} className="h-2" />
-                    <p className="text-xs text-muted-foreground">{scoreA.toFixed(1)}/10</p>
+                    <p className="text-xs text-muted-foreground">{formatScore(scoreA)}/10</p>
                   </div>
                   <div className="space-y-1">
                     <Progress value={scoreB * 10} className="h-2" />
-                    <p className="text-xs text-muted-foreground">{scoreB.toFixed(1)}/10</p>
+                    <p className="text-xs text-muted-foreground">{formatScore(scoreB)}/10</p>
                   </div>
                 </div>
               </div>
@@ -218,7 +219,7 @@ export function RouteComparison({ routeA, routeB }: RouteComparisonProps) {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-primary">
-              {routeA.routeScore.totalRouteQuality.toFixed(0)}
+              {formatScore(routeA.routeScore.totalRouteQuality)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Route Quality</p>
             <Badge className="mt-2" variant="secondary">
@@ -242,7 +243,7 @@ export function RouteComparison({ routeA, routeB }: RouteComparisonProps) {
                   <TrendingDown className="h-8 w-8 mx-auto text-blue-600 mb-2" />
                 )}
                 <p className="text-sm font-medium">
-                  {Math.abs(scoreDiff).toFixed(0)} point difference
+                  {formatScore(Math.abs(scoreDiff))} point difference
                 </p>
               </>
             )}
@@ -258,7 +259,7 @@ export function RouteComparison({ routeA, routeB }: RouteComparisonProps) {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-primary">
-              {routeB.routeScore.totalRouteQuality.toFixed(0)}
+              {formatScore(routeB.routeScore.totalRouteQuality)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Route Quality</p>
             <Badge className="mt-2" variant="secondary">
@@ -287,17 +288,17 @@ export function RouteComparison({ routeA, routeB }: RouteComparisonProps) {
                     Math.abs(diff) < 0.5 ? 'text-muted-foreground' :
                     diff > 0 ? 'text-green-600' : 'text-blue-600'
                   }`}>
-                    {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)}
+                    {diff > 0 ? `+${formatScore(diff)}` : formatScore(diff)}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Progress value={scoreA * 10} className="h-2" />
-                    <p className="text-xs text-muted-foreground">{scoreA.toFixed(1)}/10</p>
+                    <p className="text-xs text-muted-foreground">{formatScore(scoreA)}/10</p>
                   </div>
                   <div className="space-y-1">
                     <Progress value={scoreB * 10} className="h-2" />
-                    <p className="text-xs text-muted-foreground">{scoreB.toFixed(1)}/10</p>
+                    <p className="text-xs text-muted-foreground">{formatScore(scoreB)}/10</p>
                   </div>
                 </div>
               </div>

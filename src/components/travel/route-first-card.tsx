@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import type { RankedDestination } from '@/lib/analysis/schemas'
 import { logLearningFeedback } from '@/lib/learning/client-feedback'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface RouteFirstCardProps {
   destination: RankedDestination
@@ -200,7 +201,7 @@ export function RouteFirstCard({
         <div className="flex items-center justify-between">
           <div>
             <div className={`text-2xl font-bold ${getScoreColor(destination.totalMatchScore)}`}>
-              {typeof destination.totalMatchScore === 'number' ? destination.totalMatchScore : 0}/100
+              {formatScore(destination.totalMatchScore)}/100
             </div>
             <div className="text-xs text-muted-foreground">{getScoreLabel(destination.totalMatchScore)}</div>
           </div>

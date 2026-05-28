@@ -260,10 +260,17 @@ export function scoreConsultantQuality(
     issues.push('Final scope validation failed - score capped at 70')
   }
   
-  // Cap at 75 if deterministic fallback was used
-  if (metadata.analysisSource === 'fallback_deterministic' || metadata.deterministicFallbackUsed === true) {
+  // Cap at 75 if deterministic fallback was used (not for openai_repaired)
+  if (metadata.analysisSource === 'fallback_deterministic' || 
+      (metadata.deterministicFallbackUsed === true && metadata.analysisSource !== 'openai_repaired')) {
     totalScore = Math.min(totalScore, 75)
     issues.push('Deterministic fallback used - score capped at 75')
+  }
+  
+  // Note if repair was used (informational, no penalty)
+  if (metadata.openAIRepairUsed === true || metadata.repairPassed === true) {
+    // OpenAI repaired results can score high, just note it in metadata
+    // No score cap - repair is still OpenAI consultant output
   }
   
   // Cap at 75 if route type mismatches trip structure

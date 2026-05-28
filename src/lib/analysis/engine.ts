@@ -576,52 +576,146 @@ export class TravelAnalysisEngine {
               
               // Validate final recommendations before caching
               const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
-              analysis = finalValidation.validatedAnalysis
-              ;(analysis as any).finalScopeValidationPassed = finalValidation.valid
-              ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
-              ;(analysis as any).replacementsApplied = finalValidation.replacementsApplied
+              const validationIssuesBeforeRepair = [...finalValidation.validationIssues]
               
-              // Track analysis source
-              if (finalValidation.replacementsApplied.length > 0) {
-                ;(analysis as any).analysisSource = 'fallback_deterministic'
-                ;(analysis as any).deterministicFallbackUsed = true
-                ;(analysis as any).candidatePoolUsedAsReplacement = true
-                ;(analysis as any).replacementReason = 'openai_invalid_destinations'
+              // Initialize repair metadata
+              let repairAttempted = false
+              let repairPassed = false
+              let repairFailedReason: string | null = null
+              let repairDurationMs = 0
+              let repairTokens: { prompt: number; completion: number; total: number } | null = null
+              let replacementsApplied: string[] = []
+              
+              if (!finalValidation.valid) {
+                // Attempt OpenAI repair before falling back to deterministic replacement
+                repairAttempted = true
+                const repairResult = await this.repairInvalidOpenAIAnalysis(
+                  analysis,
+                  finalValidation.validationIssues,
+                  request,
+                  routeCandidatePool,
+                  analysisContext
+                )
+                
+                repairDurationMs = repairResult.repairDurationMs
+                repairTokens = repairResult.repairTokens
+                
+                if (repairResult.success && repairResult.repairedAnalysis) {
+                  // Validate repaired result
+                  const repairedValidation = this.validateFinalRecommendations(
+                    repairResult.repairedAnalysis,
+                    request,
+                    routeCandidatePool
+                  )
+                  
+                  if (repairedValidation.valid) {
+                    // Repair succeeded
+                    analysis = repairResult.repairedAnalysis
+                    repairPassed = true
+                    ;(analysis as any).analysisSource = 'openai_repaired'
+                    ;(analysis as any).deterministicFallbackUsed = false
+                    ;(analysis as any).candidatePoolUsedAsReplacement = false
+                    
+                    logger.info('OpenAI repair succeeded', {
+                      validationIssuesBeforeRepair,
+                      validationIssuesAfterRepair: repairedValidation.validationIssues,
+                      repairDurationMs,
+                      repairTokensUsed: repairTokens?.total,
+                    })
+                  } else {
+                    // Repair failed validation - use deterministic fallback
+                    repairFailedReason = 'repair_still_invalid'
+                    const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
+                    analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
+                    const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
+                    replacementsApplied = fallbackCountriesBefore
+                      .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
+                      .filter(Boolean) as string[]
+                    
+                    ;(analysis as any).analysisSource = 'fallback_deterministic'
+                    ;(analysis as any).deterministicFallbackUsed = true
+                    ;(analysis as any).candidatePoolUsedAsReplacement = true
+                    ;(analysis as any).replacementReason = 'repair_failed_validation'
+                    
+                    logger.warn('OpenAI repair failed validation, using deterministic fallback', {
+                      repairValidationIssues: repairedValidation.validationIssues,
+                      replacementsApplied,
+                    })
+                  }
+                } else {
+                  // Repair call failed - use deterministic fallback
+                  repairFailedReason = 'repair_call_failed'
+                  const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
+                  analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
+                  const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
+                  replacementsApplied = fallbackCountriesBefore
+                    .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
+                    .filter(Boolean) as string[]
+                  
+                  ;(analysis as any).analysisSource = 'fallback_deterministic'
+                  ;(analysis as any).deterministicFallbackUsed = true
+                  ;(analysis as any).candidatePoolUsedAsReplacement = true
+                  ;(analysis as any).replacementReason = 'repair_call_failed'
+                  
+                  logger.warn('OpenAI repair call failed, using deterministic fallback', {
+                    replacementsApplied,
+                  })
+                }
               } else {
+                // Validation passed - no repair needed
                 ;(analysis as any).analysisSource = 'openai_primary'
                 ;(analysis as any).deterministicFallbackUsed = false
                 ;(analysis as any).candidatePoolUsedAsReplacement = false
               }
+              
+              // Set common metadata
+              ;(analysis as any).finalScopeValidationPassed = finalValidation.valid || repairPassed
+              ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
+              ;(analysis as any).replacementsApplied = replacementsApplied
               ;(analysis as any).openAIPrimaryUsed = true
               ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
+              ;(analysis as any).openAIRepairUsed = repairPassed
+              ;(analysis as any).repairAttempted = repairAttempted
+              ;(analysis as any).repairPassed = repairPassed
+              ;(analysis as any).repairFailedReason = repairFailedReason
+              ;(analysis as any).repairDurationMs = repairDurationMs
+              ;(analysis as any).repairPromptTokens = repairTokens?.prompt ?? null
+              ;(analysis as any).repairCompletionTokens = repairTokens?.completion ?? null
+              ;(analysis as any).repairTotalTokens = repairTokens?.total ?? null
+              ;(analysis as any).validationIssuesBeforeRepair = validationIssuesBeforeRepair
+              ;(analysis as any).validationIssuesAfterRepair = repairPassed ? [] : validationIssuesBeforeRepair
               
-              logger.info('Final recommendation scope validation', {
-                passed: finalValidation.valid,
-                invalidDestinations: finalValidation.invalidDestinations,
-                replacementsApplied: finalValidation.replacementsApplied,
+              logger.info('Final recommendation validation and repair flow', {
+                initialValidationPassed: finalValidation.valid,
+                repairAttempted,
+                repairPassed,
+                repairFailedReason,
                 analysisSource: (analysis as any).analysisSource,
-                finalCountriesBeforeValidation: finalValidation.invalidDestinations.length > 0 ? 
-                  [...finalValidation.invalidDestinations, ...analysis.rankedDestinations.map(d => d.destinationName)] : 
-                  analysis.rankedDestinations.map(d => d.destinationName),
-                finalCountriesAfterValidation: analysis.rankedDestinations.map(d => d.destinationName),
+                invalidDestinations: finalValidation.invalidDestinations,
+                replacementsApplied,
+                finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
               })
               
-              // Cache only if final validation passed and not deterministic fallback
-              if (finalValidation.valid && (analysis as any).analysisSource === 'openai_primary' && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+              // Cache only if valid (openai_primary or openai_repaired)
+              const canCache = ((analysis as any).analysisSource === 'openai_primary' || (analysis as any).analysisSource === 'openai_repaired') &&
+                (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed
+              
+              if (canCache) {
                 await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
-                ;(analysis as any).cachedResultType = 'openai'
+                ;(analysis as any).cachedResultType = (analysis as any).analysisSource === 'openai_repaired' ? 'openai_repaired' : 'openai'
                 logger.info('Travel Analysis Cache: SET (after rejection)', {
-                  cachedResultType: 'openai',
+                  cachedResultType: (analysis as any).cachedResultType,
+                  analysisSource: (analysis as any).analysisSource,
                   openAIUsed: true,
                   fallbackUsed: false,
                   cacheStatus: 'SET',
                 })
-              } else if (!finalValidation.valid || (analysis as any).analysisSource === 'fallback_deterministic') {
-                ;(analysis as any).cacheSkippedReason = (analysis as any).analysisSource === 'fallback_deterministic' ? 'deterministic_fallback' : 'invalid_final_result'
+              } else if ((analysis as any).analysisSource === 'fallback_deterministic') {
+                ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
                 logger.info('Travel Analysis Cache: SKIPPED_FALLBACK', {
-                  reason: (analysis as any).cacheSkippedReason,
+                  reason: 'deterministic_fallback',
                   invalidDestinations: finalValidation.invalidDestinations,
-                  replacementsApplied: finalValidation.replacementsApplied,
+                  replacementsApplied,
                 })
               }
             }
@@ -632,54 +726,148 @@ export class TravelAnalysisEngine {
             
             // Validate final recommendations before caching
             const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
-            analysis = finalValidation.validatedAnalysis
-            ;(analysis as any).finalScopeValidationPassed = finalValidation.valid
-            ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
-            ;(analysis as any).replacementsApplied = finalValidation.replacementsApplied
+            const validationIssuesBeforeRepair = [...finalValidation.validationIssues]
             
-            // Track analysis source
-            if (finalValidation.replacementsApplied.length > 0) {
-              ;(analysis as any).analysisSource = 'fallback_deterministic'
-              ;(analysis as any).deterministicFallbackUsed = true
-              ;(analysis as any).candidatePoolUsedAsReplacement = true
-              ;(analysis as any).replacementReason = 'openai_invalid_destinations'
+            // Initialize repair metadata
+            let repairAttempted = false
+            let repairPassed = false
+            let repairFailedReason: string | null = null
+            let repairDurationMs = 0
+            let repairTokens: { prompt: number; completion: number; total: number } | null = null
+            let replacementsApplied: string[] = []
+            
+            if (!finalValidation.valid) {
+              // Attempt OpenAI repair before falling back to deterministic replacement
+              repairAttempted = true
+              const repairResult = await this.repairInvalidOpenAIAnalysis(
+                analysis,
+                finalValidation.validationIssues,
+                request,
+                routeCandidatePool,
+                analysisContext
+              )
+              
+              repairDurationMs = repairResult.repairDurationMs
+              repairTokens = repairResult.repairTokens
+              
+              if (repairResult.success && repairResult.repairedAnalysis) {
+                // Validate repaired result
+                const repairedValidation = this.validateFinalRecommendations(
+                  repairResult.repairedAnalysis,
+                  request,
+                  routeCandidatePool
+                )
+                
+                if (repairedValidation.valid) {
+                  // Repair succeeded
+                  analysis = repairResult.repairedAnalysis
+                  repairPassed = true
+                  ;(analysis as any).analysisSource = 'openai_repaired'
+                  ;(analysis as any).deterministicFallbackUsed = false
+                  ;(analysis as any).candidatePoolUsedAsReplacement = false
+                  
+                  logger.info('OpenAI repair succeeded', {
+                    validationIssuesBeforeRepair,
+                    validationIssuesAfterRepair: repairedValidation.validationIssues,
+                    repairDurationMs,
+                    repairTokensUsed: repairTokens?.total,
+                  })
+                } else {
+                  // Repair failed validation - use deterministic fallback
+                  repairFailedReason = 'repair_still_invalid'
+                  const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
+                  analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
+                  const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
+                  replacementsApplied = fallbackCountriesBefore
+                    .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
+                    .filter(Boolean) as string[]
+                  
+                  ;(analysis as any).analysisSource = 'fallback_deterministic'
+                  ;(analysis as any).deterministicFallbackUsed = true
+                  ;(analysis as any).candidatePoolUsedAsReplacement = true
+                  ;(analysis as any).replacementReason = 'repair_failed_validation'
+                  
+                  logger.warn('OpenAI repair failed validation, using deterministic fallback', {
+                    repairValidationIssues: repairedValidation.validationIssues,
+                    replacementsApplied,
+                  })
+                }
+              } else {
+                // Repair call failed - use deterministic fallback
+                repairFailedReason = 'repair_call_failed'
+                const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
+                analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
+                const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
+                replacementsApplied = fallbackCountriesBefore
+                  .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
+                  .filter(Boolean) as string[]
+                
+                ;(analysis as any).analysisSource = 'fallback_deterministic'
+                ;(analysis as any).deterministicFallbackUsed = true
+                ;(analysis as any).candidatePoolUsedAsReplacement = true
+                ;(analysis as any).replacementReason = 'repair_call_failed'
+                
+                logger.warn('OpenAI repair call failed, using deterministic fallback', {
+                  replacementsApplied,
+                })
+              }
             } else {
+              // Validation passed - no repair needed
               ;(analysis as any).analysisSource = 'openai_primary'
               ;(analysis as any).deterministicFallbackUsed = false
               ;(analysis as any).candidatePoolUsedAsReplacement = false
             }
+            
+            // Set common metadata
+            ;(analysis as any).finalScopeValidationPassed = finalValidation.valid || repairPassed
+            ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
+            ;(analysis as any).replacementsApplied = replacementsApplied
             ;(analysis as any).openAIPrimaryUsed = true
             ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
+            ;(analysis as any).openAIRepairUsed = repairPassed
+            ;(analysis as any).repairAttempted = repairAttempted
+            ;(analysis as any).repairPassed = repairPassed
+            ;(analysis as any).repairFailedReason = repairFailedReason
+            ;(analysis as any).repairDurationMs = repairDurationMs
+            ;(analysis as any).repairPromptTokens = repairTokens?.prompt ?? null
+            ;(analysis as any).repairCompletionTokens = repairTokens?.completion ?? null
+            ;(analysis as any).repairTotalTokens = repairTokens?.total ?? null
+            ;(analysis as any).validationIssuesBeforeRepair = validationIssuesBeforeRepair
+            ;(analysis as any).validationIssuesAfterRepair = repairPassed ? [] : validationIssuesBeforeRepair
             
-            logger.info('Final recommendation scope validation', {
-              passed: finalValidation.valid,
-              invalidDestinations: finalValidation.invalidDestinations,
-              replacementsApplied: finalValidation.replacementsApplied,
+            logger.info('Final recommendation validation and repair flow', {
+              initialValidationPassed: finalValidation.valid,
+              repairAttempted,
+              repairPassed,
+              repairFailedReason,
               analysisSource: (analysis as any).analysisSource,
-              finalCountriesBeforeValidation: finalValidation.invalidDestinations.length > 0 ? 
-                [...finalValidation.invalidDestinations, ...analysis.rankedDestinations.map(d => d.destinationName)] : 
-                analysis.rankedDestinations.map(d => d.destinationName),
-              finalCountriesAfterValidation: analysis.rankedDestinations.map(d => d.destinationName),
+              invalidDestinations: finalValidation.invalidDestinations,
+              replacementsApplied,
+              finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
             })
             
-            // Only cache if final validation passed and not deterministic fallback
-            if (finalValidation.valid && (analysis as any).analysisSource === 'openai_primary' && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+            // Cache only if valid (openai_primary or openai_repaired)
+            const canCache = ((analysis as any).analysisSource === 'openai_primary' || (analysis as any).analysisSource === 'openai_repaired') &&
+              (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed
+            
+            if (canCache) {
               await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
               ;(analysis as any).cacheStatus = 'SET'
-              ;(analysis as any).cachedResultType = 'openai'
+              ;(analysis as any).cachedResultType = (analysis as any).analysisSource === 'openai_repaired' ? 'openai_repaired' : 'openai'
               logger.info('Travel Analysis Cache: SET', {
-                cachedResultType: 'openai',
+                cachedResultType: (analysis as any).cachedResultType,
+                analysisSource: (analysis as any).analysisSource,
                 openAIUsed: true,
                 fallbackUsed: false,
                 cacheStatus: 'SET',
               })
-            } else if (!finalValidation.valid || (analysis as any).analysisSource === 'fallback_deterministic') {
-              ;(analysis as any).cacheSkippedReason = (analysis as any).analysisSource === 'fallback_deterministic' ? 'deterministic_fallback' : 'invalid_final_result'
+            } else if ((analysis as any).analysisSource === 'fallback_deterministic') {
+              ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
               ;(analysis as any).cachedResultType = null
               logger.info('Travel Analysis Cache: SKIPPED_FALLBACK', {
-                reason: (analysis as any).cacheSkippedReason,
+                reason: 'deterministic_fallback',
                 invalidDestinations: finalValidation.invalidDestinations,
-                replacementsApplied: finalValidation.replacementsApplied,
+                replacementsApplied,
               })
             } else {
               ;(analysis as any).cachedResultType = null
@@ -1025,6 +1213,16 @@ export class TravelAnalysisEngine {
           cacheSkippedReason: analysisWithMeta.cacheSkippedReason ?? null,
           analysisSource: analysisWithMeta.analysisSource ?? (isCacheHit ? 'cache_openai' : 'openai_primary'),
           openAIPrimaryUsed: analysisWithMeta.openAIPrimaryUsed ?? true,
+          openAIRepairUsed: analysisWithMeta.openAIRepairUsed ?? false,
+          repairAttempted: analysisWithMeta.repairAttempted ?? false,
+          repairPassed: analysisWithMeta.repairPassed ?? false,
+          repairFailedReason: analysisWithMeta.repairFailedReason ?? null,
+          repairDurationMs: analysisWithMeta.repairDurationMs ?? null,
+          repairPromptTokens: analysisWithMeta.repairPromptTokens ?? null,
+          repairCompletionTokens: analysisWithMeta.repairCompletionTokens ?? null,
+          repairTotalTokens: analysisWithMeta.repairTotalTokens ?? null,
+          validationIssuesBeforeRepair: analysisWithMeta.validationIssuesBeforeRepair ?? [],
+          validationIssuesAfterRepair: analysisWithMeta.validationIssuesAfterRepair ?? [],
           deterministicFallbackUsed: analysisWithMeta.deterministicFallbackUsed ?? false,
           candidatePoolUsedAsContext: analysisWithMeta.candidatePoolUsedAsContext ?? (routeCandidatePool.length > 0),
           candidatePoolUsedAsReplacement: analysisWithMeta.candidatePoolUsedAsReplacement ?? false,
@@ -1066,6 +1264,14 @@ export class TravelAnalysisEngine {
           recommendedRouteType: analysisWithMeta._meta.recommendedRouteType,
           analysisSource: analysisWithMeta._meta.analysisSource,
           openAIPrimaryUsed: analysisWithMeta._meta.openAIPrimaryUsed,
+          openAIRepairUsed: analysisWithMeta._meta.openAIRepairUsed,
+          repairAttempted: analysisWithMeta._meta.repairAttempted,
+          repairPassed: analysisWithMeta._meta.repairPassed,
+          repairFailedReason: analysisWithMeta._meta.repairFailedReason,
+          repairDurationMs: analysisWithMeta._meta.repairDurationMs,
+          repairTotalTokens: analysisWithMeta._meta.repairTotalTokens,
+          validationIssuesBeforeRepair: analysisWithMeta._meta.validationIssuesBeforeRepair,
+          validationIssuesAfterRepair: analysisWithMeta._meta.validationIssuesAfterRepair,
           deterministicFallbackUsed: analysisWithMeta._meta.deterministicFallbackUsed,
           candidatePoolUsedAsContext: analysisWithMeta._meta.candidatePoolUsedAsContext,
           candidatePoolUsedAsReplacement: analysisWithMeta._meta.candidatePoolUsedAsReplacement,
@@ -1441,7 +1647,162 @@ export class TravelAnalysisEngine {
   }
 
   /**
-   * Validate final recommendations before caching
+   * Repair invalid OpenAI analysis by calling OpenAI again with validation issues
+   */
+  private async repairInvalidOpenAIAnalysis(
+    originalAnalysis: TravelAnalysisResponse,
+    validationIssues: string[],
+    request: AnalysisRequest,
+    routeCandidatePool: RouteCandidate[],
+    analysisContext: string
+  ): Promise<{
+    success: boolean
+    repairedAnalysis: TravelAnalysisResponse | null
+    repairDurationMs: number
+    repairTokens: { prompt: number; completion: number; total: number } | null
+  }> {
+    try {
+      if (!this.openai) {
+        return { success: false, repairedAnalysis: null, repairDurationMs: 0, repairTokens: null }
+      }
+
+      const candidateContext = routeCandidatePool.length > 0
+        ? `\n\nCANDIDATE ROUTES (use as strong guidance):\n${routeCandidatePool.map(c => 
+            `${c.country}: ${c.routeCities.join(' → ')} (${c.priceTier}, ${c.routeType}, ${c.bestMonths.join(', ')})`
+          ).join('\n')}`
+        : ''
+
+      const repairPrompt = `You are repairing a travel consultant analysis that failed validation.
+
+ORIGINAL VALIDATION ISSUES:
+${validationIssues.map(issue => `- ${issue}`).join('\n')}
+
+CONSTRAINTS TO FIX:
+- For ${request.tripLength || 7}-day ${request.budget || 'moderate'} trips from ${request.departureCity || 'departure city'}, avoid long-haul destinations unless explicitly requested
+- Trip structure is ${request.tripStructure || 'flexible'} - route type must match
+- Each recommendation needs route cities (suggestedRoute with 2+ cities), not just country names
+- Include realistic watch-outs and before-booking checks
+- Choose destinations mostly from candidate context if provided
+- Stay within candidate pool unless you can clearly justify why an alternative is better${candidateContext}
+
+KEEP:
+- Your consultant reasoning style
+- Honest limitations and assumptions
+- Realistic scores and notes
+- Route-first thinking
+
+FIX ONLY:
+- Replace invalid destinations with valid alternatives from candidate context
+- Ensure route shape matches trip structure (${request.tripStructure})
+- Add missing required fields (suggestedRoute, recommendedNights, transportLogic)
+- Keep recommendations realistic and consultant-grade
+
+Return the same structured schema with fixes applied.`
+
+      const systemPrompt = getCompactSystemInstructions()
+      
+      logger.info('OpenAI repair request started', {
+        model: this.model,
+        validationIssues: validationIssues.length,
+        candidatePoolSize: routeCandidatePool.length,
+        tripStructure: request.tripStructure,
+        tripLength: request.tripLength,
+        budget: request.budget,
+      })
+
+      const repairStartTime = Date.now()
+      const completion = await withResilience(
+        'gpt4-repair',
+        async () => {
+          return await this.openai!.beta.chat.completions.parse({
+            model: this.model,
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              {
+                role: 'user',
+                content: `${repairPrompt}\n\n${analysisContext}`,
+              },
+            ],
+            response_format: zodResponseFormat(compactAnalysisResponseSchema, 'travel_analysis'),
+            temperature: 0.3,
+            max_completion_tokens: 3500,
+          })
+        },
+        { ...ProviderConfigs.OPENAI, timeout: 20000 } // 20s timeout for repair
+      )
+
+      const repairDurationMs = Date.now() - repairStartTime
+      logger.info('OpenAI repair completed', {
+        duration: repairDurationMs,
+        tokensUsed: completion.usage?.total_tokens,
+        promptTokens: completion.usage?.prompt_tokens,
+        completionTokens: completion.usage?.completion_tokens,
+      })
+
+      const parsed = completion.choices[0].message.parsed as CompactAnalysisResponse
+      if (!parsed) {
+        return { success: false, repairedAnalysis: null, repairDurationMs, repairTokens: null }
+      }
+
+      // Track repair cost
+      costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
+
+      // Adapt to full schema
+      const repairedResponse: TravelAnalysisResponse = {
+        ...parsed,
+        userConstraints: {
+          budget: request.budget || 'moderate',
+          travelMonths: request.travelMonths || null,
+          interests: request.interests || null,
+          travelStyle: request.travelStyle || null,
+          pace: request.pace || null,
+        },
+        rankedDestinations: parsed.rankedDestinations.map(d => ({
+          ...d,
+          categoryScores: {
+            budgetFit: 8,
+            weatherFit: 8,
+            passportEase: 8,
+            nightlife: 7,
+            nature: 7,
+            transport: 8,
+            hotelValue: 8,
+            safety: 9,
+            flightValue: null,
+          },
+          passportEase: 'easy',
+          nightlifeLevel: 7,
+          natureLevel: 7,
+          transportLevel: 8,
+          hotelValueLevel: 8,
+          safetyLevel: 9,
+          confidence: 0.85,
+          sourceLabels: ['openai-repaired'],
+          dataQuality: 'estimated',
+        })),
+      }
+
+      return {
+        success: true,
+        repairedAnalysis: repairedResponse,
+        repairDurationMs,
+        repairTokens: {
+          prompt: completion.usage?.prompt_tokens || 0,
+          completion: completion.usage?.completion_tokens || 0,
+          total: completion.usage?.total_tokens || 0,
+        },
+      }
+    } catch (error) {
+      logger.error('OpenAI repair failed', error)
+      return { success: false, repairedAnalysis: null, repairDurationMs: 0, repairTokens: null }
+    }
+  }
+
+  /**
+   * Validate final recommendations
    */
   private validateFinalRecommendations(
     analysis: TravelAnalysisResponse,
@@ -1450,26 +1811,23 @@ export class TravelAnalysisEngine {
   ): {
     valid: boolean
     invalidDestinations: string[]
-    replacementsApplied: string[]
-    validatedAnalysis: TravelAnalysisResponse
+    validationIssues: string[]
   } {
     const invalidDestinations: string[] = []
-    const replacementsApplied: string[] = []
-    let validatedAnalysis = { ...analysis }
+    const validationIssues: string[] = []
 
     // If no candidate pool, skip validation
     if (routeCandidatePool.length === 0) {
-      return { valid: true, invalidDestinations: [], replacementsApplied: [], validatedAnalysis }
+      return { valid: true, invalidDestinations: [], validationIssues: [] }
     }
 
     const candidateCountries = new Set(routeCandidatePool.map(c => c.country))
-    const rankedDests = validatedAnalysis.rankedDestinations || []
+    const rankedDests = analysis.rankedDestinations || []
     const isShortModerateTrip = (request.tripLength || 0) <= 7 && 
       (request.budget === 'low' || request.budget === 'moderate')
 
     // Check each destination
-    for (let i = 0; i < rankedDests.length; i++) {
-      const dest = rankedDests[i]
+    for (const dest of rankedDests) {
       const destCountry = dest.destinationName
 
       // Check if destination is outside candidate pool
@@ -1483,38 +1841,64 @@ export class TravelAnalysisEngine {
         
         if (isShortModerateTrip && isLongHaul) {
           invalidDestinations.push(destCountry)
-          
-          // Find replacement from candidate pool
-          const replacement = routeCandidatePool.find(c => 
-            !rankedDests.some(d => d.destinationName === c.country)
-          )
-          
-          if (replacement) {
-            // Replace with valid candidate
-            rankedDests[i] = {
-              ...dest,
-              destinationName: replacement.country,
-              destinationSummary: `${replacement.country}: ${replacement.whyCandidateFits}`,
-              suggestedRoute: replacement.routeCities,
-              whyRecommended: [replacement.whyCandidateFits, replacement.routeLogic],
-              bestMonths: replacement.bestMonths,
-              estimatedBudgetLevel: replacement.priceTier === 'budget' ? 'low' : 
-                replacement.priceTier === 'premium' ? 'high' : 'moderate',
-            }
-            replacementsApplied.push(`${destCountry} → ${replacement.country}`)
+          validationIssues.push(`${destCountry} is a long-haul destination outside candidate pool for ${request.tripLength}-day ${request.budget} trip from ${request.departureCity}`)
+        }
+      }
+    }
+
+    // Check route type mismatch
+    if (request.tripStructure === 'single_country_multi_city') {
+      for (const dest of rankedDests) {
+        if (!dest.suggestedRoute || dest.suggestedRoute.length < 2) {
+          validationIssues.push(`${dest.destinationName} missing multi-city route (trip structure requires multi-city with 2+ cities)`)
+        }
+      }
+    }
+
+    return {
+      valid: invalidDestinations.length === 0 && validationIssues.length === 0,
+      invalidDestinations,
+      validationIssues
+    }
+  }
+
+  /**
+   * Apply deterministic fallback replacement (last resort only after repair fails)
+   */
+  private applyDeterministicFallback(
+    analysis: TravelAnalysisResponse,
+    invalidDestinations: string[],
+    routeCandidatePool: RouteCandidate[]
+  ): TravelAnalysisResponse {
+    const fallbackAnalysis = { ...analysis }
+    const rankedDests = [...fallbackAnalysis.rankedDestinations]
+
+    for (let i = 0; i < rankedDests.length; i++) {
+      const dest = rankedDests[i]
+      if (invalidDestinations.includes(dest.destinationName)) {
+        // Find replacement from candidate pool
+        const replacement = routeCandidatePool.find(c => 
+          !rankedDests.some(d => d.destinationName === c.country)
+        )
+        
+        if (replacement) {
+          rankedDests[i] = {
+            ...dest,
+            destinationName: replacement.country,
+            destinationSummary: `${replacement.country}: ${replacement.whyCandidateFits}`,
+            suggestedRoute: replacement.routeCities,
+            whyRecommended: [replacement.whyCandidateFits, replacement.routeLogic],
+            bestMonths: replacement.bestMonths,
+            estimatedBudgetLevel: replacement.priceTier === 'budget' ? 'low' : 
+              replacement.priceTier === 'premium' ? 'high' : 'moderate',
+            realisticConsultantNotes: 'Conservative route-based fallback recommendation',
           }
         }
       }
     }
 
-    validatedAnalysis.rankedDestinations = rankedDests
-
-    return {
-      valid: invalidDestinations.length === 0,
-      invalidDestinations,
-      replacementsApplied,
-      validatedAnalysis
-    }
+    fallbackAnalysis.rankedDestinations = rankedDests
+    return fallbackAnalysis
   }
 
   /**

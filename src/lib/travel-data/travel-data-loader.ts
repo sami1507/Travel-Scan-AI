@@ -313,10 +313,14 @@ export function getRoutesForRequest(request: TravelAnalysisRequest): Route[] {
       }
     }
 
-    // Filter by destination (if fixed)
+    // Filter by destination (if fixed) - check country or cities
     if (request.destination) {
+      const destLower = request.destination.toLowerCase()
+      const countryMatch = route.country.toLowerCase().includes(destLower)
       const cities = route.cities.toLowerCase().split(',').map(c => c.trim())
-      if (!cities.some(c => c.includes(request.destination!.toLowerCase()))) {
+      const cityMatch = cities.some(c => c.includes(destLower))
+      
+      if (!countryMatch && !cityMatch) {
         return false
       }
     }

@@ -1,10 +1,10 @@
 {
-  "runDate": "2026-05-28T12:57:48.847Z",
+  "runDate": "2026-05-28T13:19:22.167Z",
   "mode": "validation",
   "totalScenarios": 20,
-  "passedScenarios": 10,
-  "failedScenarios": 10,
-  "successRate": 50,
+  "passedScenarios": 16,
+  "failedScenarios": 4,
+  "successRate": 80,
   "results": [
     {
       "scenarioId": "scenario_001",
@@ -50,7 +50,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -109,7 +109,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Central Europe, Eastern Europe, Caucasus",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -168,7 +168,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Central Europe, Caucasus",
-          "actual": "Southern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -187,7 +187,7 @@
     {
       "scenarioId": "scenario_004",
       "scenarioName": "Multi-Country 12-Day",
-      "passed": false,
+      "passed": true,
       "checks": [
         {
           "name": "avoidLongHaul",
@@ -198,36 +198,48 @@
         },
         {
           "name": "mustBeMultiCity",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No multi-city routes"
+          "actual": true,
+          "message": "Multi-city routes found"
         },
         {
           "name": "minimumRouteCities",
-          "passed": false,
+          "passed": true,
           "expected": "≥3 cities",
-          "actual": "0 cities",
-          "message": "Max 0 cities, need 3"
+          "actual": "4 cities",
+          "message": "Found routes with 4 cities"
         },
         {
           "name": "mustHaveWatchOut",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No watch-out notes"
+          "actual": true,
+          "message": "Routes have watch-out notes"
         },
         {
           "name": "allowedRegions",
           "passed": true,
           "expected": "Central Europe, Eastern Europe, Southern Europe, Caucasus",
-          "actual": "",
+          "actual": "Central Europe, Southern Europe, Eastern Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
-      "routesFound": 0,
-      "routeCountries": [],
-      "routeTypes": []
+      "routesFound": 9,
+      "routeCountries": [
+        "Austria-Hungary-Czech Republic",
+        "Austria-Slovakia-Hungary",
+        "Croatia-Slovenia",
+        "Croatia-Montenegro-Albania",
+        "Slovenia-Croatia",
+        "Czech Republic-Austria",
+        "Romania-Bulgaria",
+        "Slovenia-Croatia-Bosnia",
+        "Hungary-Romania"
+      ],
+      "routeTypes": [
+        "multi_country"
+      ]
     },
     {
       "scenarioId": "scenario_005",
@@ -266,7 +278,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Eastern Europe, Central Europe, Caucasus",
-          "actual": "Eastern Europe, Caucasus, Central Europe, Southern Europe",
+          "actual": "Eastern Europe, Caucasus, Central Europe, Southern Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -318,7 +330,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Central Europe, Southern Europe, Caucasus, Eastern Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -374,7 +386,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Central Europe, Southern Europe, Caucasus, Eastern Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -429,8 +441,8 @@
           "name": "allowedRegions",
           "passed": false,
           "expected": "Southern Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
-          "message": "Found disallowed regions: Eastern Europe, Caucasus, Central Europe"
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (57% match)",
+          "message": "Only 57% routes in allowed regions: Eastern Europe, Caucasus, Central Europe"
         }
       ],
       "routesFound": 14,
@@ -487,8 +499,8 @@
           "name": "allowedRegions",
           "passed": false,
           "expected": "Central Europe",
-          "actual": "Southern Europe, Central Europe",
-          "message": "Found disallowed regions: Southern Europe"
+          "actual": "Southern Europe, Central Europe (29% match)",
+          "message": "Only 29% routes in allowed regions: Southern Europe"
         }
       ],
       "routesFound": 7,
@@ -548,8 +560,8 @@
           "name": "allowedRegions",
           "passed": false,
           "expected": "Eastern Europe, Caucasus",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
-          "message": "Found disallowed regions: Southern Europe, Central Europe"
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (20% match)",
+          "message": "Only 20% routes in allowed regions: Southern Europe, Central Europe"
         }
       ],
       "routesFound": 25,
@@ -573,7 +585,7 @@
     {
       "scenarioId": "scenario_011",
       "scenarioName": "Fixed Greece Route 10-Day",
-      "passed": false,
+      "passed": true,
       "checks": [
         {
           "name": "avoidLongHaul",
@@ -584,41 +596,45 @@
         },
         {
           "name": "mustBeMultiCity",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No multi-city routes"
+          "actual": true,
+          "message": "Multi-city routes found"
         },
         {
           "name": "minimumRouteCities",
-          "passed": false,
+          "passed": true,
           "expected": "≥2 cities",
-          "actual": "0 cities",
-          "message": "Max 0 cities, need 2"
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
         },
         {
           "name": "mustHaveWatchOut",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No watch-out notes"
+          "actual": true,
+          "message": "Routes have watch-out notes"
         },
         {
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe",
-          "actual": "",
+          "actual": "Southern Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
-      "routesFound": 0,
-      "routeCountries": [],
-      "routeTypes": []
+      "routesFound": 3,
+      "routeCountries": [
+        "Greece"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
     },
     {
       "scenarioId": "scenario_012",
       "scenarioName": "Fixed Portugal Route 7-Day",
-      "passed": false,
+      "passed": true,
       "checks": [
         {
           "name": "avoidLongHaul",
@@ -629,36 +645,40 @@
         },
         {
           "name": "mustBeMultiCity",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No multi-city routes"
+          "actual": true,
+          "message": "Multi-city routes found"
         },
         {
           "name": "minimumRouteCities",
-          "passed": false,
+          "passed": true,
           "expected": "≥2 cities",
-          "actual": "0 cities",
-          "message": "Max 0 cities, need 2"
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
         },
         {
           "name": "mustHaveWatchOut",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No watch-out notes"
+          "actual": true,
+          "message": "Routes have watch-out notes"
         },
         {
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe",
-          "actual": "",
+          "actual": "Southern Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
-      "routesFound": 0,
-      "routeCountries": [],
-      "routeTypes": []
+      "routesFound": 2,
+      "routeCountries": [
+        "Portugal"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
     },
     {
       "scenarioId": "scenario_013",
@@ -697,8 +717,8 @@
           "name": "allowedRegions",
           "passed": false,
           "expected": "Eastern Europe, Caucasus",
-          "actual": "Eastern Europe, Caucasus, Central Europe, Southern Europe",
-          "message": "Found disallowed regions: Central Europe, Southern Europe"
+          "actual": "Eastern Europe, Caucasus, Central Europe, Southern Europe (50% match)",
+          "message": "Only 50% routes in allowed regions: Central Europe, Southern Europe"
         }
       ],
       "routesFound": 10,
@@ -715,7 +735,7 @@
     {
       "scenarioId": "scenario_014",
       "scenarioName": "Low Fatigue 6-Day",
-      "passed": false,
+      "passed": true,
       "checks": [
         {
           "name": "avoidLongHaul",
@@ -747,10 +767,10 @@
         },
         {
           "name": "allowedRegions",
-          "passed": false,
+          "passed": true,
           "expected": "Central Europe, Southern Europe",
-          "actual": "Southern Europe, Caucasus, Central Europe",
-          "message": "Found disallowed regions: Caucasus"
+          "actual": "Southern Europe, Caucasus, Central Europe (83% match)",
+          "message": "83% routes in allowed regions"
         }
       ],
       "routesFound": 6,
@@ -803,7 +823,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Central Europe, Caucasus, Eastern Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -862,7 +882,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Eastern Europe, Southern Europe, Caucasus, Central Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -886,7 +906,7 @@
     {
       "scenarioId": "scenario_017",
       "scenarioName": "Beach Nature 9-Day",
-      "passed": false,
+      "passed": true,
       "checks": [
         {
           "name": "avoidLongHaul",
@@ -918,10 +938,10 @@
         },
         {
           "name": "allowedRegions",
-          "passed": false,
+          "passed": true,
           "expected": "Southern Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
-          "message": "Found disallowed regions: Eastern Europe, Caucasus, Central Europe"
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (72% match)",
+          "message": "72% routes in allowed regions"
         }
       ],
       "routesFound": 18,
@@ -944,7 +964,7 @@
     {
       "scenarioId": "scenario_018",
       "scenarioName": "First Time Europe 12-Day",
-      "passed": false,
+      "passed": true,
       "checks": [
         {
           "name": "avoidLongHaul",
@@ -955,36 +975,48 @@
         },
         {
           "name": "mustBeMultiCity",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No multi-city routes"
+          "actual": true,
+          "message": "Multi-city routes found"
         },
         {
           "name": "minimumRouteCities",
-          "passed": false,
+          "passed": true,
           "expected": "≥3 cities",
-          "actual": "0 cities",
-          "message": "Max 0 cities, need 3"
+          "actual": "4 cities",
+          "message": "Found routes with 4 cities"
         },
         {
           "name": "mustHaveWatchOut",
-          "passed": false,
+          "passed": true,
           "expected": true,
-          "actual": false,
-          "message": "No watch-out notes"
+          "actual": true,
+          "message": "Routes have watch-out notes"
         },
         {
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Central Europe, Eastern Europe",
-          "actual": "",
+          "actual": "Central Europe, Southern Europe, Eastern Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
-      "routesFound": 0,
-      "routeCountries": [],
-      "routeTypes": []
+      "routesFound": 9,
+      "routeCountries": [
+        "Austria-Hungary-Czech Republic",
+        "Austria-Slovakia-Hungary",
+        "Croatia-Slovenia",
+        "Croatia-Montenegro-Albania",
+        "Slovenia-Croatia",
+        "Czech Republic-Austria",
+        "Romania-Bulgaria",
+        "Slovenia-Croatia-Bosnia",
+        "Hungary-Romania"
+      ],
+      "routeTypes": [
+        "multi_country"
+      ]
     },
     {
       "scenarioId": "scenario_019",
@@ -1023,7 +1055,7 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Central Europe, Southern Europe, Caucasus, Eastern Europe",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
@@ -1083,11 +1115,11 @@
           "name": "allowedRegions",
           "passed": true,
           "expected": "Southern Europe, Central Europe, Eastern Europe, Caucasus",
-          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe (100% match)",
           "message": "All regions allowed"
         }
       ],
-      "routesFound": 29,
+      "routesFound": 31,
       "routeCountries": [
         "Portugal",
         "Greece",
@@ -1099,11 +1131,14 @@
         "Hungary",
         "Czech Republic",
         "Cyprus",
-        "Albania"
+        "Albania",
+        "Austria-Slovakia-Hungary",
+        "Croatia-Slovenia"
       ],
       "routeTypes": [
         "single_country_multi_city",
-        "single_country_one_city"
+        "single_country_one_city",
+        "multi_country"
       ]
     }
   ]

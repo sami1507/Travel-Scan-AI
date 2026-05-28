@@ -1,14 +1,14 @@
 {
   "title": "Routes by Region",
-  "description": "Distribution of 36 curated routes across 4 European regions",
+  "description": "Distribution of 46 curated routes across 4 European regions (includes 10 multi-country routes)",
   "chart_type": "bar",
   "data": [
-    { "region": "Southern Europe", "count": 21, "percentage": 58.3 },
-    { "region": "Central Europe", "count": 9, "percentage": 25.0 },
-    { "region": "Eastern Europe", "count": 3, "percentage": 8.3 },
-    { "region": "Caucasus", "count": 3, "percentage": 8.3 }
+    { "region": "Southern Europe", "count": 25, "percentage": 54.3 },
+    { "region": "Central Europe", "count": 13, "percentage": 28.3 },
+    { "region": "Eastern Europe", "count": 5, "percentage": 10.9 },
+    { "region": "Caucasus", "count": 3, "percentage": 6.5 }
   ],
-  "total": 36,
+  "total": 46,
   "colors": {
     "Southern Europe": "#3b82f6",
     "Central Europe": "#8b5cf6",

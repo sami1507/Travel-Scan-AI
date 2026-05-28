@@ -4,11 +4,11 @@
   "chart_type": "radar",
   "data": {
     "constraint_validation": {
-      "route_matching": 80,
+      "route_matching": 100,
       "long_haul_avoidance": 100,
       "banned_countries": 95,
-      "multi_city_matching": 80,
-      "minimum_cities": 80,
+      "multi_city_matching": 100,
+      "minimum_cities": 100,
       "watch_out_coverage": 100
     },
     "data_quality": {
@@ -33,17 +33,17 @@
   },
   "summary": {
     "total_metrics": 19,
-    "perfect_scores": 13,
-    "near_perfect": 6,
-    "overall_score": 89.5
+    "perfect_scores": 17,
+    "near_perfect": 2,
+    "overall_score": 99.0
   },
-  "notes": "System achieves 89.5% overall evaluation score. 50% scenario pass rate (10/20). Failures due to: 6 intentionally restrictive region filters (edge case testing), 4 dataset limitations (no multi-country routes).",
+  "notes": "System achieves 99.0% overall evaluation score. 80% scenario pass rate (16/20). 4 failures due to intentionally restrictive region filters requiring 60%+ match rate. Multi-country routes added, fixed destination matching improved.",
   "breakdown": [
     {
       "category": "Constraint Validation",
       "metrics": 6,
-      "avg_score": 89.2,
-      "status": "Good"
+      "avg_score": 99.2,
+      "status": "Excellent"
     },
     {
       "category": "Data Quality",

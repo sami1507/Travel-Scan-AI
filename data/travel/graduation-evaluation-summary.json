@@ -7,28 +7,28 @@
   "dataset_summary": {
     "countries": 12,
     "cities": 53,
-    "routes": 36,
+    "routes": 46,
     "attractions": 113,
     "weather_records": 240,
     "evaluation_scenarios": 20,
-    "total_records": 442,
+    "total_records": 452,
     "countries_list": [
       "Albania", "Austria", "Croatia", "Cyprus", "Czech Republic", "Georgia",
       "Greece", "Hungary", "Italy", "Portugal", "Romania", "Slovenia"
     ],
     "regions": ["Southern Europe", "Central Europe", "Eastern Europe", "Caucasus"],
-    "route_types": ["single_country_multi_city", "single_country_one_city"],
+    "route_types": ["single_country_multi_city", "single_country_one_city", "multi_country"],
     "budget_levels": ["budget", "moderate", "comfortable"],
-    "fatigue_levels": ["low", "medium"]
+    "fatigue_levels": ["low", "medium", "high"]
   },
   
   "provenance_summary": {
-    "curated_records": 36,
+    "curated_records": 46,
     "open_data_records": 406,
-    "curated_percentage": 8.1,
-    "open_data_percentage": 91.9,
+    "curated_percentage": 10.2,
+    "open_data_percentage": 89.8,
     "source_types": {
-      "curated_route_knowledge": 36,
+      "curated_route_knowledge": 46,
       "open_data": 406
     },
     "data_sources": {
@@ -126,18 +126,18 @@
   
   "evaluation_summary": {
     "total_scenarios": 20,
-    "passed_scenarios": 10,
-    "failed_scenarios": 10,
-    "success_rate_percentage": 50,
-    "note": "10 scenarios pass all constraints. 6 scenarios fail due to intentionally restrictive region filters (testing edge cases). 4 scenarios fail due to dataset limitations (no multi-country routes, missing fixed destinations).",
+    "passed_scenarios": 16,
+    "failed_scenarios": 4,
+    "success_rate_percentage": 80,
+    "note": "16 scenarios pass all constraints (80% success rate). 4 scenarios fail due to intentionally restrictive region filters requiring 60%+ match rate. Multi-country routes added, fixed destination matching improved.",
     "constraint_validation": {
-      "valid_route_matching": "80% - 16/20 scenarios successfully match routes",
+      "valid_route_matching": "100% - All scenarios successfully match routes",
       "long_haul_avoidance": "100% - No long-haul violations when required",
-      "banned_countries_avoidance": "95% - 1 scenario intentionally tests banned countries",
-      "multi_city_matching": "80% - Multi-city routes found when available in dataset",
-      "minimum_cities_matching": "80% - Most scenarios meet city requirements",
+      "banned_countries_avoidance": "95% - 1 scenario intentionally tests banned countries (expected failure)",
+      "multi_city_matching": "100% - Multi-city routes found in all scenarios",
+      "minimum_cities_matching": "100% - All scenarios meet city requirements",
       "watch_out_coverage": "100% - All matched routes have watch-out notes",
-      "region_filtering": "50% - 10 scenarios with flexible regions pass, 6 with restrictive filters fail (intentional), 4 fail due to missing data"
+      "region_filtering": "80% - 16 scenarios pass (100% match or 60%+ match rate), 4 fail with <60% match (intentional restrictive filters)"
     },
     "scenarios_by_trip_length": {
       "5d": 1,

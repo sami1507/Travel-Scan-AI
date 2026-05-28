@@ -409,11 +409,80 @@ export function buildRouteCandidatePool(request: AnalysisRequest): RouteCandidat
   return allCandidates
 }
 
+/**
+ * Select diverse candidates to send to OpenAI (not just top 12)
+ */
+function selectDiverseCandidates(
+  candidates: RouteCandidate[],
+  request: AnalysisRequest
+): RouteCandidate[] {
+  if (candidates.length <= 20) {
+    return candidates
+  }
+
+  const selected: RouteCandidate[] = []
+  const regions = new Set<string>()
+  const countries = new Set<string>()
+
+  // 1. Add top 8 best-fit routes
+  const topFit = candidates.slice(0, 8)
+  selected.push(...topFit)
+  topFit.forEach(c => {
+    regions.add(c.region)
+    countries.add(c.country)
+  })
+
+  // 2. Add 2-4 from different regions
+  const remainingCandidates = candidates.slice(8)
+  const differentRegions = remainingCandidates.filter(c => !regions.has(c.region))
+  selected.push(...differentRegions.slice(0, 4))
+  differentRegions.slice(0, 4).forEach(c => {
+    regions.add(c.region)
+    countries.add(c.country)
+  })
+
+  // 3. Add 2 unique/less obvious options
+  const uniqueOptions = remainingCandidates.filter(c => c.mainstreamLevel === 'unique')
+  selected.push(...uniqueOptions.slice(0, 2))
+
+  // 4. Add 2 value options
+  const valueOptions = remainingCandidates.filter(c => c.priceTier === 'budget')
+  selected.push(...valueOptions.slice(0, 2))
+
+  // 5. Add 2 low-fatigue options
+  const lowFatigueOptions = remainingCandidates.filter(c => c.travelFatigue === 'low')
+  selected.push(...lowFatigueOptions.slice(0, 2))
+
+  // Deduplicate and limit to 20-30
+  const uniqueSelected = Array.from(new Map(selected.map(c => [c.id, c])).values())
+  
+  logger.info('Travel Data Candidate Mix', {
+    totalRoutesLoaded: candidates.length,
+    candidatesSentToOpenAI: Math.min(uniqueSelected.length, 30),
+    regionsIncluded: Array.from(regions),
+    countriesIncluded: Array.from(countries),
+    diversityMode: request.diversityMode,
+    excludeCountries: request.excludeCountries,
+  })
+
+  return uniqueSelected.slice(0, 30)
+}
+
 export function filterCandidatesByRequest(
   candidates: RouteCandidate[],
   request: AnalysisRequest
 ): RouteCandidate[] {
   let filtered = [...candidates]
+
+  // Filter by excludeCountries (for alternative ideas)
+  if (request.excludeCountries && request.excludeCountries.length > 0) {
+    const excludedSet = new Set(request.excludeCountries.map(c => c.toLowerCase()))
+    filtered = filtered.filter(c => !excludedSet.has(c.country.toLowerCase()))
+    logger.info('Filtered by excludeCountries', {
+      excludedCountries: request.excludeCountries,
+      remainingCount: filtered.length,
+    })
+  }
 
   // Filter by tripStructure
   if (request.tripStructure === 'single_country_one_city') {
@@ -451,12 +520,38 @@ export function filterCandidatesByRequest(
     })).sort((a, b) => b.estimatedScore - a.estimatedScore)
   }
 
+  // Apply diversityMode adjustments
+  if (request.diversityMode) {
+    if (request.diversityMode === 'hidden_gems') {
+      filtered = filtered.map(c => ({
+        ...c,
+        estimatedScore: c.mainstreamLevel === 'unique' ? c.estimatedScore + 10 : c.estimatedScore - 5,
+      })).sort((a, b) => b.estimatedScore - a.estimatedScore)
+    } else if (request.diversityMode === 'cheaper_options') {
+      filtered = filtered.map(c => ({
+        ...c,
+        estimatedScore: c.priceTier === 'budget' ? c.estimatedScore + 10 : c.estimatedScore,
+      })).sort((a, b) => b.estimatedScore - a.estimatedScore)
+    } else if (request.diversityMode === 'low_fatigue') {
+      filtered = filtered.map(c => ({
+        ...c,
+        estimatedScore: c.travelFatigue === 'low' ? c.estimatedScore + 10 : c.estimatedScore - 5,
+      })).sort((a, b) => b.estimatedScore - a.estimatedScore)
+    }
+  }
+
+  // Select diverse candidates (not just top 12)
+  const selectedCandidates = selectDiverseCandidates(filtered, request)
+
   logger.info('Route candidates filtered', {
     originalCount: candidates.length,
     filteredCount: filtered.length,
+    selectedCount: selectedCandidates.length,
     tripStructure: request.tripStructure,
     budget: request.budget,
+    diversityMode: request.diversityMode,
+    excludeCountries: request.excludeCountries,
   })
 
-  return filtered.slice(0, 12) // Return top 12
+  return selectedCandidates
 }

@@ -52,6 +52,11 @@ DIVERSITY RULES:
 - Avoid all-mainstream Mediterranean set (Spain/Greece/Italy) unless clearly best
 - Include at least one less-mainstream or unique option if alternatives score within 20 points
 - Labels: "Best Overall", "Best Value", "Unique Discovery"
+${request.excludeCountries && request.excludeCountries.length > 0 ? `\n⚠️ AVOID REPEATING: ${request.excludeCountries.join(', ')} - User already saw these. Only repeat if clearly the best fit and explain why.` : ''}
+${request.diversityMode === 'alternative_ideas' ? '\n🔄 MODE: Alternative Ideas - Return different valid alternatives from the travel data context. Avoid excluded countries if possible.' : ''}
+${request.diversityMode === 'hidden_gems' ? '\n💎 MODE: Hidden Gems - Prioritize less obvious, unique destinations over mainstream options.' : ''}
+${request.diversityMode === 'cheaper_options' ? '\n💰 MODE: Value Focus - Prioritize budget-friendly routes with good value for money.' : ''}
+${request.diversityMode === 'low_fatigue' ? '\n🧘 MODE: Low Fatigue - Prioritize relaxed routes with minimal travel between cities.' : ''}
 
 SCORING HONESTY:
 - Use realistic scores 70-95, not inflated

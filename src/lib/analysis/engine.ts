@@ -49,6 +49,11 @@ export interface AnalysisRequest {
   tripStructure?: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
   accommodationPreference?: string
   userId?: string // For personalization
+  // Fresh analysis controls
+  forceFresh?: boolean // Bypass cache and generate fresh analysis
+  freshRunId?: string // Unique ID for fresh run tracking
+  excludeCountries?: string[] // Countries to avoid in recommendations
+  diversityMode?: 'best_fit' | 'alternative_ideas' | 'hidden_gems' | 'cheaper_options' | 'low_fatigue'
 }
 
 export class TravelAnalysisEngine {
@@ -381,11 +386,14 @@ export class TravelAnalysisEngine {
       const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, candidatePoolSize), routeCandidatePool)
       
       // Check if cache should be bypassed
-      const bypassCache = process.env.DISABLE_ANALYSIS_CACHE === 'true' || (request as any).forceFresh === true
+      const bypassCache = process.env.DISABLE_ANALYSIS_CACHE === 'true' || request.forceFresh === true
       
       if (bypassCache) {
         logger.info('Travel Analysis Cache: BYPASSED', {
-          reason: process.env.DISABLE_ANALYSIS_CACHE === 'true' ? 'env_flag' : 'force_fresh',
+          reason: process.env.DISABLE_ANALYSIS_CACHE === 'true' ? 'env_flag' : 'forceFresh',
+          freshRunId: request.freshRunId,
+          diversityMode: request.diversityMode,
+          excludeCountries: request.excludeCountries,
         })
       }
       
@@ -2100,7 +2108,11 @@ Return the same structured schema with fixes applied.`
       destIds || 'none',
       routeCandidateCount.toString(),
       candidateCountries,
-      candidateSignatures
+      candidateSignatures,
+      // Fresh analysis controls
+      request.diversityMode || 'none',
+      (request.excludeCountries || []).sort().join(','),
+      request.freshRunId || 'none'
     ].join(':')
     
     // Hash to keep key length reasonable

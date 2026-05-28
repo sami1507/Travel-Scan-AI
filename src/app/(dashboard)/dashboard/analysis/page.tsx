@@ -59,6 +59,9 @@ export default function AnalysisPage() {
     travelMonths: number[]
     interests: string[]
     tripStructure: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
+    forceFresh?: boolean
+    excludeCountries?: string[]
+    diversityMode?: 'best_fit' | 'alternative_ideas' | 'hidden_gems' | 'cheaper_options' | 'low_fatigue'
   }, isRetry = false) => {
     // Client-side validation
     const validation = validateAnalysisRequest({
@@ -90,10 +93,19 @@ export default function AnalysisPage() {
       // Sanitize request before sending
       const sanitizedData = sanitizeAnalysisRequest(data)
       
+      // Add fresh run ID if forceFresh is enabled
+      const requestData = {
+        ...sanitizedData,
+        forceFresh: data.forceFresh,
+        freshRunId: data.forceFresh ? `fresh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : undefined,
+        excludeCountries: data.excludeCountries,
+        diversityMode: data.diversityMode,
+      }
+      
       const response = await fetch('/api/travel/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sanitizedData),
+        body: JSON.stringify(requestData),
       })
 
       if (!response.ok) {
@@ -182,6 +194,40 @@ export default function AnalysisPage() {
         tripStructure: queryContext?.query,
         timestamp: new Date().toISOString(),
       },
+    })
+  }
+
+  // Helper: Run fresh analysis (bypass cache)
+  const handleRunFreshAnalysis = () => {
+    if (!queryContext) return
+    handleAnalyze({
+      query: queryContext.query || '',
+      budget: queryContext.budget || 'moderate',
+      travelMonths: queryContext.travel_months || [],
+      interests: queryContext.interests || [],
+      tripStructure: 'single_country_multi_city',
+      forceFresh: true,
+    })
+  }
+
+  // Helper: Generate different options (exclude current countries)
+  const handleGenerateDifferentOptions = () => {
+    if (!analysis || !queryContext) return
+    
+    // Extract current countries from recommendations
+    const currentCountries = analysis.rankedDestinations
+      .map(dest => dest.destinationName)
+      .filter(name => name && name.length > 0)
+    
+    handleAnalyze({
+      query: queryContext.query || '',
+      budget: queryContext.budget || 'moderate',
+      travelMonths: queryContext.travel_months || [],
+      interests: queryContext.interests || [],
+      tripStructure: 'single_country_multi_city',
+      forceFresh: true,
+      excludeCountries: currentCountries,
+      diversityMode: 'alternative_ideas',
     })
   }
 

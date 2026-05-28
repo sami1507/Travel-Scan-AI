@@ -14,6 +14,11 @@ export const schemas = {
     travelStyle: z.enum(['solo', 'couple', 'family', 'friends', 'business']).optional(),
     pace: z.enum(['relaxed', 'moderate', 'fast', 'very-fast']).optional(),
     tripStructure: z.enum(['single_country_one_city', 'single_country_multi_city', 'multi_country']).optional(),
+    // Fresh analysis controls
+    forceFresh: z.boolean().optional(),
+    freshRunId: z.string().max(100).optional(),
+    excludeCountries: z.array(z.string().max(100)).max(50).optional(),
+    diversityMode: z.enum(['best_fit', 'alternative_ideas', 'hidden_gems', 'cheaper_options', 'low_fatigue']).optional(),
   }),
 
   // Feedback submission

@@ -49,6 +49,10 @@ export async function POST(request: NextRequest) {
       travelStyle,
       pace,
       tripStructure,
+      forceFresh,
+      freshRunId,
+      excludeCountries,
+      diversityMode,
     } = validation.data
 
     logger.info('Travel analysis requested', {
@@ -58,6 +62,10 @@ export async function POST(request: NextRequest) {
       departureCity,
       budget,
       tripStructure,
+      forceFresh,
+      freshRunId,
+      excludeCountries,
+      diversityMode,
     })
 
     // Run analysis with personalization
@@ -72,6 +80,10 @@ export async function POST(request: NextRequest) {
       pace,
       tripStructure,
       userId: user.id, // Enable personalization
+      forceFresh,
+      freshRunId,
+      excludeCountries,
+      diversityMode,
     })
 
     // Track in history (async, don't block response)

@@ -1,0 +1,114 @@
+country,city,name,category,interest_tags,typical_duration_hours,best_time_of_day,source_type,notes
+Portugal,Lisbon,Belém Tower,history,"history,architecture,unesco",1.5,morning,curated,16th century fortified tower and UNESCO site
+Portugal,Lisbon,Jerónimos Monastery,history,"history,architecture,unesco",2,morning,curated,Manueline monastery and Vasco da Gama tomb
+Portugal,Lisbon,Alfama District,old_town,"city,culture,food,photography",3,afternoon,curated,Historic Moorish quarter with fado houses
+Portugal,Lisbon,Time Out Market,food,"food,market,local",2,lunch,curated,Curated food hall with top Lisbon chefs
+Portugal,Lisbon,São Jorge Castle,viewpoint,"history,viewpoint,photography",2,late_afternoon,curated,Moorish castle with panoramic city views
+Portugal,Porto,Livraria Lello,museum,"culture,architecture,photography",1,morning,curated,Historic bookshop that inspired Harry Potter
+Portugal,Porto,Ribeira District,old_town,"city,food,photography,culture",3,afternoon,curated,UNESCO riverside quarter with colorful houses
+Portugal,Porto,Port Wine Cellars,food,"wine,food,culture",2,afternoon,curated,Traditional port wine lodges in Vila Nova de Gaia
+Portugal,Porto,Clérigos Tower,viewpoint,"history,viewpoint,photography",1,late_afternoon,curated,Baroque tower with 360-degree city views
+Portugal,Sintra,Pena Palace,history,"palaces,nature,photography,unesco",2.5,morning,curated,Romantic 19th century palace on mountain
+Portugal,Sintra,Quinta da Regaleira,history,"palaces,nature,mystery",2,afternoon,curated,Gothic palace with initiation well
+Portugal,Lagos,Ponta da Piedade,nature,"beach,nature,photography",2,morning,curated,Dramatic rock formations and sea caves
+Greece,Athens,Acropolis,history,"history,archaeology,unesco",3,morning,curated,Ancient citadel with Parthenon temple
+Greece,Athens,Acropolis Museum,museum,"history,archaeology,culture",2.5,afternoon,curated,Modern museum with ancient Greek artifacts
+Greece,Athens,Plaka District,old_town,"city,food,shopping,culture",3,evening,curated,Historic neighborhood below Acropolis
+Greece,Athens,Ancient Agora,history,"history,archaeology",2,morning,curated,Ancient marketplace and civic center
+Greece,Athens,National Archaeological Museum,museum,"history,archaeology,culture",3,morning,curated,World's finest collection of Greek antiquities
+Greece,Athens,Monastiraki Flea Market,market,"shopping,food,culture",2,morning,curated,Traditional market with antiques and food
+Greece,Naxos,Portara,history,"history,photography,sunset",1,sunset,curated,Massive marble doorway of unfinished Apollo temple
+Greece,Naxos,Naxos Old Town,old_town,"city,food,culture",3,afternoon,curated,Venetian castle and maze of whitewashed alleys
+Greece,Meteora,Meteora Monasteries,history,"history,nature,photography,unesco",4,morning,curated,Byzantine monasteries on rock pillars
+Greece,Delphi,Delphi Archaeological Site,history,"history,archaeology,unesco",3,morning,curated,Ancient sanctuary of Apollo oracle
+Italy,Rome,Colosseum,history,"history,archaeology,unesco",2.5,morning,curated,Ancient amphitheater and gladiator arena
+Italy,Rome,Roman Forum,history,"history,archaeology",2,morning,curated,Ancient Roman civic center ruins
+Italy,Rome,Vatican Museums,museum,"art,history,religion,culture",4,morning,curated,Sistine Chapel and Renaissance masterpieces
+Italy,Rome,Trastevere,old_town,"food,city,nightlife,culture",3,evening,curated,Bohemian neighborhood with trattorias
+Italy,Rome,Trevi Fountain,city,"history,photography,romance",0.5,evening,curated,Baroque fountain and coin-tossing tradition
+Italy,Florence,Uffizi Gallery,museum,"art,history,culture",3,morning,curated,Renaissance art collection with Botticelli
+Italy,Florence,Duomo,history,"history,architecture,viewpoint",2,morning,curated,Cathedral with Brunelleschi's dome
+Italy,Florence,Ponte Vecchio,city,"history,shopping,photography",1,sunset,curated,Medieval bridge with jewelry shops
+Italy,Florence,Accademia Gallery,museum,"art,culture",1.5,afternoon,curated,Michelangelo's David sculpture
+Italy,Bologna,Piazza Maggiore,city,"city,food,culture,history",2,afternoon,curated,Medieval main square with porticos
+Italy,Bologna,Two Towers,viewpoint,"history,viewpoint,photography",1,late_afternoon,curated,Medieval leaning towers symbol of city
+Italy,Bologna,Mercato di Mezzo,food,"food,market,local",1.5,lunch,curated,Historic covered food market
+Italy,Naples,Naples Archaeological Museum,museum,"history,archaeology,culture",3,morning,curated,Pompeii artifacts and ancient Roman art
+Italy,Naples,Spaccanapoli,old_town,"city,food,culture,history",3,afternoon,curated,Historic street splitting old Naples
+Italy,Pompeii,Pompeii Ruins,history,"history,archaeology,unesco",4,morning,day_trip,Ancient Roman city preserved by Vesuvius
+Italy,Venice,St Mark's Basilica,history,"history,architecture,religion",1.5,morning,curated,Byzantine cathedral with gold mosaics
+Italy,Venice,Doge's Palace,history,"history,art,architecture",2.5,afternoon,curated,Gothic palace and seat of Venetian power
+Italy,Venice,Rialto Market,market,"food,market,local,culture",1.5,morning,curated,Historic fish and produce market
+Croatia,Zagreb,Upper Town,old_town,"city,history,culture,viewpoint",3,afternoon,curated,Medieval quarter with St Mark's Church
+Croatia,Zagreb,Dolac Market,market,"food,market,local,culture",1.5,morning,curated,Open-air farmers market with local produce
+Croatia,Zagreb,Museum of Broken Relationships,museum,"culture,unique,quirky",1.5,afternoon,curated,Unique museum of failed love stories
+Croatia,Split,Diocletian's Palace,history,"history,unesco,city",3,morning,curated,Roman palace complex now city center
+Croatia,Split,Marjan Hill,nature,"nature,hiking,viewpoint,beach",3,morning,curated,Forest park with beaches and viewpoints
+Croatia,Split,Riva Promenade,city,"city,food,culture",2,evening,curated,Waterfront promenade with cafes
+Croatia,Dubrovnik,Old Town Walls,history,"history,viewpoint,photography,unesco",2.5,morning,curated,Medieval walls encircling old city
+Croatia,Dubrovnik,Stradun,city,"city,shopping,food,culture",2,afternoon,curated,Main limestone street through old town
+Croatia,Dubrovnik,Lokrum Island,nature,"nature,beach,day_trip",3,morning,day_trip,Island nature reserve 10 min by boat
+Croatia,Hvar,Hvar Town,city,"city,beach,nightlife,history",3,afternoon,curated,Venetian harbor town with fortress
+Croatia,Plitvice,Plitvice Lakes,nature,"nature,unesco,photography,hiking",5,morning,curated,16 terraced lakes with waterfalls
+Slovenia,Ljubljana,Ljubljana Castle,viewpoint,"history,viewpoint,photography",2,late_afternoon,curated,Medieval castle overlooking city
+Slovenia,Ljubljana,Tivoli Park,nature,"nature,walking,relaxation",2,afternoon,curated,Large park with gardens and paths
+Slovenia,Ljubljana,Central Market,market,"food,market,local,architecture",1.5,morning,curated,Plečnik-designed market by river
+Slovenia,Ljubljana,Dragon Bridge,city,"architecture,photography,culture",0.5,anytime,curated,Art Nouveau bridge with dragon statues
+Slovenia,Bled,Lake Bled,nature,"nature,photography,romance",4,morning,curated,Alpine lake with island church
+Slovenia,Bled,Bled Castle,viewpoint,"history,viewpoint,photography",1.5,afternoon,curated,Medieval castle on cliff above lake
+Slovenia,Postojna,Postojna Cave,nature,"caves,nature,unique",2,morning,curated,24km cave system with train ride
+Slovenia,Piran,Tartini Square,city,"city,history,culture",1,afternoon,curated,Venetian square by Adriatic
+Romania,Bucharest,Palace of Parliament,history,"history,architecture,unique",2,afternoon,curated,World's second largest building
+Romania,Bucharest,Old Town,old_town,"city,food,nightlife,culture",3,evening,curated,Historic Lipscani district with restaurants
+Romania,Bucharest,Village Museum,museum,"culture,history,outdoor",2,afternoon,curated,Open-air museum of traditional houses
+Romania,Brasov,Council Square,city,"city,history,culture",2,afternoon,curated,Medieval square with colorful buildings
+Romania,Brasov,Black Church,history,"history,architecture,religion",1,morning,curated,Gothic Lutheran church
+Romania,Brasov,Bran Castle,history,"history,castles,day_trip",2,morning,day_trip,Dracula's castle 30km from Brasov
+Romania,Sibiu,Grand Square,city,"city,history,culture",2,afternoon,curated,Large medieval square with Brukenthal Palace
+Romania,Sibiu,Bridge of Lies,city,"history,culture,photography",0.5,anytime,curated,Cast iron bridge with legends
+Romania,Sighisoara,Citadel,old_town,"history,unesco,medieval,photography",3,afternoon,curated,Fortified medieval town where Vlad was born
+Georgia,Tbilisi,Old Town,old_town,"city,history,culture,food",4,afternoon,curated,Historic quarter with sulfur baths
+Georgia,Tbilisi,Narikala Fortress,viewpoint,"history,viewpoint,photography",1.5,sunset,curated,Ancient fortress overlooking city
+Georgia,Tbilisi,Fabrika,city,"culture,art,nightlife,food",2,evening,curated,Soviet sewing factory turned creative space
+Georgia,Tbilisi,Dry Bridge Market,market,"shopping,antiques,culture",2,morning,curated,Flea market with Soviet memorabilia
+Georgia,Mtskheta,Jvari Monastery,history,"history,religion,unesco,viewpoint",1,morning,curated,6th century church on mountain
+Georgia,Mtskheta,Svetitskhoveli Cathedral,history,"history,religion,unesco",1,morning,curated,11th century cathedral and Georgian Orthodox center
+Georgia,Kazbegi,Gergeti Trinity Church,nature,"nature,photography,hiking,religion",4,morning,curated,14th century church at 2170m with mountain backdrop
+Georgia,Batumi,Batumi Boulevard,city,"city,beach,walking",2,evening,curated,Seaside promenade with modern architecture
+Austria,Vienna,Schönbrunn Palace,history,"history,palaces,gardens,unesco",3,morning,curated,Habsburg summer palace with gardens
+Austria,Vienna,Hofburg Palace,history,"history,palaces,museums",2.5,afternoon,curated,Imperial palace and Sisi Museum
+Austria,Vienna,St Stephen's Cathedral,history,"history,architecture,religion,viewpoint",1.5,morning,curated,Gothic cathedral in city center
+Austria,Vienna,Belvedere Palace,museum,"art,history,palaces,gardens",2.5,afternoon,curated,Baroque palace with Klimt's Kiss
+Austria,Vienna,Naschmarkt,market,"food,market,culture",2,morning,curated,Historic market with international food
+Austria,Salzburg,Hohensalzburg Fortress,viewpoint,"history,viewpoint,photography",2,morning,curated,Medieval fortress above old town
+Austria,Salzburg,Mozart's Birthplace,museum,"history,music,culture",1,afternoon,curated,Museum in Mozart's birth house
+Austria,Salzburg,Mirabell Gardens,nature,"gardens,photography,music",1,afternoon,curated,Baroque gardens from Sound of Music
+Austria,Hallstatt,Hallstatt Village,city,"photography,nature,village,history",3,afternoon,curated,Picturesque lakeside village
+Austria,Innsbruck,Golden Roof,city,"history,architecture,city",0.5,afternoon,curated,Landmark with 2657 gilded copper tiles
+Hungary,Budapest,Parliament Building,history,"history,architecture,viewpoint",1.5,morning,curated,Neo-Gothic parliament on Danube
+Hungary,Budapest,Buda Castle,viewpoint,"history,viewpoint,museums",3,afternoon,curated,Royal palace complex with museums
+Hungary,Budapest,Széchenyi Thermal Bath,spa,"spa,relaxation,culture",3,afternoon,curated,Grand thermal bath complex
+Hungary,Budapest,Great Market Hall,market,"food,market,local,culture",1.5,morning,curated,Historic covered market with paprika
+Hungary,Budapest,Ruin Bars,nightlife,"nightlife,culture,unique",3,evening,curated,Bars in abandoned buildings in Jewish Quarter
+Hungary,Eger,Eger Castle,history,"history,viewpoint",2,morning,curated,Medieval castle that resisted Ottomans
+Hungary,Eger,Valley of Beautiful Women,food,"wine,food,culture",2,afternoon,curated,Wine cellars carved into hillside
+Hungary,Lake Balaton,Tihany Peninsula,nature,"nature,viewpoint,village",3,afternoon,curated,Peninsula with abbey and lavender
+Czech Republic,Prague,Prague Castle,history,"history,architecture,viewpoint",3,morning,curated,Largest ancient castle complex in world
+Czech Republic,Prague,Charles Bridge,city,"history,photography,culture",1,sunrise,curated,Gothic bridge with baroque statues
+Czech Republic,Prague,Old Town Square,city,"city,history,architecture",2,afternoon,curated,Medieval square with Astronomical Clock
+Czech Republic,Prague,Jewish Quarter,history,"history,culture,synagogues",2,afternoon,curated,Historic Jewish ghetto with synagogues
+Czech Republic,Prague,Lennon Wall,city,"culture,art,photography",0.5,anytime,curated,Graffiti wall tribute to John Lennon
+Czech Republic,Cesky Krumlov,Historic Center,old_town,"history,unesco,medieval,photography",4,afternoon,curated,Perfectly preserved medieval town
+Czech Republic,Cesky Krumlov,Castle,history,"history,viewpoint,gardens",2,morning,curated,13th century castle with baroque theater
+Czech Republic,Karlovy Vary,Colonnades,spa,"spa,architecture,culture",2,morning,curated,Elegant spa colonnades with thermal springs
+Cyprus,Nicosia,Old Town,old_town,"history,culture,city",3,afternoon,curated,Divided capital with Venetian walls
+Cyprus,Paphos,Archaeological Park,history,"history,archaeology,unesco",3,morning,curated,Ancient mosaics and Roman ruins
+Cyprus,Paphos,Tombs of the Kings,history,"history,archaeology,unesco",1.5,morning,curated,Underground tombs from 4th century BC
+Cyprus,Limassol,Old Town,old_town,"city,food,culture",2,afternoon,curated,Historic center with castle and market
+Albania,Tirana,Skanderbeg Square,city,"city,history,culture",1,afternoon,curated,Main square with colorful buildings
+Albania,Tirana,Bunk'Art,museum,"history,culture,unique",2,afternoon,curated,Cold War bunker turned museum
+Albania,Berat,Berat Castle,history,"history,unesco,viewpoint",2,morning,curated,Inhabited castle with Byzantine churches
+Albania,Berat,Mangalem Quarter,old_town,"history,unesco,photography",3,afternoon,curated,Ottoman quarter with white houses
+Albania,Gjirokaster,Gjirokaster Castle,history,"history,unesco,viewpoint",2,morning,curated,Fortress with museum and views
+Albania,Gjirokaster,Old Bazaar,market,"shopping,culture,history",1.5,afternoon,curated,Traditional bazaar with handicrafts
+Albania,Saranda,Ksamil Beaches,beach,"beach,nature,relaxation",4,morning,curated,White sand beaches and turquoise water

@@ -1,0 +1,241 @@
+country,city,month,avg_temp_c,rain_risk,weather_score,crowd_risk,summer_warning,season_note
+Portugal,Lisbon,1,12,medium,65,low,false,Mild winter with occasional rain
+Portugal,Lisbon,2,13,medium,68,low,false,Early spring starting
+Portugal,Lisbon,3,15,medium,75,low,false,Pleasant spring weather
+Portugal,Lisbon,4,17,low,85,medium,false,Ideal spring conditions
+Portugal,Lisbon,5,19,low,90,medium,false,Perfect weather before summer
+Portugal,Lisbon,6,22,very_low,85,high,false,Warm and dry but crowded
+Portugal,Lisbon,7,25,very_low,75,very_high,true,Very hot and very crowded
+Portugal,Lisbon,8,26,very_low,70,very_high,true,Peak heat and tourism
+Portugal,Lisbon,9,24,low,90,medium,false,Excellent autumn weather
+Portugal,Lisbon,10,20,medium,85,medium,false,Warm autumn days
+Portugal,Lisbon,11,16,medium,70,low,false,Cooler with more rain
+Portugal,Lisbon,12,13,medium,65,low,false,Mild winter
+Portugal,Porto,1,10,high,60,low,false,Rainy winter
+Portugal,Porto,2,11,high,62,low,false,Cool and wet
+Portugal,Porto,3,13,medium,70,low,false,Spring arriving
+Portugal,Porto,4,15,medium,80,medium,false,Pleasant spring
+Portugal,Porto,5,17,medium,85,medium,false,Ideal conditions
+Portugal,Porto,6,20,low,85,high,false,Warm and mostly dry
+Portugal,Porto,7,22,low,75,very_high,true,Hot and crowded
+Portugal,Porto,8,23,low,70,very_high,true,Peak summer heat
+Portugal,Porto,9,21,medium,85,medium,false,Excellent autumn
+Portugal,Porto,10,18,medium,80,medium,false,Mild autumn
+Portugal,Porto,11,14,high,65,low,false,Rainy season
+Portugal,Porto,12,11,high,60,low,false,Wet winter
+Greece,Athens,1,10,medium,60,low,false,Cool winter
+Greece,Athens,2,11,medium,65,low,false,Early spring
+Greece,Athens,3,14,medium,75,low,false,Pleasant spring
+Greece,Athens,4,18,low,85,medium,false,Ideal spring weather
+Greece,Athens,5,23,low,90,medium,false,Warm and perfect
+Greece,Athens,6,28,very_low,80,high,true,Hot and dry
+Greece,Athens,7,31,very_low,65,very_high,true,Very hot and crowded
+Greece,Athens,8,31,very_low,60,very_high,true,Extreme heat
+Greece,Athens,9,27,very_low,85,high,false,Still hot but better
+Greece,Athens,10,22,low,90,medium,false,Perfect autumn
+Greece,Athens,11,17,medium,75,low,false,Mild autumn
+Greece,Athens,12,12,medium,65,low,false,Cool winter
+Greece,Naxos,1,12,medium,65,very_low,false,Quiet winter
+Greece,Naxos,2,13,medium,68,very_low,false,Off-season
+Greece,Naxos,3,15,medium,75,low,false,Spring starting
+Greece,Naxos,4,18,low,85,low,false,Excellent spring
+Greece,Naxos,5,22,low,90,medium,false,Perfect island weather
+Greece,Naxos,6,26,very_low,85,high,false,Hot and dry
+Greece,Naxos,7,28,very_low,70,very_high,true,Very hot and crowded
+Greece,Naxos,8,28,very_low,65,very_high,true,Peak heat and crowds
+Greece,Naxos,9,25,very_low,90,medium,false,Ideal autumn
+Greece,Naxos,10,21,low,85,low,false,Warm autumn
+Greece,Naxos,11,17,medium,70,very_low,false,Cooler off-season
+Greece,Naxos,12,14,medium,65,very_low,false,Quiet winter
+Italy,Rome,1,9,medium,60,low,false,Cool winter
+Italy,Rome,2,10,medium,65,low,false,Early spring
+Italy,Rome,3,13,medium,75,medium,false,Pleasant spring
+Italy,Rome,4,16,medium,85,high,false,Ideal spring weather
+Italy,Rome,5,20,low,90,high,false,Perfect conditions
+Italy,Rome,6,24,low,85,very_high,false,Hot and very crowded
+Italy,Rome,7,27,very_low,70,very_high,true,Very hot and packed
+Italy,Rome,8,28,very_low,65,very_high,true,Extreme heat and crowds
+Italy,Rome,9,24,low,90,high,false,Excellent autumn
+Italy,Rome,10,19,medium,85,medium,false,Mild autumn
+Italy,Rome,11,14,medium,70,low,false,Cooler with rain
+Italy,Rome,12,10,medium,60,low,false,Cool winter
+Italy,Florence,1,7,medium,55,low,false,Cold winter
+Italy,Florence,2,9,medium,60,low,false,Cool early spring
+Italy,Florence,3,12,medium,70,medium,false,Spring arriving
+Italy,Florence,4,16,medium,80,high,false,Pleasant spring
+Italy,Florence,5,20,low,90,very_high,false,Ideal but crowded
+Italy,Florence,6,24,low,80,very_high,true,Hot and very crowded
+Italy,Florence,7,27,very_low,65,very_high,true,Extreme heat and crowds
+Italy,Florence,8,27,very_low,60,very_high,true,Peak summer chaos
+Italy,Florence,9,23,low,85,high,false,Good autumn weather
+Italy,Florence,10,18,medium,80,medium,false,Mild autumn
+Italy,Florence,11,12,medium,65,low,false,Cooler and wetter
+Italy,Florence,12,8,medium,55,low,false,Cold winter
+Italy,Venice,1,5,medium,50,low,false,Cold and foggy
+Italy,Venice,2,7,medium,55,low,false,Cool winter
+Italy,Venice,3,11,medium,70,medium,false,Spring starting
+Italy,Venice,4,15,medium,80,high,false,Pleasant spring
+Italy,Venice,5,19,medium,85,very_high,false,Warm and crowded
+Italy,Venice,6,23,low,80,very_high,true,Hot and packed
+Italy,Venice,7,26,low,70,very_high,true,Very hot and crowded
+Italy,Venice,8,26,low,65,very_high,true,Peak heat and tourism
+Italy,Venice,9,22,low,85,high,false,Good autumn weather
+Italy,Venice,10,16,medium,75,medium,false,Mild autumn
+Italy,Venice,11,10,high,60,low,false,Rainy and cool
+Italy,Venice,12,6,medium,50,low,false,Cold and foggy
+Croatia,Zagreb,1,2,medium,50,low,false,Cold winter
+Croatia,Zagreb,2,4,medium,55,low,false,Cool early spring
+Croatia,Zagreb,3,9,medium,65,low,false,Spring starting
+Croatia,Zagreb,4,14,medium,75,low,false,Pleasant spring
+Croatia,Zagreb,5,18,medium,85,medium,false,Ideal conditions
+Croatia,Zagreb,6,22,medium,85,medium,false,Warm summer
+Croatia,Zagreb,7,24,low,80,high,false,Hot summer
+Croatia,Zagreb,8,24,low,75,high,false,Peak summer
+Croatia,Zagreb,9,19,medium,85,medium,false,Excellent autumn
+Croatia,Zagreb,10,14,medium,75,low,false,Mild autumn
+Croatia,Zagreb,11,8,high,60,low,false,Rainy and cool
+Croatia,Zagreb,12,3,medium,50,low,false,Cold winter
+Croatia,Split,1,9,medium,65,very_low,false,Mild winter
+Croatia,Split,2,10,medium,68,very_low,false,Early spring
+Croatia,Split,3,13,medium,75,low,false,Pleasant spring
+Croatia,Split,4,16,low,85,low,false,Ideal spring
+Croatia,Split,5,21,low,90,medium,false,Perfect weather
+Croatia,Split,6,25,very_low,85,high,false,Hot and dry
+Croatia,Split,7,28,very_low,75,very_high,true,Very hot and crowded
+Croatia,Split,8,28,very_low,70,very_high,true,Peak heat and crowds
+Croatia,Split,9,24,low,90,medium,false,Excellent autumn
+Croatia,Split,10,19,medium,85,low,false,Warm autumn
+Croatia,Split,11,14,medium,70,very_low,false,Mild off-season
+Croatia,Split,12,10,medium,65,very_low,false,Quiet winter
+Croatia,Dubrovnik,1,10,medium,65,very_low,false,Mild winter
+Croatia,Dubrovnik,2,11,medium,68,very_low,false,Early spring
+Croatia,Dubrovnik,3,13,medium,75,low,false,Pleasant spring
+Croatia,Dubrovnik,4,16,low,85,medium,false,Ideal spring
+Croatia,Dubrovnik,5,21,low,90,high,false,Perfect but busy
+Croatia,Dubrovnik,6,25,very_low,85,very_high,false,Hot and very crowded
+Croatia,Dubrovnik,7,28,very_low,70,very_high,true,Extreme heat and crowds
+Croatia,Dubrovnik,8,28,very_low,65,very_high,true,Peak summer chaos
+Croatia,Dubrovnik,9,24,low,90,high,false,Excellent autumn
+Croatia,Dubrovnik,10,19,medium,85,medium,false,Warm autumn
+Croatia,Dubrovnik,11,15,medium,70,low,false,Mild off-season
+Croatia,Dubrovnik,12,11,medium,65,very_low,false,Quiet winter
+Slovenia,Ljubljana,1,1,medium,50,low,false,Cold winter
+Slovenia,Ljubljana,2,3,medium,55,low,false,Cool early spring
+Slovenia,Ljubljana,3,8,medium,65,low,false,Spring arriving
+Slovenia,Ljubljana,4,13,medium,75,low,false,Pleasant spring
+Slovenia,Ljubljana,5,17,medium,85,medium,false,Ideal conditions
+Slovenia,Ljubljana,6,21,medium,85,medium,false,Warm summer
+Slovenia,Ljubljana,7,23,medium,80,high,false,Hot summer
+Slovenia,Ljubljana,8,23,medium,75,high,false,Peak summer
+Slovenia,Ljubljana,9,18,medium,85,medium,false,Excellent autumn
+Slovenia,Ljubljana,10,13,medium,75,low,false,Mild autumn
+Slovenia,Ljubljana,11,7,high,60,low,false,Rainy and cool
+Slovenia,Ljubljana,12,2,medium,50,low,false,Cold winter
+Slovenia,Bled,1,0,medium,50,low,false,Cold winter
+Slovenia,Bled,2,2,medium,55,low,false,Cool early spring
+Slovenia,Bled,3,7,medium,65,low,false,Spring starting
+Slovenia,Bled,4,11,medium,75,low,false,Pleasant spring
+Slovenia,Bled,5,16,medium,85,medium,false,Ideal lake weather
+Slovenia,Bled,6,19,medium,90,high,false,Perfect summer
+Slovenia,Bled,7,21,medium,85,very_high,false,Warm and crowded
+Slovenia,Bled,8,21,medium,80,very_high,false,Peak summer crowds
+Slovenia,Bled,9,17,medium,85,medium,false,Excellent autumn
+Slovenia,Bled,10,12,medium,75,low,false,Mild autumn
+Slovenia,Bled,11,6,high,60,low,false,Rainy and cool
+Slovenia,Bled,12,1,medium,50,low,false,Cold winter
+Romania,Bucharest,1,-1,medium,45,low,false,Cold winter
+Romania,Bucharest,2,2,medium,50,low,false,Cool early spring
+Romania,Bucharest,3,8,medium,65,low,false,Spring arriving
+Romania,Bucharest,4,14,medium,75,low,false,Pleasant spring
+Romania,Bucharest,5,19,medium,85,medium,false,Ideal conditions
+Romania,Bucharest,6,23,medium,85,medium,false,Warm summer
+Romania,Bucharest,7,25,low,80,high,false,Hot summer
+Romania,Bucharest,8,25,low,75,high,false,Peak summer
+Romania,Bucharest,9,20,medium,85,medium,false,Excellent autumn
+Romania,Bucharest,10,14,medium,75,low,false,Mild autumn
+Romania,Bucharest,11,7,high,60,low,false,Rainy and cool
+Romania,Bucharest,12,1,medium,45,low,false,Cold winter
+Romania,Brasov,1,-3,medium,40,low,false,Cold mountain winter
+Romania,Brasov,2,0,medium,45,low,false,Cool early spring
+Romania,Brasov,3,5,medium,60,low,false,Spring starting
+Romania,Brasov,4,11,medium,70,low,false,Pleasant spring
+Romania,Brasov,5,16,medium,80,medium,false,Ideal conditions
+Romania,Brasov,6,19,medium,85,medium,false,Warm summer
+Romania,Brasov,7,21,low,85,high,false,Perfect summer
+Romania,Brasov,8,21,low,80,high,false,Peak summer
+Romania,Brasov,9,17,medium,85,medium,false,Excellent autumn
+Romania,Brasov,10,11,medium,75,low,false,Mild autumn
+Romania,Brasov,11,5,high,55,low,false,Rainy and cool
+Romania,Brasov,12,-1,medium,40,low,false,Cold winter
+Georgia,Tbilisi,1,3,low,55,low,false,Cool winter
+Georgia,Tbilisi,2,5,low,60,low,false,Early spring
+Georgia,Tbilisi,3,10,medium,70,low,false,Pleasant spring
+Georgia,Tbilisi,4,15,medium,80,low,false,Ideal spring
+Georgia,Tbilisi,5,20,medium,85,medium,false,Warm and perfect
+Georgia,Tbilisi,6,24,low,85,medium,false,Hot summer
+Georgia,Tbilisi,7,27,low,80,high,false,Very hot
+Georgia,Tbilisi,8,27,low,75,high,false,Peak heat
+Georgia,Tbilisi,9,23,low,85,medium,false,Excellent autumn
+Georgia,Tbilisi,10,17,medium,80,low,false,Mild autumn
+Georgia,Tbilisi,11,10,medium,65,low,false,Cool autumn
+Georgia,Tbilisi,12,5,low,55,low,false,Cool winter
+Austria,Vienna,1,1,medium,50,low,false,Cold winter
+Austria,Vienna,2,3,medium,55,low,false,Cool early spring
+Austria,Vienna,3,8,medium,65,low,false,Spring arriving
+Austria,Vienna,4,13,medium,75,medium,false,Pleasant spring
+Austria,Vienna,5,18,medium,85,high,false,Ideal conditions
+Austria,Vienna,6,21,medium,85,high,false,Warm summer
+Austria,Vienna,7,23,low,80,very_high,false,Hot and crowded
+Austria,Vienna,8,23,low,75,very_high,false,Peak summer
+Austria,Vienna,9,18,medium,85,medium,false,Excellent autumn
+Austria,Vienna,10,13,medium,75,low,false,Mild autumn
+Austria,Vienna,11,7,high,60,low,false,Rainy and cool
+Austria,Vienna,12,2,medium,50,low,false,Cold winter with markets
+Hungary,Budapest,1,0,medium,50,low,false,Cold winter
+Hungary,Budapest,2,3,medium,55,low,false,Cool early spring
+Hungary,Budapest,3,9,medium,65,low,false,Spring arriving
+Hungary,Budapest,4,14,medium,75,medium,false,Pleasant spring
+Hungary,Budapest,5,19,medium,85,high,false,Ideal conditions
+Hungary,Budapest,6,22,medium,85,high,false,Warm summer
+Hungary,Budapest,7,24,low,80,very_high,false,Hot and crowded
+Hungary,Budapest,8,24,low,75,very_high,false,Peak summer
+Hungary,Budapest,9,19,medium,85,medium,false,Excellent autumn
+Hungary,Budapest,10,13,medium,75,low,false,Mild autumn
+Hungary,Budapest,11,7,high,60,low,false,Rainy and cool
+Hungary,Budapest,12,2,medium,50,low,false,Cold winter
+Czech Republic,Prague,1,0,medium,50,low,false,Cold winter
+Czech Republic,Prague,2,2,medium,55,low,false,Cool early spring
+Czech Republic,Prague,3,7,medium,65,low,false,Spring arriving
+Czech Republic,Prague,4,12,medium,75,medium,false,Pleasant spring
+Czech Republic,Prague,5,17,medium,85,high,false,Ideal conditions
+Czech Republic,Prague,6,20,medium,85,very_high,false,Warm and very crowded
+Czech Republic,Prague,7,22,low,80,very_high,false,Hot and packed
+Czech Republic,Prague,8,22,low,75,very_high,false,Peak summer crowds
+Czech Republic,Prague,9,17,medium,85,high,false,Excellent autumn
+Czech Republic,Prague,10,12,medium,75,medium,false,Mild autumn
+Czech Republic,Prague,11,6,high,60,low,false,Rainy and cool
+Czech Republic,Prague,12,1,medium,55,low,false,Cold winter with markets
+Cyprus,Nicosia,1,10,medium,65,low,false,Mild winter
+Cyprus,Nicosia,2,11,medium,68,low,false,Early spring
+Cyprus,Nicosia,3,14,medium,75,low,false,Pleasant spring
+Cyprus,Nicosia,4,19,low,85,medium,false,Ideal spring
+Cyprus,Nicosia,5,24,very_low,90,medium,false,Warm and perfect
+Cyprus,Nicosia,6,29,very_low,80,high,true,Very hot
+Cyprus,Nicosia,7,32,very_low,65,high,true,Extreme heat
+Cyprus,Nicosia,8,32,very_low,60,high,true,Peak heat
+Cyprus,Nicosia,9,28,very_low,85,medium,false,Still hot but better
+Cyprus,Nicosia,10,23,low,90,medium,false,Perfect autumn
+Cyprus,Nicosia,11,17,medium,75,low,false,Mild autumn
+Cyprus,Nicosia,12,12,medium,65,low,false,Cool winter
+Albania,Tirana,1,7,high,55,low,false,Cool rainy winter
+Albania,Tirana,2,9,high,60,low,false,Early spring
+Albania,Tirana,3,12,medium,70,low,false,Pleasant spring
+Albania,Tirana,4,16,medium,80,low,false,Ideal spring
+Albania,Tirana,5,21,low,85,medium,false,Warm and perfect
+Albania,Tirana,6,25,low,85,medium,false,Hot summer
+Albania,Tirana,7,28,very_low,80,high,false,Very hot
+Albania,Tirana,8,28,very_low,75,high,false,Peak heat
+Albania,Tirana,9,24,low,85,medium,false,Excellent autumn
+Albania,Tirana,10,19,medium,80,low,false,Mild autumn
+Albania,Tirana,11,13,high,65,low,false,Rainy autumn
+Albania,Tirana,12,9,high,55,low,false,Cool rainy winter

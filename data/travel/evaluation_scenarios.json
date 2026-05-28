@@ -1,0 +1,404 @@
+[
+  {
+    "id": "scenario_001",
+    "name": "Tel Aviv Summer Moderate 7-Day",
+    "departureCity": "Tel Aviv",
+    "passportCountry": "Israel",
+    "tripLength": 7,
+    "budget": "moderate",
+    "travelMonths": [6, 7, 8],
+    "interests": ["food", "city", "history", "nature"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": true,
+      "allowedRegions": ["Southern Europe", "Eastern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": ["Japan", "Thailand", "USA", "Mexico"]
+    }
+  },
+  {
+    "id": "scenario_002",
+    "name": "Autumn Culture Food 10-Day",
+    "departureCity": "London",
+    "passportCountry": "UK",
+    "tripLength": 10,
+    "budget": "comfortable",
+    "travelMonths": [9, 10],
+    "interests": ["culture", "food", "history", "art"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_003",
+    "name": "Single City 5-Day",
+    "departureCity": "Paris",
+    "passportCountry": "France",
+    "tripLength": 5,
+    "budget": "moderate",
+    "travelMonths": [5, 6],
+    "interests": ["city", "food", "culture"],
+    "tripStructure": "single_country_one_city",
+    "expected": {
+      "mustBeMultiCity": false,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe", "Central Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 1,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_004",
+    "name": "Multi-Country 12-Day",
+    "departureCity": "Berlin",
+    "passportCountry": "Germany",
+    "tripLength": 12,
+    "budget": "comfortable",
+    "travelMonths": [6, 7, 8],
+    "interests": ["history", "culture", "city", "nature"],
+    "tripStructure": "multi_country",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Central Europe", "Eastern Europe", "Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 3,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_005",
+    "name": "Budget Balkans 8-Day",
+    "departureCity": "Vienna",
+    "passportCountry": "Austria",
+    "tripLength": 8,
+    "budget": "budget",
+    "travelMonths": [5, 6, 9],
+    "interests": ["history", "nature", "food", "culture"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": true,
+      "allowedRegions": ["Southern Europe", "Eastern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_006",
+    "name": "Nature Hiking 9-Day",
+    "departureCity": "Munich",
+    "passportCountry": "Germany",
+    "tripLength": 9,
+    "budget": "moderate",
+    "travelMonths": [6, 7, 8, 9],
+    "interests": ["nature", "hiking", "photography", "mountains"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_007",
+    "name": "Family Comfort 7-Day",
+    "departureCity": "Amsterdam",
+    "passportCountry": "Netherlands",
+    "tripLength": 7,
+    "budget": "comfortable",
+    "travelMonths": [7, 8],
+    "interests": ["city", "food", "culture", "relaxation"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": true,
+      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_008",
+    "name": "Friends Social 10-Day",
+    "departureCity": "Barcelona",
+    "passportCountry": "Spain",
+    "tripLength": 10,
+    "budget": "moderate",
+    "travelMonths": [6, 7, 8],
+    "interests": ["nightlife", "beach", "food", "city"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_009",
+    "name": "Winter Christmas Markets 6-Day",
+    "departureCity": "Brussels",
+    "passportCountry": "Belgium",
+    "tripLength": 6,
+    "budget": "moderate",
+    "travelMonths": [12],
+    "interests": ["city", "culture", "food", "markets"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": true,
+      "allowedRegions": ["Central Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_010",
+    "name": "Avoid Mainstream 8-Day",
+    "departureCity": "Copenhagen",
+    "passportCountry": "Denmark",
+    "tripLength": 8,
+    "budget": "moderate",
+    "travelMonths": [5, 6, 9],
+    "interests": ["history", "culture", "food", "nature"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Eastern Europe", "Caucasus"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": ["Italy", "Spain", "Greece", "France"]
+    }
+  },
+  {
+    "id": "scenario_011",
+    "name": "Fixed Greece Route 10-Day",
+    "departureCity": "Rome",
+    "passportCountry": "Italy",
+    "tripLength": 10,
+    "budget": "moderate",
+    "travelMonths": [5, 6, 9, 10],
+    "interests": ["history", "beach", "food", "culture"],
+    "tripStructure": "single_country_multi_city",
+    "destination": "Greece",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_012",
+    "name": "Fixed Portugal Route 7-Day",
+    "departureCity": "Madrid",
+    "passportCountry": "Spain",
+    "tripLength": 7,
+    "budget": "moderate",
+    "travelMonths": [4, 5, 6, 9, 10],
+    "interests": ["food", "city", "history", "wine"],
+    "tripStructure": "single_country_multi_city",
+    "destination": "Portugal",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_013",
+    "name": "Strict Budget 9-Day",
+    "departureCity": "Warsaw",
+    "passportCountry": "Poland",
+    "tripLength": 9,
+    "budget": "budget",
+    "travelMonths": [5, 6, 9],
+    "interests": ["history", "culture", "food", "city"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": true,
+      "allowedRegions": ["Eastern Europe", "Caucasus"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_014",
+    "name": "Low Fatigue 6-Day",
+    "departureCity": "Zurich",
+    "passportCountry": "Switzerland",
+    "tripLength": 6,
+    "budget": "comfortable",
+    "travelMonths": [5, 6, 9],
+    "interests": ["city", "culture", "food", "relaxation"],
+    "tripStructure": "single_country_one_city",
+    "expected": {
+      "mustBeMultiCity": false,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 1,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_015",
+    "name": "Food Markets 8-Day",
+    "departureCity": "Lyon",
+    "passportCountry": "France",
+    "tripLength": 8,
+    "budget": "moderate",
+    "travelMonths": [5, 6, 9, 10],
+    "interests": ["food", "markets", "culture", "city"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe", "Central Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_016",
+    "name": "History Old Towns 10-Day",
+    "departureCity": "Prague",
+    "passportCountry": "Czech Republic",
+    "tripLength": 10,
+    "budget": "moderate",
+    "travelMonths": [5, 6, 9],
+    "interests": ["history", "old_town", "culture", "photography"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Eastern Europe", "Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_017",
+    "name": "Beach Nature 9-Day",
+    "departureCity": "Athens",
+    "passportCountry": "Greece",
+    "tripLength": 9,
+    "budget": "moderate",
+    "travelMonths": [6, 7, 8, 9],
+    "interests": ["beach", "nature", "food", "relaxation"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_018",
+    "name": "First Time Europe 12-Day",
+    "departureCity": "New York",
+    "passportCountry": "USA",
+    "tripLength": 12,
+    "budget": "comfortable",
+    "travelMonths": [5, 6, 9],
+    "interests": ["history", "city", "culture", "food"],
+    "tripStructure": "multi_country",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe", "Central Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 3,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_019",
+    "name": "Moderate Luxury City 7-Day",
+    "departureCity": "Dubai",
+    "passportCountry": "UAE",
+    "tripLength": 7,
+    "budget": "luxury",
+    "travelMonths": [4, 5, 10],
+    "interests": ["city", "culture", "food", "art"],
+    "tripStructure": "single_country_multi_city",
+    "expected": {
+      "mustBeMultiCity": true,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 2,
+      "bannedCountries": []
+    }
+  },
+  {
+    "id": "scenario_020",
+    "name": "Weak Input No Interests 7-Day",
+    "departureCity": "London",
+    "passportCountry": "UK",
+    "tripLength": 7,
+    "budget": "moderate",
+    "travelMonths": [6, 7],
+    "interests": [],
+    "tripStructure": "flexible",
+    "expected": {
+      "mustBeMultiCity": false,
+      "avoidLongHaul": false,
+      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe"],
+      "mustHaveWatchOut": true,
+      "mustHaveBeforeBookingChecks": true,
+      "minimumRouteCities": 1,
+      "bannedCountries": []
+    }
+  }
+]

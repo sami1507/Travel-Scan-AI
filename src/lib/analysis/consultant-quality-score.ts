@@ -43,6 +43,9 @@ export function scoreConsultantQuality(
     budget?: string
     travel_months?: number[]
     interests?: string[]
+    tripStructure?: string
+    tripLength?: number
+    departureCity?: string
   }
 ): ConsultantQualityScore {
   const issues: string[] = []
@@ -240,7 +243,40 @@ export function scoreConsultantQuality(
     genericLanguagePenalty * 0.15 + // Scale down to 15 points max
     dataHonesty
 
-  const totalScore = Math.min(100, Math.max(0, Math.round(rawTotal)))
+  let totalScore = Math.min(100, Math.max(0, Math.round(rawTotal)))
+
+  // Apply caps based on critical failures
+  // metadata already declared above at line 219
+  
+  // Cap at 85 if quality gate failed
+  if (metadata.qualityGatePassed === false) {
+    totalScore = Math.min(totalScore, 85)
+    issues.push('Quality gate failed - score capped at 85')
+  }
+  
+  // Cap at 80 if route type mismatches trip structure
+  if (request?.tripStructure === 'single_country_multi_city' && metadata.routeType === 'single-destination') {
+    totalScore = Math.min(totalScore, 80)
+    issues.push('Route type mismatch: expected multi-city but got single-destination')
+  }
+  
+  // Cap at 75 if route score is 0 with multi-city request
+  if (request?.tripStructure && request.tripStructure !== 'single_country_one_city' && metadata.routeScore === 0) {
+    totalScore = Math.min(totalScore, 75)
+    issues.push('Route score is 0 despite multi-city request')
+  }
+  
+  // Subtract points for broken spacing (if detected)
+  if (metadata.brokenSpacing === true) {
+    totalScore = Math.max(0, totalScore - 10)
+    issues.push('Broken spacing detected in output')
+  }
+  
+  // Subtract points for generic phrase count
+  if (genericPhrases.length > 0) {
+    const penalty = Math.min(15, genericPhrases.length * 3)
+    totalScore = Math.max(0, totalScore - penalty)
+  }
 
   // Add recommendations based on scores
   if (routeSpecificity < 10) {

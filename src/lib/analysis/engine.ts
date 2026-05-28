@@ -26,7 +26,7 @@ import { costTracker } from '../monitoring/cost-tracker'
 import { cacheManager, CachePresets } from '../cache/cache-manager'
 
 // Analysis cache version - increment to invalidate all cached results after algorithm changes
-const ANALYSIS_CACHE_VERSION = 'consultant-v4-diversity-route-2026-05-19'
+const ANALYSIS_CACHE_VERSION = 'consultant-v6-real-route-consultant-2026-05-28'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
 import { compactAnalysisResponseSchema, CompactAnalysisResponse } from './compact-schema'
@@ -281,27 +281,68 @@ export class TravelAnalysisEngine {
       })
 
       // Step 6: Analyze routes with route intelligence
-      const routeAnalysis = routeIntelligenceService.analyzeRoutes(
-        scoredDestinations.slice(0, 10).map(dest => ({
-          destinationId: dest.destinationId,
-          destinationName: dest.destinationName,
-          destinationType: dest.destinationType,
-          totalMatchScore: dest.totalScore,
-          categoryScores: dest.categoryScores,
-          whyRecommended: dest.reasons,
-          possibleDownsides: dest.warnings,
-          bestMonths: dest.bestMonths || [],
-          estimatedBudgetLevel: userPreferences.budget,
-          passportEase: dest.categoryScores.passportEase >= 7 ? 'easy' : 'moderate',
-          nightlifeLevel: dest.categoryScores.nightlife,
-          natureLevel: dest.categoryScores.nature,
-          transportLevel: dest.categoryScores.transport,
-          hotelValueLevel: dest.categoryScores.hotelValue,
-          safetyLevel: dest.categoryScores.safety,
-          confidence: dest.confidence,
-          sourceLabels: ['knowledge-base', 'scoring-engine'],
+      // Use route candidate pool if knowledge retrieval returned 0
+      let routeAnalysisDestinations = scoredDestinations.slice(0, 10).map(dest => ({
+        destinationId: dest.destinationId,
+        destinationName: dest.destinationName,
+        destinationType: dest.destinationType,
+        totalMatchScore: dest.totalScore,
+        categoryScores: dest.categoryScores,
+        whyRecommended: dest.reasons,
+        possibleDownsides: dest.warnings,
+        bestMonths: dest.bestMonths || [],
+        estimatedBudgetLevel: userPreferences.budget,
+        passportEase: dest.categoryScores.passportEase >= 7 ? 'easy' : 'moderate',
+        nightlifeLevel: dest.categoryScores.nightlife,
+        natureLevel: dest.categoryScores.nature,
+        transportLevel: dest.categoryScores.transport,
+        hotelValueLevel: dest.categoryScores.hotelValue,
+        safetyLevel: dest.categoryScores.safety,
+        confidence: dest.confidence,
+        sourceLabels: ['knowledge-base', 'scoring-engine'],
+        dataQuality: 'knowledge-based' as const,
+      }))
+
+      // If knowledge retrieval returned 0 but we have route candidates, use them
+      if (routeAnalysisDestinations.length === 0 && routeCandidatePool.length > 0) {
+        routeAnalysisDestinations = routeCandidatePool.map(candidate => ({
+          destinationId: candidate.id,
+          destinationName: candidate.country,
+          destinationType: 'country' as const,
+          totalMatchScore: candidate.estimatedScore,
+          categoryScores: {
+            budgetFit: candidate.priceTier === 'budget' ? 9 : candidate.priceTier === 'moderate' ? 8 : 7,
+            weatherFit: 8,
+            passportEase: 8,
+            nightlife: 7,
+            nature: candidate.interestsFit.includes('nature') ? 9 : 7,
+            transport: 8,
+            hotelValue: 8,
+            safety: 9,
+            flightValue: null,
+          },
+          whyRecommended: [candidate.whyCandidateFits, candidate.routeLogic],
+          possibleDownsides: [],
+          bestMonths: candidate.bestMonths,
+          estimatedBudgetLevel: (candidate.priceTier === 'budget' ? 'low' : candidate.priceTier === 'premium' ? 'high' : 'moderate') as 'low' | 'moderate' | 'high' | 'luxury',
+          passportEase: 'easy' as const,
+          nightlifeLevel: 7,
+          natureLevel: candidate.interestsFit.includes('nature') ? 9 : 7,
+          transportLevel: 8,
+          hotelValueLevel: 8,
+          safetyLevel: 9,
+          confidence: 0.8,
+          sourceLabels: ['route-candidate-pool'],
           dataQuality: 'knowledge-based' as const,
-        })),
+        }))
+        
+        logger.info('Route intelligence using route candidate pool', {
+          candidateCount: routeAnalysisDestinations.length,
+        })
+      }
+
+      const routeAnalysis = routeIntelligenceService.analyzeRoutes(
+        routeAnalysisDestinations,
         {
           budget: userPreferences.budget,
           travelMonths: request.travelMonths,
@@ -313,6 +354,8 @@ export class TravelAnalysisEngine {
       )
 
       logger.info('Route intelligence analysis complete', {
+        destinationCount: routeAnalysisDestinations.length,
+        tripStructure: request.tripStructure,
         recommendedRouteType: routeAnalysis.recommendedRoute.routeType,
         routeScore: routeAnalysis.recommendedRoute.routeScore.totalRouteQuality,
       })
@@ -333,7 +376,7 @@ export class TravelAnalysisEngine {
       )
 
       // Step 7: Call OpenAI for structured analysis (with caching, resilience, and fallback)
-      const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, candidatePoolSize))
+      const cacheKey = this.buildCacheKey(request, scoredDestinations.slice(0, candidatePoolSize), routeCandidatePool)
       
       // Check if cache should be bypassed
       const bypassCache = process.env.DISABLE_ANALYSIS_CACHE === 'true' || (request as any).forceFresh === true
@@ -483,6 +526,7 @@ export class TravelAnalysisEngine {
             ;(fullResponse as any).fallbackUsed = false
             ;(fullResponse as any).fallbackReason = 'none'
             ;(fullResponse as any).cacheEligible = true
+            ;(fullResponse as any).cacheVersion = ANALYSIS_CACHE_VERSION
             ;(fullResponse as any).openAIDurationMs = openAIDurationMs
             ;(fullResponse as any).systemPromptLength = systemPromptLength
             ;(fullResponse as any).promptTokens = completion.usage?.prompt_tokens ?? null
@@ -506,13 +550,42 @@ export class TravelAnalysisEngine {
           // Try to get from cache first
           const cached = await cacheManager.get<TravelAnalysisResponse>(cacheKey, CachePresets.OPENAI_ANALYSIS.namespace)
           if (cached) {
-            analysis = cached
-            ;(analysis as any).cacheStatus = 'HIT'
-            ;(analysis as any).cachedResultType = 'openai'
-            logger.info('Travel Analysis Cache: HIT', {
-              cachedResultType: 'openai',
-              cacheStatus: 'HIT',
-            })
+            // Validate cached result
+            const validation = this.validateCachedResult(cached, request, routeCandidatePool)
+            
+            if (validation.valid) {
+              analysis = cached
+              ;(analysis as any).cacheStatus = 'HIT'
+              ;(analysis as any).cachedResultType = 'openai'
+              logger.info('Travel Analysis Cache: HIT', {
+                cachedResultType: 'openai',
+                cacheStatus: 'HIT',
+              })
+            } else {
+              // Reject stale/incompatible cache
+              logger.info('Travel Analysis Cache: REJECTED_STALE_OR_INCOMPATIBLE', {
+                reason: validation.reason,
+                routeCandidateCount: routeCandidatePool.length,
+                tripStructure: request.tripStructure,
+              })
+              
+              // Fetch fresh
+              analysis = await fetchFresh()
+              ;(analysis as any).cacheStatus = 'REJECTED'
+              ;(analysis as any).cacheRejectionReason = validation.reason
+              
+              // Cache the fresh result
+              if ((analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+                await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
+                ;(analysis as any).cachedResultType = 'openai'
+                logger.info('Travel Analysis Cache: SET (after rejection)', {
+                  cachedResultType: 'openai',
+                  openAIUsed: true,
+                  fallbackUsed: false,
+                  cacheStatus: 'SET',
+                })
+              }
+            }
           } else {
             // Fetch fresh
             analysis = await fetchFresh()
@@ -816,6 +889,9 @@ export class TravelAnalysisEngine {
           budget: request.budget,
           travel_months: request.travelMonths,
           interests: request.interests,
+          tripStructure: request.tripStructure,
+          tripLength: request.tripLength,
+          departureCity: request.departureCity,
         })
 
         // Calculate total duration
@@ -823,23 +899,35 @@ export class TravelAnalysisEngine {
 
         // Add complete analysis metadata
         const analysisWithMeta = analysis as any
+        const isCacheHit = analysisWithMeta.cacheStatus === 'HIT'
+        const isCacheRejected = analysisWithMeta.cacheStatus === 'REJECTED'
+        
         analysisWithMeta._meta = {
           analysisId: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          // For cache hits, openAIUsed refers to whether OpenAI was used to create the cached result
           openAIUsed: analysisWithMeta.openAIUsed || false,
+          // currentRequestOpenAIUsed indicates if OpenAI was called in THIS request
+          currentRequestOpenAIUsed: isCacheHit ? false : (analysisWithMeta.openAIUsed || false),
           fallbackUsed: analysisWithMeta.fallbackUsed || false,
           fallbackReason: analysisWithMeta.fallbackReason || null,
           modelUsed: analysisWithMeta.openAIUsed ? this.model : null,
           durationMs,
-          openAIDurationMs: analysisWithMeta.openAIDurationMs ?? null,
+          // For cache hits, openAIDurationMs should be null for current request
+          openAIDurationMs: isCacheHit ? null : (analysisWithMeta.openAIDurationMs ?? null),
+          // Store original cached duration if available
+          cachedOpenAIDurationMs: isCacheHit ? (analysisWithMeta.openAIDurationMs ?? null) : null,
           cacheStatus: analysisWithMeta.cacheStatus || 'UNKNOWN',
+          cacheRejectionReason: analysisWithMeta.cacheRejectionReason ?? null,
           cachedResultType: analysisWithMeta.cachedResultType ?? null,
           compactPromptUsed: true,
           systemPromptLength: analysisWithMeta.systemPromptLength ?? null,
-          promptTokens: analysisWithMeta.promptTokens ?? null,
-          completionTokens: analysisWithMeta.completionTokens ?? null,
-          totalTokens: analysisWithMeta.totalTokens ?? null,
+          promptTokens: isCacheHit ? null : (analysisWithMeta.promptTokens ?? null),
+          completionTokens: isCacheHit ? null : (analysisWithMeta.completionTokens ?? null),
+          totalTokens: isCacheHit ? null : (analysisWithMeta.totalTokens ?? null),
           candidatePoolUsed: routeCandidatePool.length > 0,
           candidatePoolCount: routeCandidatePool.length,
+          routeIntelligenceDestinationCount: routeAnalysisDestinations.length,
+          recommendedRouteType: routeAnalysis.recommendedRoute.routeType,
           diversityScore: diversityResult.diversityScore,
           regionSpread: diversityResult.regionSpread,
           mainstreamCount: diversityResult.mainstreamCount,
@@ -1249,10 +1337,92 @@ export class TravelAnalysisEngine {
   }
 
   /**
+   * Validate cached result against current request and candidate pool
+   */
+  private validateCachedResult(
+    cached: TravelAnalysisResponse,
+    request: AnalysisRequest,
+    routeCandidatePool: RouteCandidate[]
+  ): { valid: boolean; reason?: string } {
+    // Check if cached result has required version metadata
+    const cachedVersion = (cached as any).cacheVersion
+    if (cachedVersion !== ANALYSIS_CACHE_VERSION) {
+      return { valid: false, reason: 'cache_version_mismatch' }
+    }
+
+    // If we have a candidate pool, validate destinations are within scope
+    if (routeCandidatePool.length > 0) {
+      const candidateCountries = new Set(routeCandidatePool.map(c => c.country))
+      const rankedDests = cached.rankedDestinations || []
+      
+      for (const dest of rankedDests) {
+        const destCountry = dest.destinationName
+        // Check if destination is outside candidate pool
+        if (!candidateCountries.has(destCountry) && !request.destination?.includes(destCountry)) {
+          // Check if this is a long-haul destination for short moderate trip
+          const isShortModerateTrip = (request.tripLength || 0) <= 7 && 
+            (request.budget === 'low' || request.budget === 'moderate')
+          const isLongHaul = this.isLongHaulDestination(destCountry, request.departureCity || '')
+          
+          if (isShortModerateTrip && isLongHaul) {
+            return { 
+              valid: false, 
+              reason: `out_of_scope_destination: ${destCountry} not in candidate pool for short moderate trip` 
+            }
+          }
+        }
+      }
+    }
+
+    // Check if quality gate failed
+    const qualityGatePassed = (cached as any).qualityGatePassed
+    if (qualityGatePassed === false) {
+      return { valid: false, reason: 'quality_gate_failed' }
+    }
+
+    // Check if route type matches trip structure
+    const routeType = (cached as any).routeType
+    if (request.tripStructure === 'single_country_multi_city' && routeType === 'single-destination') {
+      return { valid: false, reason: 'route_type_mismatch' }
+    }
+
+    return { valid: true }
+  }
+
+  /**
+   * Check if destination is long-haul from departure city
+   */
+  private isLongHaulDestination(destination: string, departureCity: string): boolean {
+    const longHaulDestinations = ['Japan', 'China', 'Thailand', 'Vietnam', 'Indonesia', 'Malaysia', 
+      'Singapore', 'South Korea', 'Philippines', 'Australia', 'New Zealand', 'USA', 'Canada', 
+      'Mexico', 'Brazil', 'Argentina', 'Chile', 'South Africa', 'Kenya', 'Tanzania']
+    
+    // For European/Middle Eastern departure cities, Asia/Americas/Oceania are long-haul
+    const europeanMidEastCities = ['Tel Aviv', 'TLV', 'London', 'Paris', 'Berlin', 'Rome', 
+      'Madrid', 'Amsterdam', 'Vienna', 'Prague', 'Budapest', 'Athens', 'Istanbul', 'Dubai']
+    
+    const isDepartureEuropeOrMidEast = europeanMidEastCities.some(city => 
+      departureCity.includes(city) || city.includes(departureCity)
+    )
+    
+    if (isDepartureEuropeOrMidEast) {
+      return longHaulDestinations.includes(destination)
+    }
+    
+    return false
+  }
+
+  /**
    * Build cache key for analysis results
    */
-  private buildCacheKey(request: AnalysisRequest, topDestinations: any[]): string {
+  private buildCacheKey(request: AnalysisRequest, topDestinations: any[], routeCandidatePool?: RouteCandidate[]): string {
     const destIds = topDestinations.map(d => d.destinationId).slice(0, 5).join(',')
+    
+    // Include route candidate pool in cache key
+    const routeCandidateCount = routeCandidatePool?.length || 0
+    const candidateCountries = routeCandidatePool ? [...new Set(routeCandidatePool.map(c => c.country))].sort().join(',') : 'none'
+    const candidateSignatures = routeCandidatePool ? routeCandidatePool.map(c => `${c.country}-${c.routeType}`).sort().join(',') : 'none'
+    
     const key = [
       ANALYSIS_CACHE_VERSION,
       request.query,
@@ -1268,7 +1438,10 @@ export class TravelAnalysisEngine {
       request.travelStyle || 'any',
       request.pace || 'any',
       request.accommodationPreference || 'any',
-      destIds || 'none'
+      destIds || 'none',
+      routeCandidateCount.toString(),
+      candidateCountries,
+      candidateSignatures
     ].join(':')
     
     // Hash to keep key length reasonable
@@ -1281,6 +1454,8 @@ export class TravelAnalysisEngine {
       travelMonths: request.travelMonths?.length || 0,
       fixedDestination: request.destination || 'none',
       candidateCount: topDestinations.length,
+      routeCandidateCount,
+      candidateCountries: candidateCountries === 'none' ? 'none' : candidateCountries.split(',').length,
     })
     
     return cacheKey

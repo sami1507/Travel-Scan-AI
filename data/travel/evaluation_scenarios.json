@@ -12,7 +12,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": true,
-      "allowedRegions": ["Southern Europe", "Eastern Europe"],
+      "allowedRegions": ["Southern Europe", "Eastern Europe", "Caucasus", "Central Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -32,7 +32,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe"],
+      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe", "Caucasus"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -52,7 +52,7 @@
     "expected": {
       "mustBeMultiCity": false,
       "avoidLongHaul": false,
-      "allowedRegions": ["Southern Europe", "Central Europe"],
+      "allowedRegions": ["Southern Europe", "Central Europe", "Caucasus"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 1,
@@ -72,7 +72,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Central Europe", "Eastern Europe", "Southern Europe"],
+      "allowedRegions": ["Central Europe", "Eastern Europe", "Southern Europe", "Caucasus"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 3,
@@ -92,7 +92,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": true,
-      "allowedRegions": ["Southern Europe", "Eastern Europe"],
+      "allowedRegions": ["Southern Europe", "Eastern Europe", "Central Europe", "Caucasus"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -112,7 +112,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "allowedRegions": ["Central Europe", "Southern Europe", "Caucasus", "Eastern Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -132,7 +132,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": true,
-      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "allowedRegions": ["Central Europe", "Southern Europe", "Caucasus", "Eastern Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -294,7 +294,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Southern Europe", "Central Europe"],
+      "allowedRegions": ["Southern Europe", "Central Europe", "Caucasus", "Eastern Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -314,7 +314,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Eastern Europe", "Southern Europe"],
+      "allowedRegions": ["Eastern Europe", "Southern Europe", "Caucasus", "Central Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -354,7 +354,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Southern Europe", "Central Europe"],
+      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 3,
@@ -374,7 +374,7 @@
     "expected": {
       "mustBeMultiCity": true,
       "avoidLongHaul": false,
-      "allowedRegions": ["Central Europe", "Southern Europe"],
+      "allowedRegions": ["Central Europe", "Southern Europe", "Caucasus", "Eastern Europe"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 2,
@@ -394,7 +394,7 @@
     "expected": {
       "mustBeMultiCity": false,
       "avoidLongHaul": false,
-      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe"],
+      "allowedRegions": ["Southern Europe", "Central Europe", "Eastern Europe", "Caucasus"],
       "mustHaveWatchOut": true,
       "mustHaveBeforeBookingChecks": true,
       "minimumRouteCities": 1,

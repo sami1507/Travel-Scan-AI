@@ -248,15 +248,21 @@ export function scoreConsultantQuality(
   // Apply caps based on critical failures
   // metadata already declared above at line 219
   
-  // Cap at 85 if quality gate failed
-  if (metadata.qualityGatePassed === false) {
-    totalScore = Math.min(totalScore, 85)
-    issues.push('Quality gate failed - score capped at 85')
+  // Cap at 60 if destination outside candidate pool
+  if (metadata.invalidDestinations && metadata.invalidDestinations.length > 0) {
+    totalScore = Math.min(totalScore, 60)
+    issues.push(`Destination outside candidate pool - score capped at 60: ${metadata.invalidDestinations.join(', ')}`)
   }
   
-  // Cap at 80 if route type mismatches trip structure
+  // Cap at 70 if final scope validation failed
+  if (metadata.finalScopeValidationPassed === false) {
+    totalScore = Math.min(totalScore, 70)
+    issues.push('Final scope validation failed - score capped at 70')
+  }
+  
+  // Cap at 75 if route type mismatches trip structure
   if (request?.tripStructure === 'single_country_multi_city' && metadata.routeType === 'single-destination') {
-    totalScore = Math.min(totalScore, 80)
+    totalScore = Math.min(totalScore, 75)
     issues.push('Route type mismatch: expected multi-city but got single-destination')
   }
   
@@ -264,6 +270,12 @@ export function scoreConsultantQuality(
   if (request?.tripStructure && request.tripStructure !== 'single_country_one_city' && metadata.routeScore === 0) {
     totalScore = Math.min(totalScore, 75)
     issues.push('Route score is 0 despite multi-city request')
+  }
+  
+  // Cap at 85 if quality gate failed
+  if (metadata.qualityGatePassed === false) {
+    totalScore = Math.min(totalScore, 85)
+    issues.push('Quality gate failed - score capped at 85')
   }
   
   // Subtract points for broken spacing (if detected)

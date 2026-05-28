@@ -574,8 +574,25 @@ export class TravelAnalysisEngine {
               ;(analysis as any).cacheStatus = 'REJECTED'
               ;(analysis as any).cacheRejectionReason = validation.reason
               
-              // Cache the fresh result
-              if ((analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+              // Validate final recommendations before caching
+              const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
+              analysis = finalValidation.validatedAnalysis
+              ;(analysis as any).finalScopeValidationPassed = finalValidation.valid
+              ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
+              ;(analysis as any).replacementsApplied = finalValidation.replacementsApplied
+              
+              logger.info('Final recommendation scope validation', {
+                passed: finalValidation.valid,
+                invalidDestinations: finalValidation.invalidDestinations,
+                replacementsApplied: finalValidation.replacementsApplied,
+                finalCountriesBeforeValidation: finalValidation.invalidDestinations.length > 0 ? 
+                  [...finalValidation.invalidDestinations, ...analysis.rankedDestinations.map(d => d.destinationName)] : 
+                  analysis.rankedDestinations.map(d => d.destinationName),
+                finalCountriesAfterValidation: analysis.rankedDestinations.map(d => d.destinationName),
+              })
+              
+              // Cache only if final validation passed
+              if (finalValidation.valid && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
                 await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
                 ;(analysis as any).cachedResultType = 'openai'
                 logger.info('Travel Analysis Cache: SET (after rejection)', {
@@ -584,6 +601,12 @@ export class TravelAnalysisEngine {
                   fallbackUsed: false,
                   cacheStatus: 'SET',
                 })
+              } else if (!finalValidation.valid) {
+                ;(analysis as any).cacheSkippedReason = 'invalid_final_result'
+                logger.info('Travel Analysis Cache: SKIPPED_INVALID_FINAL_RESULT', {
+                  invalidDestinations: finalValidation.invalidDestinations,
+                  replacementsApplied: finalValidation.replacementsApplied,
+                })
               }
             }
           } else {
@@ -591,8 +614,25 @@ export class TravelAnalysisEngine {
             analysis = await fetchFresh()
             ;(analysis as any).cacheStatus = 'MISS'
             
-            // Only cache if it's a successful OpenAI result
-            if ((analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+            // Validate final recommendations before caching
+            const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
+            analysis = finalValidation.validatedAnalysis
+            ;(analysis as any).finalScopeValidationPassed = finalValidation.valid
+            ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
+            ;(analysis as any).replacementsApplied = finalValidation.replacementsApplied
+            
+            logger.info('Final recommendation scope validation', {
+              passed: finalValidation.valid,
+              invalidDestinations: finalValidation.invalidDestinations,
+              replacementsApplied: finalValidation.replacementsApplied,
+              finalCountriesBeforeValidation: finalValidation.invalidDestinations.length > 0 ? 
+                [...finalValidation.invalidDestinations, ...analysis.rankedDestinations.map(d => d.destinationName)] : 
+                analysis.rankedDestinations.map(d => d.destinationName),
+              finalCountriesAfterValidation: analysis.rankedDestinations.map(d => d.destinationName),
+            })
+            
+            // Only cache if final validation passed and it's a successful OpenAI result
+            if (finalValidation.valid && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
               await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
               ;(analysis as any).cacheStatus = 'SET'
               ;(analysis as any).cachedResultType = 'openai'
@@ -601,6 +641,13 @@ export class TravelAnalysisEngine {
                 openAIUsed: true,
                 fallbackUsed: false,
                 cacheStatus: 'SET',
+              })
+            } else if (!finalValidation.valid) {
+              ;(analysis as any).cacheSkippedReason = 'invalid_final_result'
+              ;(analysis as any).cachedResultType = null
+              logger.info('Travel Analysis Cache: SKIPPED_INVALID_FINAL_RESULT', {
+                invalidDestinations: finalValidation.invalidDestinations,
+                replacementsApplied: finalValidation.replacementsApplied,
               })
             } else {
               ;(analysis as any).cachedResultType = null
@@ -940,6 +987,10 @@ export class TravelAnalysisEngine {
           genericPhrases: qualityScore.genericPhrases,
           routeCompletenessScore: (analysis.rankedDestinations.filter((d: any) => d.suggestedRoute && d.suggestedRoute.length > 1).length / Math.max(1, analysis.rankedDestinations.length)) * 100,
           scoreHonestyPassed: qualityResult.passed,
+          finalScopeValidationPassed: analysisWithMeta.finalScopeValidationPassed ?? true,
+          invalidDestinations: analysisWithMeta.invalidDestinations ?? [],
+          replacementsApplied: analysisWithMeta.replacementsApplied ?? [],
+          cacheSkippedReason: analysisWithMeta.cacheSkippedReason ?? null,
         }
 
         // Log comprehensive final metadata
@@ -948,17 +999,24 @@ export class TravelAnalysisEngine {
           analysisId: analysisWithMeta._meta.analysisId,
           source,
           openAIUsed: analysisWithMeta._meta.openAIUsed,
+          currentRequestOpenAIUsed: analysisWithMeta._meta.currentRequestOpenAIUsed,
           fallbackUsed: analysisWithMeta._meta.fallbackUsed,
           fallbackReason: analysisWithMeta._meta.fallbackReason,
           modelUsed: analysisWithMeta._meta.modelUsed,
           durationMs: analysisWithMeta._meta.durationMs,
           openAIDurationMs: analysisWithMeta._meta.openAIDurationMs,
+          cachedOpenAIDurationMs: analysisWithMeta._meta.cachedOpenAIDurationMs,
           systemPromptLength: analysisWithMeta._meta.systemPromptLength,
           promptTokens: analysisWithMeta._meta.promptTokens,
           completionTokens: analysisWithMeta._meta.completionTokens,
           totalTokens: analysisWithMeta._meta.totalTokens,
           cacheStatus: analysisWithMeta._meta.cacheStatus,
+          cacheRejectionReason: analysisWithMeta._meta.cacheRejectionReason,
           cachedResultType: analysisWithMeta._meta.cachedResultType,
+          cacheSkippedReason: analysisWithMeta._meta.cacheSkippedReason,
+          finalScopeValidationPassed: analysisWithMeta._meta.finalScopeValidationPassed,
+          invalidDestinations: analysisWithMeta._meta.invalidDestinations,
+          replacementsApplied: analysisWithMeta._meta.replacementsApplied,
           consultantQualityScore: analysisWithMeta._meta.consultantQualityScore,
           consultantQualityGrade: analysisWithMeta._meta.consultantQualityGrade,
           genericPhraseCount: analysisWithMeta._meta.genericPhraseCount,
@@ -966,6 +1024,8 @@ export class TravelAnalysisEngine {
           uniqueOptionIncluded: analysisWithMeta._meta.uniqueOptionIncluded,
           candidatePoolUsed: analysisWithMeta._meta.candidatePoolUsed,
           candidatePoolCount: analysisWithMeta._meta.candidatePoolCount,
+          routeIntelligenceDestinationCount: analysisWithMeta._meta.routeIntelligenceDestinationCount,
+          recommendedRouteType: analysisWithMeta._meta.recommendedRouteType,
           finalCountries: analysis.rankedDestinations.map((d: any) => d.destinationName),
           finalRoutes: analysis.rankedDestinations.map((d: any) => d.suggestedRoute?.join(' → ') || d.destinationName),
         })
@@ -1334,6 +1394,83 @@ export class TravelAnalysisEngine {
     }
 
     return data
+  }
+
+  /**
+   * Validate final recommendations before caching
+   */
+  private validateFinalRecommendations(
+    analysis: TravelAnalysisResponse,
+    request: AnalysisRequest,
+    routeCandidatePool: RouteCandidate[]
+  ): {
+    valid: boolean
+    invalidDestinations: string[]
+    replacementsApplied: string[]
+    validatedAnalysis: TravelAnalysisResponse
+  } {
+    const invalidDestinations: string[] = []
+    const replacementsApplied: string[] = []
+    let validatedAnalysis = { ...analysis }
+
+    // If no candidate pool, skip validation
+    if (routeCandidatePool.length === 0) {
+      return { valid: true, invalidDestinations: [], replacementsApplied: [], validatedAnalysis }
+    }
+
+    const candidateCountries = new Set(routeCandidatePool.map(c => c.country))
+    const rankedDests = validatedAnalysis.rankedDestinations || []
+    const isShortModerateTrip = (request.tripLength || 0) <= 7 && 
+      (request.budget === 'low' || request.budget === 'moderate')
+
+    // Check each destination
+    for (let i = 0; i < rankedDests.length; i++) {
+      const dest = rankedDests[i]
+      const destCountry = dest.destinationName
+
+      // Check if destination is outside candidate pool
+      const isOutsidePool = !candidateCountries.has(destCountry)
+      const isExplicitlyRequested = request.destination?.includes(destCountry) || 
+        request.query?.toLowerCase().includes(destCountry.toLowerCase())
+
+      if (isOutsidePool && !isExplicitlyRequested) {
+        // Check if it's a long-haul destination for short moderate trip
+        const isLongHaul = this.isLongHaulDestination(destCountry, request.departureCity || '')
+        
+        if (isShortModerateTrip && isLongHaul) {
+          invalidDestinations.push(destCountry)
+          
+          // Find replacement from candidate pool
+          const replacement = routeCandidatePool.find(c => 
+            !rankedDests.some(d => d.destinationName === c.country)
+          )
+          
+          if (replacement) {
+            // Replace with valid candidate
+            rankedDests[i] = {
+              ...dest,
+              destinationName: replacement.country,
+              destinationSummary: `${replacement.country}: ${replacement.whyCandidateFits}`,
+              suggestedRoute: replacement.routeCities,
+              whyRecommended: [replacement.whyCandidateFits, replacement.routeLogic],
+              bestMonths: replacement.bestMonths,
+              estimatedBudgetLevel: replacement.priceTier === 'budget' ? 'low' : 
+                replacement.priceTier === 'premium' ? 'high' : 'moderate',
+            }
+            replacementsApplied.push(`${destCountry} → ${replacement.country}`)
+          }
+        }
+      }
+    }
+
+    validatedAnalysis.rankedDestinations = rankedDests
+
+    return {
+      valid: invalidDestinations.length === 0,
+      invalidDestinations,
+      replacementsApplied,
+      validatedAnalysis
+    }
   }
 
   /**

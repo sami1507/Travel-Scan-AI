@@ -37,6 +37,7 @@ export default function AnalysisPage() {
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [retryCount, setRetryCount] = useState(0)
+  const [errorBoundaryKey, setErrorBoundaryKey] = useState(0)
   const [analysis, setAnalysis] = useState<TravelAnalysisResponse | null>(null)
   const [selectedDestination, setSelectedDestination] = useState<RankedDestination | null>(null)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -297,6 +298,7 @@ export default function AnalysisPage() {
                         setSelectedDestination(null)
                         setCompareSelections([])
                         setCompareMode(false)
+                        setErrorBoundaryKey(prev => prev + 1)
                       }}
                       className="gap-2"
                     >
@@ -308,13 +310,32 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
           ) : (
-        <AnalysisErrorBoundary onReset={() => {
-          clearAnalysisClientState()
-          setAnalysis(null)
-          setSelectedDestination(null)
-          setCompareSelections([])
-          setCompareMode(false)
-        }}>
+        <AnalysisErrorBoundary 
+          key={errorBoundaryKey}
+          onReset={() => {
+            clearAnalysisClientState()
+            setAnalysis(null)
+            setSelectedDestination(null)
+            setCompareSelections([])
+            setCompareMode(false)
+            setErrorBoundaryKey(prev => prev + 1) // Force remount
+          }}
+          analysisSummary={{
+            hasAnalysis: !!analysis,
+            rankedDestinationsType: typeof analysis?.rankedDestinations,
+            rankedDestinationsIsArray: Array.isArray(analysis?.rankedDestinations),
+            rankedDestinationsLength: analysis?.rankedDestinations?.length,
+            warningsType: typeof analysis?.warnings,
+            assumptionsType: typeof analysis?.assumptions,
+            hasMeta: !!(analysis as any)?._meta,
+            cacheStatus: (analysis as any)?._meta?.cacheStatus,
+            openAIUsed: (analysis as any)?._meta?.openAIUsed,
+            fallbackUsed: (analysis as any)?._meta?.fallbackUsed,
+            firstDestinationKeys: Array.isArray(analysis?.rankedDestinations) && analysis.rankedDestinations.length > 0
+              ? Object.keys(analysis.rankedDestinations[0])
+              : [],
+          }}
+        >
           <div className="space-y-6">
           {/* Action Bar */}
           <div className="flex flex-wrap items-center gap-3 animate-fade-in">

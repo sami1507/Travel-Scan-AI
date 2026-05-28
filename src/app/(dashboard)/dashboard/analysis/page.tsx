@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route, RefreshCw, Shuffle, Gem, DollarSign, Palmtree } from 'lucide-react'
 import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
 import { TravelLoading } from '@/components/ui/travel-loading'
@@ -406,16 +406,117 @@ export default function AnalysisPage() {
               className={compareMode ? 'shadow-lg shadow-primary/20' : 'border-2'}
             >
               <GitCompare className="h-4 w-4 mr-2" />
-              {compareMode ? 'Exit Compare' : 'Compare Destinations'}
+              {compareMode ? 'Exit Compare' : 'Compare'}
             </Button>
-            {compareMode && compareSelections.length === 2 && (
-              <Button asChild className="shadow-lg shadow-primary/20">
-                <a href={`/dashboard/compare?a=${compareSelections[0].destinationId}&b=${compareSelections[1].destinationId}`}>
-                  View Comparison
-                </a>
-              </Button>
-            )}
           </div>
+
+          {/* Fresh Analysis Controls */}
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Fresh Analysis Options</h3>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {/* Run Fresh Analysis */}
+                  <Button
+                    onClick={handleRunFreshAnalysis}
+                    disabled={loading || !queryContext}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-2 hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Run Fresh Analysis
+                  </Button>
+
+                  {/* Generate Different Options */}
+                  <Button
+                    onClick={handleGenerateDifferentOptions}
+                    disabled={loading || !analysis || !queryContext}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-2 hover:border-accent/50 hover:bg-accent/5"
+                  >
+                    <Shuffle className="h-3.5 w-3.5" />
+                    Generate Different Options
+                  </Button>
+                </div>
+
+                {/* Diversity Mode Controls */}
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground mb-2">Or try a specific focus:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => {
+                        if (!queryContext) return
+                        handleAnalyze({
+                          query: queryContext.query || '',
+                          budget: queryContext.budget || 'moderate',
+                          travelMonths: queryContext.travel_months || [],
+                          interests: queryContext.interests || [],
+                          tripStructure: 'single_country_multi_city',
+                          forceFresh: true,
+                          diversityMode: 'hidden_gems',
+                        })
+                      }}
+                      disabled={loading || !queryContext}
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs h-7"
+                    >
+                      <Gem className="h-3 w-3" />
+                      Hidden Gems
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!queryContext) return
+                        handleAnalyze({
+                          query: queryContext.query || '',
+                          budget: queryContext.budget || 'moderate',
+                          travelMonths: queryContext.travel_months || [],
+                          interests: queryContext.interests || [],
+                          tripStructure: 'single_country_multi_city',
+                          forceFresh: true,
+                          diversityMode: 'cheaper_options',
+                        })
+                      }}
+                      disabled={loading || !queryContext}
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs h-7"
+                    >
+                      <DollarSign className="h-3 w-3" />
+                      Cheaper Options
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!queryContext) return
+                        handleAnalyze({
+                          query: queryContext.query || '',
+                          budget: queryContext.budget || 'moderate',
+                          travelMonths: queryContext.travel_months || [],
+                          interests: queryContext.interests || [],
+                          tripStructure: 'single_country_multi_city',
+                          forceFresh: true,
+                          diversityMode: 'low_fatigue',
+                        })
+                      }}
+                      disabled={loading || !queryContext}
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs h-7"
+                    >
+                      <Palmtree className="h-3 w-3" />
+                      Lower Fatigue
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Personalization Indicator */}
           {analysis.personalization && (

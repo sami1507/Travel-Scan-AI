@@ -30,8 +30,9 @@ const ANALYSIS_CACHE_VERSION = 'consultant-v7-openai-primary-2026-05-28'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
 import { compactAnalysisResponseSchema, CompactAnalysisResponse } from './compact-schema'
-import { buildCompactTravelAnalysisPrompt, getCompactSystemInstructions } from './compact-prompt'
+import { buildCompactTravelAnalysisPrompt, getCompactSystemInstructions, TravelDataContext } from './compact-prompt'
 import { buildRouteCandidatePool, filterCandidatesByRequest, RouteCandidate } from './route-candidate-pool'
+import { getAttractionsForRoute, getWeatherForRoute } from '../travel-data/travel-data-loader'
 
 export interface AnalysisRequest {
   query: string
@@ -398,7 +399,32 @@ export class TravelAnalysisEngine {
         const fetchFresh = async () => {
             const openAIStartTime = Date.now()
             const fastMode = true // Use fast core analysis mode
-            const compactPrompt = buildCompactTravelAnalysisPrompt(request)
+            
+            // Build travel data context if route candidates available
+            let travelDataContext: TravelDataContext | undefined
+            if (routeCandidatePool.length > 0) {
+              const attractions = new Map<string, any[]>()
+              const weather = new Map<string, any[]>()
+              
+              routeCandidatePool.forEach(route => {
+                const cities = route.routeCities
+                const routeAttractions = getAttractionsForRoute(route.country, cities, request.interests)
+                attractions.set(route.id, routeAttractions)
+                
+                if (request.travelMonths && request.travelMonths.length > 0) {
+                  const routeWeather = getWeatherForRoute(route.country, cities, request.travelMonths)
+                  weather.set(route.id, routeWeather)
+                }
+              })
+              
+              travelDataContext = {
+                routeCandidates: routeCandidatePool,
+                attractions,
+                weather
+              }
+            }
+            
+            const compactPrompt = buildCompactTravelAnalysisPrompt(request, travelDataContext)
             const systemPrompt = getCompactSystemInstructions()
             const systemPromptLength = systemPrompt.length
             
@@ -412,6 +438,8 @@ export class TravelAnalysisEngine {
               compactPromptUsed: true,
               estimatedOutputMode: 'fast_core',
               maxCompletionTokens: 3500,
+              travelDataContextUsed: !!travelDataContext,
+              travelDataRoutesCount: travelDataContext?.routeCandidates?.length || 0,
             })
 
             const completion = await withResilience(
@@ -1227,6 +1255,14 @@ export class TravelAnalysisEngine {
           candidatePoolUsedAsContext: analysisWithMeta.candidatePoolUsedAsContext ?? (routeCandidatePool.length > 0),
           candidatePoolUsedAsReplacement: analysisWithMeta.candidatePoolUsedAsReplacement ?? false,
           replacementReason: analysisWithMeta.replacementReason ?? null,
+          travelDataUsed: routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
+          travelDataRoutesLoaded: routeCandidatePool.filter(r => r.sourceType === 'curated_route_knowledge').length,
+          travelDataCandidateRoutesUsed: routeCandidatePool.length,
+          travelDataAttractionsUsed: 0, // Will be calculated if travel data context was built
+          travelDataWeatherRecordsUsed: 0, // Will be calculated if travel data context was built
+          travelDataSourceTypes: [...new Set(routeCandidatePool.map(r => r.sourceType).filter(Boolean))],
+          travelDataConfidenceLevels: [...new Set(routeCandidatePool.map(r => r.confidenceLevel).filter(Boolean))],
+          travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
         }
 
         // Log comprehensive final metadata
@@ -1276,6 +1312,14 @@ export class TravelAnalysisEngine {
           candidatePoolUsedAsContext: analysisWithMeta._meta.candidatePoolUsedAsContext,
           candidatePoolUsedAsReplacement: analysisWithMeta._meta.candidatePoolUsedAsReplacement,
           replacementReason: analysisWithMeta._meta.replacementReason,
+          travelDataUsed: analysisWithMeta._meta.travelDataUsed,
+          travelDataRoutesLoaded: analysisWithMeta._meta.travelDataRoutesLoaded,
+          travelDataCandidateRoutesUsed: analysisWithMeta._meta.travelDataCandidateRoutesUsed,
+          travelDataAttractionsUsed: analysisWithMeta._meta.travelDataAttractionsUsed,
+          travelDataWeatherRecordsUsed: analysisWithMeta._meta.travelDataWeatherRecordsUsed,
+          travelDataSourceTypes: analysisWithMeta._meta.travelDataSourceTypes,
+          travelDataConfidenceLevels: analysisWithMeta._meta.travelDataConfidenceLevels,
+          travelDataFallbackUsed: analysisWithMeta._meta.travelDataFallbackUsed,
           finalCountries: analysis.rankedDestinations.map((d: any) => d.destinationName),
           finalRoutes: analysis.rankedDestinations.map((d: any) => d.suggestedRoute?.join(' → ') || d.destinationName),
         })

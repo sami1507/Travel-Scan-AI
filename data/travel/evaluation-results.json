@@ -1,0 +1,1110 @@
+{
+  "runDate": "2026-05-28T12:03:13.490Z",
+  "mode": "validation",
+  "totalScenarios": 20,
+  "passedScenarios": 0,
+  "failedScenarios": 20,
+  "successRate": 0,
+  "results": [
+    {
+      "scenarioId": "scenario_001",
+      "scenarioName": "Tel Aviv Summer Moderate 7-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "bannedCountries",
+          "passed": true,
+          "expected": "Avoid: Japan, Thailand, USA, Mexico",
+          "actual": "No banned countries",
+          "message": "No banned countries found"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe, Eastern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Caucasus, Central Europe"
+        }
+      ],
+      "routesFound": 24,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_002",
+      "scenarioName": "Autumn Culture Food 10-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe, Central Europe, Eastern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Caucasus"
+        }
+      ],
+      "routesFound": 23,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Romania",
+        "Georgia",
+        "Austria",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_003",
+      "scenarioName": "Single City 5-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥1 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe, Central Europe",
+          "actual": "Southern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Caucasus"
+        }
+      ],
+      "routesFound": 5,
+      "routeCountries": [
+        "Portugal",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus"
+      ],
+      "routeTypes": [
+        "single_country_one_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_004",
+      "scenarioName": "Multi-Country 12-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No multi-city routes"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": false,
+          "expected": "≥3 cities",
+          "actual": "0 cities",
+          "message": "Max 0 cities, need 3"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": true,
+          "expected": "Central Europe, Eastern Europe, Southern Europe",
+          "actual": "",
+          "message": "All regions allowed"
+        }
+      ],
+      "routesFound": 0,
+      "routeCountries": [],
+      "routeTypes": []
+    },
+    {
+      "scenarioId": "scenario_005",
+      "scenarioName": "Budget Balkans 8-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe, Eastern Europe",
+          "actual": "Eastern Europe, Caucasus, Central Europe, Southern Europe",
+          "message": "Found disallowed regions: Caucasus, Central Europe"
+        }
+      ],
+      "routesFound": 10,
+      "routeCountries": [
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_006",
+      "scenarioName": "Nature Hiking 9-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Central Europe, Southern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Eastern Europe, Caucasus"
+        }
+      ],
+      "routesFound": 12,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_007",
+      "scenarioName": "Family Comfort 7-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Central Europe, Southern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Eastern Europe, Caucasus"
+        }
+      ],
+      "routesFound": 12,
+      "routeCountries": [
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Austria",
+        "Hungary",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_008",
+      "scenarioName": "Friends Social 10-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Eastern Europe, Caucasus, Central Europe"
+        }
+      ],
+      "routesFound": 14,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_009",
+      "scenarioName": "Winter Christmas Markets 6-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Central Europe",
+          "actual": "Southern Europe, Central Europe",
+          "message": "Found disallowed regions: Southern Europe"
+        }
+      ],
+      "routesFound": 7,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_010",
+      "scenarioName": "Avoid Mainstream 8-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "bannedCountries",
+          "passed": false,
+          "expected": "Avoid: Italy, Spain, Greece, France",
+          "actual": "Found: Greece, Italy",
+          "message": "Contains banned countries"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Eastern Europe, Caucasus",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Southern Europe, Central Europe"
+        }
+      ],
+      "routesFound": 25,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_011",
+      "scenarioName": "Fixed Greece Route 10-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No multi-city routes"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": false,
+          "expected": "≥2 cities",
+          "actual": "0 cities",
+          "message": "Max 0 cities, need 2"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": true,
+          "expected": "Southern Europe",
+          "actual": "",
+          "message": "All regions allowed"
+        }
+      ],
+      "routesFound": 0,
+      "routeCountries": [],
+      "routeTypes": []
+    },
+    {
+      "scenarioId": "scenario_012",
+      "scenarioName": "Fixed Portugal Route 7-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No multi-city routes"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": false,
+          "expected": "≥2 cities",
+          "actual": "0 cities",
+          "message": "Max 0 cities, need 2"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": true,
+          "expected": "Southern Europe",
+          "actual": "",
+          "message": "All regions allowed"
+        }
+      ],
+      "routesFound": 0,
+      "routeCountries": [],
+      "routeTypes": []
+    },
+    {
+      "scenarioId": "scenario_013",
+      "scenarioName": "Strict Budget 9-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Eastern Europe, Caucasus",
+          "actual": "Eastern Europe, Caucasus, Central Europe, Southern Europe",
+          "message": "Found disallowed regions: Central Europe, Southern Europe"
+        }
+      ],
+      "routesFound": 10,
+      "routeCountries": [
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_014",
+      "scenarioName": "Low Fatigue 6-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥1 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Central Europe, Southern Europe",
+          "actual": "Southern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Caucasus"
+        }
+      ],
+      "routesFound": 6,
+      "routeCountries": [
+        "Portugal",
+        "Georgia",
+        "Austria",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus"
+      ],
+      "routeTypes": [
+        "single_country_one_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_015",
+      "scenarioName": "Food Markets 8-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe, Central Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Eastern Europe, Caucasus"
+        }
+      ],
+      "routesFound": 24,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_016",
+      "scenarioName": "History Old Towns 10-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Eastern Europe, Southern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Caucasus, Central Europe"
+        }
+      ],
+      "routesFound": 17,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_017",
+      "scenarioName": "Beach Nature 9-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Eastern Europe, Caucasus, Central Europe"
+        }
+      ],
+      "routesFound": 18,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_018",
+      "scenarioName": "First Time Europe 12-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No multi-city routes"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": false,
+          "expected": "≥3 cities",
+          "actual": "0 cities",
+          "message": "Max 0 cities, need 3"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": false,
+          "expected": true,
+          "actual": false,
+          "message": "No watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": true,
+          "expected": "Southern Europe, Central Europe",
+          "actual": "",
+          "message": "All regions allowed"
+        }
+      ],
+      "routesFound": 0,
+      "routeCountries": [],
+      "routeTypes": []
+    },
+    {
+      "scenarioId": "scenario_019",
+      "scenarioName": "Moderate Luxury City 7-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥2 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Central Europe, Southern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Eastern Europe, Caucasus"
+        }
+      ],
+      "routesFound": 27,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Austria",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city"
+      ]
+    },
+    {
+      "scenarioId": "scenario_020",
+      "scenarioName": "Weak Input No Interests 7-Day",
+      "passed": false,
+      "checks": [
+        {
+          "name": "avoidLongHaul",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "No long-haul destinations"
+        },
+        {
+          "name": "mustBeMultiCity",
+          "passed": true,
+          "expected": false,
+          "actual": true,
+          "message": "Multi-city routes found"
+        },
+        {
+          "name": "minimumRouteCities",
+          "passed": true,
+          "expected": "≥1 cities",
+          "actual": "3 cities",
+          "message": "Found routes with 3 cities"
+        },
+        {
+          "name": "mustHaveWatchOut",
+          "passed": true,
+          "expected": true,
+          "actual": true,
+          "message": "Routes have watch-out notes"
+        },
+        {
+          "name": "allowedRegions",
+          "passed": false,
+          "expected": "Southern Europe, Central Europe, Eastern Europe",
+          "actual": "Southern Europe, Eastern Europe, Caucasus, Central Europe",
+          "message": "Found disallowed regions: Caucasus"
+        }
+      ],
+      "routesFound": 29,
+      "routeCountries": [
+        "Portugal",
+        "Greece",
+        "Italy",
+        "Croatia",
+        "Slovenia",
+        "Romania",
+        "Georgia",
+        "Hungary",
+        "Czech Republic",
+        "Cyprus",
+        "Albania"
+      ],
+      "routeTypes": [
+        "single_country_multi_city",
+        "single_country_one_city"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 // Deterministic route candidate pool for when knowledge retrieval returns 0
 // Provides realistic route options as fallback candidates
+// Now integrates with processed travel data from CSV files
 
 import { AnalysisRequest } from './engine'
 import { logger } from '../utils'
+import { loadRoutes, Route } from '../travel-data/travel-data-loader'
 
 export interface RouteCandidate {
   id: string
@@ -20,10 +22,89 @@ export interface RouteCandidate {
   approximateCoordinates: { city: string; lat: number; lng: number }[]
   whyCandidateFits: string
   estimatedScore: number
+  // Travel data provenance
+  sourceType?: string
+  confidenceLevel?: string
+  dataLimitations?: string
+  watchOut?: string
+}
+
+/**
+ * Convert Route from CSV to RouteCandidate
+ */
+function routeToCandidate(route: Route): RouteCandidate {
+  const cities = route.cities.split(',').map(c => c.trim())
+  
+  // Map route_type
+  let routeType: 'single-city' | 'multi-city-single-country' | 'multi-country'
+  if (route.route_type === 'single_country_one_city') {
+    routeType = 'single-city'
+  } else if (route.route_type === 'multi_country') {
+    routeType = 'multi-country'
+  } else {
+    routeType = 'multi-city-single-country'
+  }
+
+  // Map budget_level to priceTier
+  const priceTier = route.budget_level === 'comfortable' || route.budget_level === 'luxury' 
+    ? 'premium' 
+    : route.budget_level as 'budget' | 'moderate'
+
+  // Map fatigue_level
+  const travelFatigue = route.fatigue_level as 'low' | 'moderate' | 'high'
+
+  // Parse months
+  const bestMonths = route.best_months.split(',').map(m => parseInt(m.trim()))
+
+  // Parse interests
+  const interestsFit = route.interests.split(',').map(i => i.trim())
+
+  return {
+    id: route.route_id,
+    country: route.country,
+    region: route.region,
+    routeCities: cities,
+    routeType,
+    priceTier,
+    travelFatigue,
+    bestMonths,
+    interestsFit,
+    mainstreamLevel: 'less-mainstream', // Most routes in our dataset are less mainstream
+    routeLogic: route.why_route_fits,
+    transportMode: 'Train and local transport',
+    approximateCoordinates: [], // Would need destination coordinates
+    whyCandidateFits: route.why_route_fits,
+    estimatedScore: 80,
+    sourceType: route.source_type,
+    confidenceLevel: route.confidence_level,
+    dataLimitations: route.data_limitations,
+    watchOut: route.watch_out,
+  }
 }
 
 export function buildRouteCandidatePool(request: AnalysisRequest): RouteCandidate[] {
-  const candidates: RouteCandidate[] = [
+  // Try to load routes from processed travel data
+  let travelDataRoutes: Route[] = []
+  let travelDataUsed = false
+  
+  try {
+    travelDataRoutes = loadRoutes()
+    if (travelDataRoutes.length > 0) {
+      travelDataUsed = true
+      logger.info('[RouteCandidatePool] Loaded routes from travel data', {
+        routesCount: travelDataRoutes.length,
+        source: 'processed CSV'
+      })
+    }
+  } catch (error) {
+    logger.warn('[RouteCandidatePool] Failed to load travel data routes, using fallback', { error })
+  }
+
+  // Convert travel data routes to candidates
+  const travelDataCandidates = travelDataRoutes.map(routeToCandidate)
+
+  // Fallback hard-coded candidates (if travel data unavailable or for additional coverage)
+  const fallbackCandidates: RouteCandidate[] = [
     // Mediterranean - Mainstream
     {
       id: 'greece-islands',
@@ -308,15 +389,24 @@ export function buildRouteCandidatePool(request: AnalysisRequest): RouteCandidat
     },
   ]
 
+  // Combine travel data candidates with fallback candidates
+  // Prefer travel data if available, otherwise use fallback
+  const allCandidates = travelDataUsed && travelDataCandidates.length > 0
+    ? travelDataCandidates
+    : [...travelDataCandidates, ...fallbackCandidates]
+
   logger.info('Route candidate pool built', {
-    candidateCount: candidates.length,
-    regions: [...new Set(candidates.map(c => c.region))],
-    countries: [...new Set(candidates.map(c => c.country))],
-    mainstreamCount: candidates.filter(c => c.mainstreamLevel === 'mainstream').length,
-    uniqueCount: candidates.filter(c => c.mainstreamLevel === 'unique').length,
+    candidateCount: allCandidates.length,
+    travelDataCandidates: travelDataCandidates.length,
+    fallbackCandidates: fallbackCandidates.length,
+    travelDataUsed,
+    regions: [...new Set(allCandidates.map(c => c.region))],
+    countries: [...new Set(allCandidates.map(c => c.country))],
+    mainstreamCount: allCandidates.filter(c => c.mainstreamLevel === 'mainstream').length,
+    uniqueCount: allCandidates.filter(c => c.mainstreamLevel === 'unique').length,
   })
 
-  return candidates
+  return allCandidates
 }
 
 export function filterCandidatesByRequest(

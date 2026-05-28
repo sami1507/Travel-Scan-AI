@@ -2,9 +2,44 @@
 // Target: <=4500 characters to reduce timeout risk
 
 import { AnalysisRequest } from './engine'
+import { RouteCandidate } from './route-candidate-pool'
 
-export function buildCompactTravelAnalysisPrompt(request: AnalysisRequest): string {
+export interface TravelDataContext {
+  routeCandidates?: RouteCandidate[]
+  attractions?: Map<string, any[]>
+  weather?: Map<string, any[]>
+}
+
+export function buildCompactTravelAnalysisPrompt(
+  request: AnalysisRequest,
+  travelDataContext?: TravelDataContext
+): string {
+  // Build travel data section if available
+  let travelDataSection = ''
+  
+  if (travelDataContext?.routeCandidates && travelDataContext.routeCandidates.length > 0) {
+    const topRoutes = travelDataContext.routeCandidates.slice(0, 6)
+    
+    travelDataSection = `\nTRAVEL DATA CONTEXT (use as planning reference):
+${topRoutes.map(route => {
+  const attractions = travelDataContext.attractions?.get(route.id) || []
+  const weather = travelDataContext.weather?.get(route.id) || []
+  
+  return `• ${route.country} - ${route.routeCities.join(' → ')}
+  Days: ${route.routeCities.length * 2}-${route.routeCities.length * 3} | Budget: ${route.priceTier} | Fatigue: ${route.travelFatigue}
+  Best months: ${route.bestMonths.slice(0, 5).join(',')} | Interests: ${route.interestsFit.slice(0, 4).join(', ')}
+  Why: ${route.whyCandidateFits.slice(0, 100)}${route.whyCandidateFits.length > 100 ? '...' : ''}
+  ${route.watchOut ? `⚠️ ${route.watchOut.slice(0, 80)}${route.watchOut.length > 80 ? '...' : ''}` : ''}
+  ${attractions.length > 0 ? `Attractions: ${attractions.slice(0, 3).map((a: any) => a.name).join(', ')}` : ''}
+  ${weather.length > 0 ? `Weather: avg ${Math.round(weather.reduce((sum: number, w: any) => sum + parseInt(w.weather_score), 0) / weather.length)}/100` : ''}`
+}).join('\n\n')}
+
+Note: This data is planning-level guidance from curated sources. Use it as context but apply your travel expertise.
+`
+  }
+
   const prompt = `You are a realistic travel consultant. Analyze the request and return exactly 3 recommendations.
+${travelDataSection}
 
 TRIP STRUCTURE RULES:
 ${request.tripStructure === 'single_country_one_city' ? '- Focus on one city deep-dive routes' : ''}

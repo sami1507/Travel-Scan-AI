@@ -49,8 +49,8 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
     return 'text-orange-600'
   }
 
-  const scoreLabel = getScoreLabel(topDestination.totalMatchScore)
-  const scoreTitle = getScoreTitle(topDestination.totalMatchScore, topDestination.destinationName)
+  const scoreLabel = getScoreLabel(topDestination.totalMatchScore || 0)
+  const scoreTitle = getScoreTitle(topDestination.totalMatchScore || 0, topDestination.destinationName || 'Unknown')
 
   return (
     <Card className="border-2 border-primary/20">
@@ -66,11 +66,11 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
           <div className="flex items-center justify-between mb-2">
             <p className="font-semibold">Match Score: {scoreLabel}</p>
             <Badge className="bg-primary text-primary-foreground">
-              {topDestination.totalMatchScore.toFixed(1)}/100
+              {typeof topDestination.totalMatchScore === 'number' ? topDestination.totalMatchScore.toFixed(1) : '0.0'}/100
             </Badge>
           </div>
-          <Progress value={topDestination.totalMatchScore} className="h-3" />
-          {topDestination.totalMatchScore < 70 && (
+          <Progress value={topDestination.totalMatchScore || 0} className="h-3" />
+          {(topDestination.totalMatchScore || 0) < 70 && (
             <p className="text-xs text-muted-foreground mt-2">
               No option is a perfect match. This is the strongest compromise based on your inputs.
             </p>
@@ -80,7 +80,7 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
         <Separator />
 
         {/* Key Strengths */}
-        {topDestination.whyRecommended && topDestination.whyRecommended.length > 0 && (
+        {Array.isArray(topDestination.whyRecommended) && topDestination.whyRecommended.length > 0 && (
           <div className="space-y-3">
             <h3 className="font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -100,24 +100,26 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
         <Separator />
 
         {/* Category Scores */}
+        {topDestination.categoryScores && typeof topDestination.categoryScores === 'object' && (
         <div className="space-y-3">
           <h3 className="font-semibold">Score Breakdown</h3>
           <div className="space-y-3">
             {Object.entries(topDestination.categoryScores)
-              .sort(([, a], [, b]) => b - a)
+              .sort(([, a], [, b]) => (b || 0) - (a || 0))
               .map(([category, score]) => (
                 <div key={category} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{getCategoryLabel(category)}</span>
-                    <span className={`font-semibold ${getScoreColor(score)}`}>
-                      {score.toFixed(1)}/10
+                    <span className={`font-semibold ${getScoreColor(score || 0)}`}>
+                      {typeof score === 'number' ? score.toFixed(1) : '0.0'}/10
                     </span>
                   </div>
-                  <Progress value={score * 10} className="h-2" />
+                  <Progress value={(score || 0) * 10} className="h-2" />
                 </div>
               ))}
           </div>
         </div>
+        )}
 
         {/* Scoring Methodology */}
         {scoreBreakdown && (
@@ -134,7 +136,7 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
         )}
 
         {/* Comparison with Alternatives */}
-        {alternatives.length > 0 && (
+        {Array.isArray(alternatives) && alternatives.length > 0 && (
           <>
             <Separator />
             <div className="space-y-3">
@@ -150,14 +152,14 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
                         <p className="text-xs text-muted-foreground capitalize">{alt.destinationType}</p>
                       </div>
                       <Badge variant="outline">
-                        {alt.totalMatchScore.toFixed(1)}/100
+                        {typeof alt.totalMatchScore === 'number' ? alt.totalMatchScore.toFixed(1) : '0.0'}/100
                       </Badge>
                     </div>
                     
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-muted-foreground">Score difference:</span>
                       <span className="font-medium text-orange-600">
-                        -{(topDestination.totalMatchScore - alt.totalMatchScore).toFixed(1)} points
+                        -{((topDestination.totalMatchScore || 0) - (alt.totalMatchScore || 0)).toFixed(1)} points
                       </span>
                     </div>
 
@@ -165,11 +167,14 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">Weaker in:</p>
                       <div className="flex flex-wrap gap-1">
-                        {Object.entries(alt.categoryScores)
-                          .filter(([cat, score]) => {
-                            const topScore = topDestination.categoryScores[cat as keyof typeof topDestination.categoryScores]
-                            return topScore - score > 1
-                          })
+                        {(alt.categoryScores && typeof alt.categoryScores === 'object' && topDestination.categoryScores && typeof topDestination.categoryScores === 'object' 
+                          ? Object.entries(alt.categoryScores)
+                              .filter(([cat, score]) => {
+                                const topScore = topDestination.categoryScores[cat as keyof typeof topDestination.categoryScores]
+                                return (topScore || 0) - (score || 0) > 1
+                              })
+                          : []
+                        )
                           .slice(0, 3)
                           .map(([cat]) => (
                             <Badge key={cat} variant="secondary" className="text-xs">
@@ -193,7 +198,7 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
             <p>
               Rankings are based on evidence-based scoring across multiple factors. 
               Scores reflect how well each destination matches your specific preferences and constraints.
-              Data quality: <span className="font-medium">{topDestination.dataQuality}</span>
+              Data quality: <span className="font-medium">{topDestination.dataQuality || 'Unknown'}</span>
             </p>
           </div>
         </div>

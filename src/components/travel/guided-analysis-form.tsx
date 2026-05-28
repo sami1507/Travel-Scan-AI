@@ -19,6 +19,7 @@ interface GuidedAnalysisFormProps {
     query: string
     departureCity: string
     budget: string
+    tripLength: number
     travelMonths: number[]
     interests: string[]
     tripStructure: TripStructure
@@ -166,6 +167,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
       query,
       departureCity,
       budget,
+      tripLength: parseInt(tripLength) || 7,
       travelMonths,
       interests: travelStyles,
       tripStructure,

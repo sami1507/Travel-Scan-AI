@@ -297,6 +297,18 @@ export function scoreConsultantQuality(
     issues.push('Broken spacing detected in output')
   }
   
+  // Subtract points if travel data attractions available but not used
+  if (metadata.travelDataCandidateRoutesUsed > 0 && metadata.travelDataAttractionsUsed === 0) {
+    totalScore = Math.max(0, totalScore - 5)
+    issues.push('Travel data attractions available but not used in context')
+  }
+  
+  // Subtract points if travel data weather available but not used
+  if (metadata.travelDataCandidateRoutesUsed > 0 && metadata.travelDataWeatherRecordsUsed === 0) {
+    totalScore = Math.max(0, totalScore - 5)
+    issues.push('Travel data weather records available but not used in context')
+  }
+  
   // Subtract points for generic phrase count
   if (genericPhrases.length > 0) {
     const penalty = Math.min(15, genericPhrases.length * 3)

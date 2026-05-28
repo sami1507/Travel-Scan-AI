@@ -335,6 +335,7 @@ export class TravelAnalysisEngine {
           confidence: 0.8,
           sourceLabels: ['route-candidate-pool'],
           dataQuality: 'knowledge-based' as const,
+          suggestedRoute: candidate.routeCities,
         }))
         
         logger.info('Route intelligence using route candidate pool', {
@@ -424,6 +425,10 @@ export class TravelAnalysisEngine {
               }
             }
             
+            // Calculate travel data usage counts
+            const attractionsCount = travelDataContext ? Array.from(travelDataContext.attractions?.values() || []).reduce((sum, arr) => sum + arr.length, 0) : 0
+            const weatherCount = travelDataContext ? Array.from(travelDataContext.weather?.values() || []).reduce((sum, arr) => sum + arr.length, 0) : 0
+            
             const compactPrompt = buildCompactTravelAnalysisPrompt(request, travelDataContext)
             const systemPrompt = getCompactSystemInstructions()
             const systemPromptLength = systemPrompt.length
@@ -440,6 +445,8 @@ export class TravelAnalysisEngine {
               maxCompletionTokens: 3500,
               travelDataContextUsed: !!travelDataContext,
               travelDataRoutesCount: travelDataContext?.routeCandidates?.length || 0,
+              travelDataAttractionsCount: attractionsCount,
+              travelDataWeatherCount: weatherCount,
             })
 
             const completion = await withResilience(
@@ -560,6 +567,8 @@ export class TravelAnalysisEngine {
             ;(fullResponse as any).promptTokens = completion.usage?.prompt_tokens ?? null
             ;(fullResponse as any).completionTokens = completion.usage?.completion_tokens ?? null
             ;(fullResponse as any).totalTokens = completion.usage?.total_tokens ?? null
+            ;(fullResponse as any).travelDataAttractionsUsed = attractionsCount
+            ;(fullResponse as any).travelDataWeatherRecordsUsed = weatherCount
 
             return fullResponse
         }
@@ -1046,27 +1055,48 @@ export class TravelAnalysisEngine {
       }
 
       // Step 9: Optional Claude verification for accuracy (non-blocking)
+      let claudeVerifierUsed = false
+      let claudeVerifierPassed = false
+      let claudeVerificationSuccessCount = 0
       try {
         const { getClaudeVerifier } = await import('../services/claude-verifier')
         const claudeVerifier = getClaudeVerifier()
         
         if (claudeVerifier.isAvailable()) {
           logger.info('Running Claude accuracy verification on recommendations')
+          claudeVerifierUsed = true
           
-          // Verify each recommendation in parallel
+          // Verify each recommendation in parallel with error handling
           const verificationPromises = analysis.rankedDestinations.map(async (dest) => {
-            const verification = await claudeVerifier.verifyRecommendation(
-              dest,
-              request.travelMonths?.length || 7,
-              request.tripStructure || 'single_country_one_city'
-            )
-            return claudeVerifier.applyVerification(dest, verification)
+            try {
+              const verification = await claudeVerifier.verifyRecommendation(
+                dest,
+                request.travelMonths?.length || 7,
+                request.tripStructure || 'single_country_one_city'
+              )
+              claudeVerificationSuccessCount++
+              return claudeVerifier.applyVerification(dest, verification)
+            } catch (err) {
+              logger.warn('Claude verification failed for destination', {
+                destination: dest.destinationName,
+                error: err instanceof Error ? err.message : String(err),
+              })
+              return dest // Return original if verification fails
+            }
           })
           
           const verifiedDestinations = await Promise.all(verificationPromises)
           analysis.rankedDestinations = verifiedDestinations
           
-          logger.info('Claude verification completed successfully')
+          if (claudeVerificationSuccessCount > 0) {
+            claudeVerifierPassed = true
+            logger.info('Claude verification completed', {
+              successCount: claudeVerificationSuccessCount,
+              totalCount: analysis.rankedDestinations.length,
+            })
+          } else {
+            logger.warn('Claude verification failed for all recommendations - continuing with unverified')
+          }
         }
       } catch (claudeError) {
         // Claude verification is optional - log but don't fail
@@ -1227,6 +1257,9 @@ export class TravelAnalysisEngine {
           regionSpread: diversityResult.regionSpread,
           mainstreamCount: diversityResult.mainstreamCount,
           uniqueOptionIncluded: diversityResult.uniqueOptionIncluded,
+          claudeVerifierUsed,
+          claudeVerifierPassed,
+          claudeVerificationSuccessCount,
           consultantQualityScore: qualityScore.totalScore,
           consultantQualityGrade: qualityScore.totalScore >= 90 ? 'Excellent' : qualityScore.totalScore >= 80 ? 'Good' : qualityScore.totalScore >= 70 ? 'Acceptable' : 'Needs Improvement',
           consultantQualityIssues: qualityScore.issues,
@@ -1258,8 +1291,8 @@ export class TravelAnalysisEngine {
           travelDataUsed: routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
           travelDataRoutesLoaded: routeCandidatePool.filter(r => r.sourceType === 'curated_route_knowledge').length,
           travelDataCandidateRoutesUsed: routeCandidatePool.length,
-          travelDataAttractionsUsed: 0, // Will be calculated if travel data context was built
-          travelDataWeatherRecordsUsed: 0, // Will be calculated if travel data context was built
+          travelDataAttractionsUsed: analysisWithMeta.travelDataAttractionsUsed ?? 0,
+          travelDataWeatherRecordsUsed: analysisWithMeta.travelDataWeatherRecordsUsed ?? 0,
           travelDataSourceTypes: [...new Set(routeCandidatePool.map(r => r.sourceType).filter(Boolean))],
           travelDataConfidenceLevels: [...new Set(routeCandidatePool.map(r => r.confidenceLevel).filter(Boolean))],
           travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
@@ -2733,7 +2766,7 @@ Return the same structured schema with fixes applied.`
         : 'Live AI provider unavailable. Showing knowledge-based recommendations with conservative estimates.'],
       assumptions: ['Standard travel preferences applied', 'Moderate pacing assumed'],
       recommendedRoutes: firstDest ? [{
-        routeType: firstDest.suggestedRoute && firstDest.suggestedRoute.length > 2 ? 'multi-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length === 2 ? '2-city' : 'single-destination',
+        routeType: firstDest.suggestedRoute && firstDest.suggestedRoute.length === 3 ? '3-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length > 3 ? 'multi-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length === 2 ? '2-city' : 'single-destination',
         routeName: `${firstDest.destinationName} Route`,
         orderedStops: (firstDest.suggestedRoute || [firstDest.destinationName]).map((city, idx) => ({
           destinationId: `${city.toLowerCase().replace(/\s+/g, '-')}-${idx}`,

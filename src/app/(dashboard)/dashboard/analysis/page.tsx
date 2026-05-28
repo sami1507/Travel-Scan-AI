@@ -53,7 +53,9 @@ export default function AnalysisPage() {
 
   const handleAnalyze = async (data: {
     query: string
+    departureCity?: string
     budget: string
+    tripLength?: number
     travelMonths: number[]
     interests: string[]
     tripStructure: 'single_country_one_city' | 'single_country_multi_city' | 'multi_country'
@@ -61,6 +63,8 @@ export default function AnalysisPage() {
     // Client-side validation
     const validation = validateAnalysisRequest({
       query: data.query,
+      departureCity: data.departureCity,
+      tripLength: data.tripLength,
       travelMonths: data.travelMonths,
       interests: data.interests,
       budget: data.budget,

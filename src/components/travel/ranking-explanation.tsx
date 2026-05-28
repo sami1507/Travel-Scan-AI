@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { TrendingUp, Award, AlertCircle, Info } from 'lucide-react'
 import type { RankedDestination } from '@/lib/analysis/schemas'
+import { formatScore } from '@/lib/utils/format-score'
 
 interface RankingExplanationProps {
   topDestination: RankedDestination
@@ -66,7 +67,7 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
           <div className="flex items-center justify-between mb-2">
             <p className="font-semibold">Match Score: {scoreLabel}</p>
             <Badge className="bg-primary text-primary-foreground">
-              {typeof topDestination.totalMatchScore === 'number' ? topDestination.totalMatchScore.toFixed(1) : '0.0'}/100
+              {formatScore(topDestination.totalMatchScore)}/100
             </Badge>
           </div>
           <Progress value={topDestination.totalMatchScore || 0} className="h-3" />
@@ -111,7 +112,7 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{getCategoryLabel(category)}</span>
                     <span className={`font-semibold ${getScoreColor(score || 0)}`}>
-                      {typeof score === 'number' ? score.toFixed(1) : '0.0'}/10
+                      {formatScore(score)}/10
                     </span>
                   </div>
                   <Progress value={(score || 0) * 10} className="h-2" />
@@ -152,14 +153,14 @@ export function RankingExplanation({ topDestination, alternatives = [], scoreBre
                         <p className="text-xs text-muted-foreground capitalize">{alt.destinationType}</p>
                       </div>
                       <Badge variant="outline">
-                        {typeof alt.totalMatchScore === 'number' ? alt.totalMatchScore.toFixed(1) : '0.0'}/100
+                        {formatScore(alt.totalMatchScore)}/100
                       </Badge>
                     </div>
                     
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-muted-foreground">Score difference:</span>
                       <span className="font-medium text-orange-600">
-                        -{((topDestination.totalMatchScore || 0) - (alt.totalMatchScore || 0)).toFixed(1)} points
+                        -{formatScore((topDestination.totalMatchScore || 0) - (alt.totalMatchScore || 0))} points
                       </span>
                     </div>
 

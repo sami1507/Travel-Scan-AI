@@ -1,0 +1,38 @@
+{
+  "title": "Average Weather Score by Month",
+  "description": "Monthly weather suitability scores (0-100) across 20 cities",
+  "chart_type": "line",
+  "data": [
+    { "month": "Jan", "month_num": 1, "score": 55, "label": "Winter" },
+    { "month": "Feb", "month_num": 2, "score": 60, "label": "Winter" },
+    { "month": "Mar", "month_num": 3, "score": 70, "label": "Spring" },
+    { "month": "Apr", "month_num": 4, "score": 80, "label": "Spring" },
+    { "month": "May", "month_num": 5, "score": 87, "label": "Spring" },
+    { "month": "Jun", "month_num": 6, "score": 84, "label": "Summer" },
+    { "month": "Jul", "month_num": 7, "score": 76, "label": "Summer" },
+    { "month": "Aug", "month_num": 8, "score": 71, "label": "Summer" },
+    { "month": "Sep", "month_num": 9, "score": 86, "label": "Autumn" },
+    { "month": "Oct", "month_num": 10, "score": 80, "label": "Autumn" },
+    { "month": "Nov", "month_num": 11, "score": 65, "label": "Autumn" },
+    { "month": "Dec", "month_num": 12, "score": 56, "label": "Winter" }
+  ],
+  "best_months": [
+    { "month": "May", "score": 87 },
+    { "month": "Sep", "score": 86 },
+    { "month": "Jun", "score": 84 }
+  ],
+  "worst_months": [
+    { "month": "Jan", "score": 55 },
+    { "month": "Dec", "score": 56 },
+    { "month": "Feb", "score": 60 }
+  ],
+  "threshold_good": 80,
+  "threshold_excellent": 85,
+  "colors": {
+    "Winter": "#3b82f6",
+    "Spring": "#10b981",
+    "Summer": "#f59e0b",
+    "Autumn": "#ef4444"
+  },
+  "notes": "Best travel months: May (87), September (86), June (84). Avoid July-August (too hot and crowded)."
+}

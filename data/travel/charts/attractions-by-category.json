@@ -1,0 +1,34 @@
+{
+  "title": "Attractions by Category",
+  "description": "Distribution of 113 attractions across categories",
+  "chart_type": "bar_horizontal",
+  "data": [
+    { "category": "history", "count": 34, "percentage": 30.1 },
+    { "category": "city", "count": 19, "percentage": 16.8 },
+    { "category": "old_town", "count": 14, "percentage": 12.4 },
+    { "category": "museum", "count": 12, "percentage": 10.6 },
+    { "category": "nature", "count": 10, "percentage": 8.8 },
+    { "category": "viewpoint", "count": 8, "percentage": 7.1 },
+    { "category": "market", "count": 8, "percentage": 7.1 },
+    { "category": "food", "count": 4, "percentage": 3.5 },
+    { "category": "spa", "count": 2, "percentage": 1.8 },
+    { "category": "nightlife", "count": 1, "percentage": 0.9 },
+    { "category": "beach", "count": 1, "percentage": 0.9 }
+  ],
+  "total": 113,
+  "top_3": ["history", "city", "old_town"],
+  "colors": {
+    "history": "#ef4444",
+    "city": "#3b82f6",
+    "old_town": "#f59e0b",
+    "museum": "#8b5cf6",
+    "nature": "#10b981",
+    "viewpoint": "#06b6d4",
+    "market": "#ec4899",
+    "food": "#f97316",
+    "spa": "#14b8a6",
+    "nightlife": "#a855f7",
+    "beach": "#0ea5e9"
+  },
+  "notes": "History attractions dominate (30%), followed by city experiences and old towns"
+}

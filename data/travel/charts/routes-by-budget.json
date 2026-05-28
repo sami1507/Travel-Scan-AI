@@ -1,0 +1,17 @@
+{
+  "title": "Routes by Budget Level",
+  "description": "Budget distribution of 36 curated routes",
+  "chart_type": "pie",
+  "data": [
+    { "budget": "moderate", "count": 18, "percentage": 50.0 },
+    { "budget": "budget", "count": 12, "percentage": 33.3 },
+    { "budget": "comfortable", "count": 6, "percentage": 16.7 }
+  ],
+  "total": 36,
+  "colors": {
+    "moderate": "#10b981",
+    "budget": "#3b82f6",
+    "comfortable": "#8b5cf6"
+  },
+  "notes": "50% of routes are moderate budget, making them accessible to most travelers"
+}

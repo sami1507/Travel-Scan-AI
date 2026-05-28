@@ -1,0 +1,15 @@
+{
+  "title": "Routes by Fatigue Level",
+  "description": "Travel fatigue distribution of 36 curated routes",
+  "chart_type": "bar",
+  "data": [
+    { "fatigue": "medium", "count": 23, "percentage": 63.9 },
+    { "fatigue": "low", "count": 13, "percentage": 36.1 }
+  ],
+  "total": 36,
+  "colors": {
+    "low": "#10b981",
+    "medium": "#f59e0b"
+  },
+  "notes": "Most routes are medium fatigue (multi-city with moderate travel), suitable for active travelers"
+}

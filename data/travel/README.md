@@ -9,6 +9,31 @@ This dataset forms the **data foundation** for the TravelScan AI graduation proj
 3. **Attraction and POI data** - Points of interest categorized by type and interest tags
 4. **Seasonal weather patterns** - Planning-level climate guidance for destination selection
 5. **Evaluation scenarios** - Test cases for measuring recommendation quality
+6. **Data provenance tracking** - Clear source attribution and confidence levels for academic integrity
+
+## Folder Structure
+
+```
+data/travel/
+├── raw/                          # Raw data from external APIs (optional, not in git)
+│   ├── wikidata-destinations.json
+│   ├── osm-attractions.json
+│   └── openmeteo-weather.json
+├── processed/                    # Cleaned data with provenance metadata
+│   ├── destinations.csv          # With source_type, source_name, confidence_level
+│   ├── routes.csv                # With provenance fields
+│   ├── attractions.csv           # With provenance fields
+│   └── monthly_weather.csv       # With provenance fields
+├── destinations.csv              # Original curated data (compatibility)
+├── routes.csv                    # Original curated data (compatibility)
+├── attractions.csv               # Original curated data (compatibility)
+├── monthly_weather.csv           # Original curated data (compatibility)
+├── evaluation_scenarios.json     # Test scenarios
+├── eda-summary.json              # Auto-generated EDA results
+└── README.md                     # This file
+```
+
+**Note:** The `processed/` folder contains the same data with additional provenance fields for academic documentation. Scripts automatically use processed files if available, otherwise fall back to original files.
 
 ## Dataset Files
 
@@ -53,11 +78,116 @@ This dataset forms the **data foundation** for the TravelScan AI graduation proj
 
 **Use Case:** Automated testing, quality metrics, regression testing
 
+## Data Provenance Fields
+
+All processed datasets include the following provenance metadata:
+
+| Field | Description | Example Values |
+|-------|-------------|----------------|
+| `source_name` | Name of the data source | "Wikidata", "OpenStreetMap", "Open-Meteo", "TravelScan Curated Route Base" |
+| `source_type` | Type of data source | "open_data", "curated_route_knowledge", "curated" |
+| `source_url_or_query` | URL or query used to fetch data | "https://www.wikidata.org/wiki/Q597", "Overpass API query for Lisbon" |
+| `collected_at` | ISO 8601 timestamp of data collection | "2026-05-28" |
+| `cleaned_at` | ISO 8601 timestamp of data cleaning | "2026-05-28" |
+| `confidence_level` | Data quality/confidence level | "verified", "planning_guidance", "estimated" |
+| `data_limitations` | Known limitations of the data | "Coordinates from Wikidata; budget level curated" |
+
+### Provenance Examples
+
+**Destinations (Open Data):**
+```csv
+country,city,latitude,longitude,source_name,source_type,confidence_level
+Portugal,Lisbon,38.7223,-9.1393,Wikidata,open_data,verified
+```
+
+**Routes (Curated Knowledge):**
+```csv
+route_id,country,route_name,source_name,source_type,confidence_level
+PT001,Portugal,Lisbon Porto Classic,TravelScan Curated Route Base,curated_route_knowledge,planning_guidance
+```
+
+**Attractions (Open Data):**
+```csv
+country,city,name,source_name,source_type,confidence_level
+Portugal,Lisbon,Belém Tower,OpenStreetMap,open_data,verified
+```
+
+**Weather (Open Data):**
+```csv
+country,city,month,avg_temp_c,source_name,source_type,confidence_level
+Portugal,Lisbon,5,19,Open-Meteo,open_data,planning_guidance
+```
+
+## Data Collection Pipeline
+
+### 1. Optional Fetch Scripts (Not Run During Build)
+
+The project includes optional fetch scripts for documentation purposes:
+
+```bash
+# Fetch destinations from Wikidata (optional)
+npx tsx scripts/fetch-wikidata-destinations.ts
+
+# Fetch attractions from OpenStreetMap (optional)
+npx tsx scripts/fetch-osm-attractions.ts
+
+# Fetch weather from Open-Meteo (optional)
+npx tsx scripts/fetch-openmeteo-weather.ts
+```
+
+These scripts:
+- **Are NOT run during Vercel build** (would fail without API access)
+- Save raw JSON to `data/travel/raw/`
+- Include error handling (save error JSON if fetch fails)
+- Are for academic documentation of data collection methodology
+
+### 2. Data Cleaning
+
+```bash
+# Clean raw data and generate processed CSVs
+npx tsx scripts/clean-travel-data.ts
+```
+
+This script:
+- Reads raw JSON from `data/travel/raw/` (if available)
+- Merges with curated seed data
+- Adds provenance metadata
+- Outputs cleaned CSVs to `data/travel/processed/`
+- Falls back to curated data if raw data unavailable
+
+### 3. Validation
+
+```bash
+# Validate processed data
+npx tsx scripts/validate-travel-data.ts
+```
+
+Validates:
+- Required fields present
+- Data types correct
+- No duplicate IDs
+- Constraints satisfied (e.g., multi-city routes have 2+ cities)
+- No banned long-haul destinations in starter dataset
+
+### 4. Exploratory Data Analysis
+
+```bash
+# Run EDA and generate summary
+npx tsx scripts/travel-data-eda.ts
+```
+
+Outputs:
+- Dataset statistics
+- Distribution by region, budget, category
+- Seasonal patterns
+- **Provenance breakdown** (curated vs open data)
+- Saves `eda-summary.json`
+
 ## Data Sources and Methodology
 
-### Conceptual Data Sources
+### Data Sources Used
 
-This dataset is built using publicly available structured knowledge and open data:
+This dataset combines **curated expert knowledge** with **open data sources**:
 
 1. **Wikidata** - Structured public knowledge base for:
    - Geographic coordinates

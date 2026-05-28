@@ -114,8 +114,7 @@
       "beach": 1
     },
     "by_source_type": {
-      "curated": 110,
-      "day_trip": 3
+      "open_data": 113
     },
     "avg_duration_hours": 2.2
   },
@@ -167,5 +166,22 @@
     },
     "with_fixed_destination": 2,
     "with_banned_countries": 2
+  },
+  "provenance": {
+    "destinations_by_source_type": {
+      "open_data": 53
+    },
+    "routes_by_source_type": {
+      "curated_route_knowledge": 36
+    },
+    "attractions_by_source_type": {
+      "open_data": 113
+    },
+    "weather_by_source_type": {
+      "open_data": 240
+    },
+    "total_curated": 36,
+    "total_open_data": 406,
+    "has_provenance_fields": true
   }
 }

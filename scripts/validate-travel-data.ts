@@ -36,13 +36,23 @@ interface Attraction {
 console.log('🔍 TravelScan AI - Travel Data Validation\n')
 
 const dataDir = path.join(process.cwd(), 'data', 'travel')
+const processedDir = path.join(dataDir, 'processed')
 
-// Load datasets
-const routesCSV = fs.readFileSync(path.join(dataDir, 'routes.csv'), 'utf-8')
+// Load datasets (prefer processed, fallback to original)
+const routesPath = fs.existsSync(path.join(processedDir, 'routes.csv')) 
+  ? path.join(processedDir, 'routes.csv')
+  : path.join(dataDir, 'routes.csv')
+const routesCSV = fs.readFileSync(routesPath, 'utf-8')
 const routes: Route[] = parse(routesCSV, { columns: true })
 
-const attractionsCSV = fs.readFileSync(path.join(dataDir, 'attractions.csv'), 'utf-8')
+const attractionsPath = fs.existsSync(path.join(processedDir, 'attractions.csv'))
+  ? path.join(processedDir, 'attractions.csv')
+  : path.join(dataDir, 'attractions.csv')
+const attractionsCSV = fs.readFileSync(attractionsPath, 'utf-8')
 const attractions: Attraction[] = parse(attractionsCSV, { columns: true })
+
+console.log(`📁 Reading from: ${routesPath.includes('processed') ? 'processed/' : ''}`)
+console.log()
 
 let errors = 0
 let warnings = 0

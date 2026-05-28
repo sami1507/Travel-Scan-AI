@@ -82,21 +82,37 @@ console.log('📊 TravelScan AI - Travel Data EDA\n')
 
 // Load datasets
 const dataDir = path.join(process.cwd(), 'data', 'travel')
+const processedDir = path.join(dataDir, 'processed')
 
-const destinationsCSV = fs.readFileSync(path.join(dataDir, 'destinations.csv'), 'utf-8')
+// Prefer processed files, fallback to original
+const destinationsPath = fs.existsSync(path.join(processedDir, 'destinations.csv'))
+  ? path.join(processedDir, 'destinations.csv')
+  : path.join(dataDir, 'destinations.csv')
+const destinationsCSV = fs.readFileSync(destinationsPath, 'utf-8')
 const destinations: Destination[] = parse(destinationsCSV, { columns: true })
 
-const routesCSV = fs.readFileSync(path.join(dataDir, 'routes.csv'), 'utf-8')
+const routesPath = fs.existsSync(path.join(processedDir, 'routes.csv'))
+  ? path.join(processedDir, 'routes.csv')
+  : path.join(dataDir, 'routes.csv')
+const routesCSV = fs.readFileSync(routesPath, 'utf-8')
 const routes: Route[] = parse(routesCSV, { columns: true })
 
-const attractionsCSV = fs.readFileSync(path.join(dataDir, 'attractions.csv'), 'utf-8')
+const attractionsPath = fs.existsSync(path.join(processedDir, 'attractions.csv'))
+  ? path.join(processedDir, 'attractions.csv')
+  : path.join(dataDir, 'attractions.csv')
+const attractionsCSV = fs.readFileSync(attractionsPath, 'utf-8')
 const attractions: Attraction[] = parse(attractionsCSV, { columns: true })
 
-const weatherCSV = fs.readFileSync(path.join(dataDir, 'monthly_weather.csv'), 'utf-8')
+const weatherPath = fs.existsSync(path.join(processedDir, 'monthly_weather.csv'))
+  ? path.join(processedDir, 'monthly_weather.csv')
+  : path.join(dataDir, 'monthly_weather.csv')
+const weatherCSV = fs.readFileSync(weatherPath, 'utf-8')
 const weather: Weather[] = parse(weatherCSV, { columns: true })
 
 const scenariosJSON = fs.readFileSync(path.join(dataDir, 'evaluation_scenarios.json'), 'utf-8')
 const scenarios: EvaluationScenario[] = JSON.parse(scenariosJSON)
+
+console.log(`📁 Reading from: ${destinationsPath.includes('processed') ? 'processed/' : 'original'} files\n`)
 
 // Compute summary statistics
 const summary = {
@@ -141,6 +157,15 @@ const summary = {
     by_trip_structure: {} as Record<string, number>,
     with_fixed_destination: 0,
     with_banned_countries: 0,
+  },
+  provenance: {
+    destinations_by_source_type: {} as Record<string, number>,
+    routes_by_source_type: {} as Record<string, number>,
+    attractions_by_source_type: {} as Record<string, number>,
+    weather_by_source_type: {} as Record<string, number>,
+    total_curated: 0,
+    total_open_data: 0,
+    has_provenance_fields: false,
   },
 }
 
@@ -231,6 +256,39 @@ scenarios.forEach(s => {
     summary.evaluation.with_banned_countries++
   }
 })
+
+// Provenance analysis (check if processed files have provenance fields)
+const hasProvenanceFields = (destinations[0] as any).source_type !== undefined
+
+summary.provenance.has_provenance_fields = hasProvenanceFields
+
+if (hasProvenanceFields) {
+  destinations.forEach((d: any) => {
+    const sourceType = d.source_type || 'unknown'
+    summary.provenance.destinations_by_source_type[sourceType] = (summary.provenance.destinations_by_source_type[sourceType] || 0) + 1
+    if (sourceType === 'open_data') summary.provenance.total_open_data++
+    if (sourceType === 'curated' || sourceType === 'curated_route_knowledge') summary.provenance.total_curated++
+  })
+
+  routes.forEach((r: any) => {
+    const sourceType = r.source_type || 'unknown'
+    summary.provenance.routes_by_source_type[sourceType] = (summary.provenance.routes_by_source_type[sourceType] || 0) + 1
+    if (sourceType === 'curated' || sourceType === 'curated_route_knowledge') summary.provenance.total_curated++
+  })
+
+  attractions.forEach((a: any) => {
+    const sourceType = a.source_type || 'unknown'
+    summary.provenance.attractions_by_source_type[sourceType] = (summary.provenance.attractions_by_source_type[sourceType] || 0) + 1
+    if (sourceType === 'open_data') summary.provenance.total_open_data++
+    if (sourceType === 'curated') summary.provenance.total_curated++
+  })
+
+  weather.forEach((w: any) => {
+    const sourceType = w.source_type || 'unknown'
+    summary.provenance.weather_by_source_type[sourceType] = (summary.provenance.weather_by_source_type[sourceType] || 0) + 1
+    if (sourceType === 'open_data') summary.provenance.total_open_data++
+  })
+}
 
 // Print summary
 console.log('='.repeat(80))
@@ -382,6 +440,55 @@ console.log()
 console.log(`With Fixed Destination:   ${summary.evaluation.with_fixed_destination}`)
 console.log(`With Banned Countries:    ${summary.evaluation.with_banned_countries}`)
 console.log()
+
+console.log('='.repeat(80))
+console.log('DATA PROVENANCE')
+console.log('='.repeat(80))
+console.log(`Provenance Fields Present: ${summary.provenance.has_provenance_fields ? '✅ Yes' : '❌ No'}`)
+console.log()
+
+if (summary.provenance.has_provenance_fields) {
+  console.log('Total Records by Source Type:')
+  console.log(`  Curated:   ${summary.provenance.total_curated}`)
+  console.log(`  Open Data: ${summary.provenance.total_open_data}`)
+  console.log()
+  
+  if (Object.keys(summary.provenance.destinations_by_source_type).length > 0) {
+    console.log('Destinations by Source:')
+    Object.entries(summary.provenance.destinations_by_source_type).forEach(([type, count]) => {
+      console.log(`  ${type.padEnd(30)} ${count}`)
+    })
+    console.log()
+  }
+  
+  if (Object.keys(summary.provenance.routes_by_source_type).length > 0) {
+    console.log('Routes by Source:')
+    Object.entries(summary.provenance.routes_by_source_type).forEach(([type, count]) => {
+      console.log(`  ${type.padEnd(30)} ${count}`)
+    })
+    console.log()
+  }
+  
+  if (Object.keys(summary.provenance.attractions_by_source_type).length > 0) {
+    console.log('Attractions by Source:')
+    Object.entries(summary.provenance.attractions_by_source_type).forEach(([type, count]) => {
+      console.log(`  ${type.padEnd(30)} ${count}`)
+    })
+    console.log()
+  }
+  
+  if (Object.keys(summary.provenance.weather_by_source_type).length > 0) {
+    console.log('Weather by Source:')
+    Object.entries(summary.provenance.weather_by_source_type).forEach(([type, count]) => {
+      console.log(`  ${type.padEnd(30)} ${count}`)
+    })
+    console.log()
+  }
+} else {
+  console.log('⚠️  Using original files without provenance metadata')
+  console.log('💡 Run scripts/add-provenance-to-data.ts to add provenance fields')
+  console.log()
+}
 
 // Save summary to JSON
 const outputPath = path.join(dataDir, 'eda-summary.json')

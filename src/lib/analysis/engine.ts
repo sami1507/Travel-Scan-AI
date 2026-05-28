@@ -1079,7 +1079,10 @@ export class TravelAnalysisEngine {
                 request.travelMonths?.length || 7,
                 request.tripStructure || 'single_country_one_city'
               )
-              claudeVerificationSuccessCount++
+              // Only count as success if verification returned a valid result (not null)
+              if (verification !== null) {
+                claudeVerificationSuccessCount++
+              }
               return claudeVerifier.applyVerification(dest, verification)
             } catch (err) {
               logger.warn('Claude verification failed for destination', {
@@ -1101,9 +1104,10 @@ export class TravelAnalysisEngine {
               model: claudeModelUsed,
             })
           } else {
-            claudeVerifierError = 'All verification calls failed'
+            claudeVerifierError = 'all_verifications_failed'
             logger.warn('Claude verification failed for all recommendations - continuing with unverified', {
               model: claudeModelUsed,
+              error: claudeVerifierError,
             })
           }
         }

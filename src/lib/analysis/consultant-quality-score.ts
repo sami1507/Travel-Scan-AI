@@ -260,6 +260,12 @@ export function scoreConsultantQuality(
     issues.push('Final scope validation failed - score capped at 70')
   }
   
+  // Cap at 75 if deterministic fallback was used
+  if (metadata.analysisSource === 'fallback_deterministic' || metadata.deterministicFallbackUsed === true) {
+    totalScore = Math.min(totalScore, 75)
+    issues.push('Deterministic fallback used - score capped at 75')
+  }
+  
   // Cap at 75 if route type mismatches trip structure
   if (request?.tripStructure === 'single_country_multi_city' && metadata.routeType === 'single-destination') {
     totalScore = Math.min(totalScore, 75)

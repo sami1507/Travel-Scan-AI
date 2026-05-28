@@ -26,7 +26,7 @@ import { costTracker } from '../monitoring/cost-tracker'
 import { cacheManager, CachePresets } from '../cache/cache-manager'
 
 // Analysis cache version - increment to invalidate all cached results after algorithm changes
-const ANALYSIS_CACHE_VERSION = 'consultant-v6-real-route-consultant-2026-05-28'
+const ANALYSIS_CACHE_VERSION = 'consultant-v7-openai-primary-2026-05-28'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
 import { compactAnalysisResponseSchema, CompactAnalysisResponse } from './compact-schema'
@@ -581,18 +581,33 @@ export class TravelAnalysisEngine {
               ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
               ;(analysis as any).replacementsApplied = finalValidation.replacementsApplied
               
+              // Track analysis source
+              if (finalValidation.replacementsApplied.length > 0) {
+                ;(analysis as any).analysisSource = 'fallback_deterministic'
+                ;(analysis as any).deterministicFallbackUsed = true
+                ;(analysis as any).candidatePoolUsedAsReplacement = true
+                ;(analysis as any).replacementReason = 'openai_invalid_destinations'
+              } else {
+                ;(analysis as any).analysisSource = 'openai_primary'
+                ;(analysis as any).deterministicFallbackUsed = false
+                ;(analysis as any).candidatePoolUsedAsReplacement = false
+              }
+              ;(analysis as any).openAIPrimaryUsed = true
+              ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
+              
               logger.info('Final recommendation scope validation', {
                 passed: finalValidation.valid,
                 invalidDestinations: finalValidation.invalidDestinations,
                 replacementsApplied: finalValidation.replacementsApplied,
+                analysisSource: (analysis as any).analysisSource,
                 finalCountriesBeforeValidation: finalValidation.invalidDestinations.length > 0 ? 
                   [...finalValidation.invalidDestinations, ...analysis.rankedDestinations.map(d => d.destinationName)] : 
                   analysis.rankedDestinations.map(d => d.destinationName),
                 finalCountriesAfterValidation: analysis.rankedDestinations.map(d => d.destinationName),
               })
               
-              // Cache only if final validation passed
-              if (finalValidation.valid && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+              // Cache only if final validation passed and not deterministic fallback
+              if (finalValidation.valid && (analysis as any).analysisSource === 'openai_primary' && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
                 await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
                 ;(analysis as any).cachedResultType = 'openai'
                 logger.info('Travel Analysis Cache: SET (after rejection)', {
@@ -601,9 +616,10 @@ export class TravelAnalysisEngine {
                   fallbackUsed: false,
                   cacheStatus: 'SET',
                 })
-              } else if (!finalValidation.valid) {
-                ;(analysis as any).cacheSkippedReason = 'invalid_final_result'
-                logger.info('Travel Analysis Cache: SKIPPED_INVALID_FINAL_RESULT', {
+              } else if (!finalValidation.valid || (analysis as any).analysisSource === 'fallback_deterministic') {
+                ;(analysis as any).cacheSkippedReason = (analysis as any).analysisSource === 'fallback_deterministic' ? 'deterministic_fallback' : 'invalid_final_result'
+                logger.info('Travel Analysis Cache: SKIPPED_FALLBACK', {
+                  reason: (analysis as any).cacheSkippedReason,
                   invalidDestinations: finalValidation.invalidDestinations,
                   replacementsApplied: finalValidation.replacementsApplied,
                 })
@@ -621,18 +637,33 @@ export class TravelAnalysisEngine {
             ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
             ;(analysis as any).replacementsApplied = finalValidation.replacementsApplied
             
+            // Track analysis source
+            if (finalValidation.replacementsApplied.length > 0) {
+              ;(analysis as any).analysisSource = 'fallback_deterministic'
+              ;(analysis as any).deterministicFallbackUsed = true
+              ;(analysis as any).candidatePoolUsedAsReplacement = true
+              ;(analysis as any).replacementReason = 'openai_invalid_destinations'
+            } else {
+              ;(analysis as any).analysisSource = 'openai_primary'
+              ;(analysis as any).deterministicFallbackUsed = false
+              ;(analysis as any).candidatePoolUsedAsReplacement = false
+            }
+            ;(analysis as any).openAIPrimaryUsed = true
+            ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
+            
             logger.info('Final recommendation scope validation', {
               passed: finalValidation.valid,
               invalidDestinations: finalValidation.invalidDestinations,
               replacementsApplied: finalValidation.replacementsApplied,
+              analysisSource: (analysis as any).analysisSource,
               finalCountriesBeforeValidation: finalValidation.invalidDestinations.length > 0 ? 
                 [...finalValidation.invalidDestinations, ...analysis.rankedDestinations.map(d => d.destinationName)] : 
                 analysis.rankedDestinations.map(d => d.destinationName),
               finalCountriesAfterValidation: analysis.rankedDestinations.map(d => d.destinationName),
             })
             
-            // Only cache if final validation passed and it's a successful OpenAI result
-            if (finalValidation.valid && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
+            // Only cache if final validation passed and not deterministic fallback
+            if (finalValidation.valid && (analysis as any).analysisSource === 'openai_primary' && (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed) {
               await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
               ;(analysis as any).cacheStatus = 'SET'
               ;(analysis as any).cachedResultType = 'openai'
@@ -642,10 +673,11 @@ export class TravelAnalysisEngine {
                 fallbackUsed: false,
                 cacheStatus: 'SET',
               })
-            } else if (!finalValidation.valid) {
-              ;(analysis as any).cacheSkippedReason = 'invalid_final_result'
+            } else if (!finalValidation.valid || (analysis as any).analysisSource === 'fallback_deterministic') {
+              ;(analysis as any).cacheSkippedReason = (analysis as any).analysisSource === 'fallback_deterministic' ? 'deterministic_fallback' : 'invalid_final_result'
               ;(analysis as any).cachedResultType = null
-              logger.info('Travel Analysis Cache: SKIPPED_INVALID_FINAL_RESULT', {
+              logger.info('Travel Analysis Cache: SKIPPED_FALLBACK', {
+                reason: (analysis as any).cacheSkippedReason,
                 invalidDestinations: finalValidation.invalidDestinations,
                 replacementsApplied: finalValidation.replacementsApplied,
               })
@@ -991,6 +1023,12 @@ export class TravelAnalysisEngine {
           invalidDestinations: analysisWithMeta.invalidDestinations ?? [],
           replacementsApplied: analysisWithMeta.replacementsApplied ?? [],
           cacheSkippedReason: analysisWithMeta.cacheSkippedReason ?? null,
+          analysisSource: analysisWithMeta.analysisSource ?? (isCacheHit ? 'cache_openai' : 'openai_primary'),
+          openAIPrimaryUsed: analysisWithMeta.openAIPrimaryUsed ?? true,
+          deterministicFallbackUsed: analysisWithMeta.deterministicFallbackUsed ?? false,
+          candidatePoolUsedAsContext: analysisWithMeta.candidatePoolUsedAsContext ?? (routeCandidatePool.length > 0),
+          candidatePoolUsedAsReplacement: analysisWithMeta.candidatePoolUsedAsReplacement ?? false,
+          replacementReason: analysisWithMeta.replacementReason ?? null,
         }
 
         // Log comprehensive final metadata
@@ -1026,6 +1064,12 @@ export class TravelAnalysisEngine {
           candidatePoolCount: analysisWithMeta._meta.candidatePoolCount,
           routeIntelligenceDestinationCount: analysisWithMeta._meta.routeIntelligenceDestinationCount,
           recommendedRouteType: analysisWithMeta._meta.recommendedRouteType,
+          analysisSource: analysisWithMeta._meta.analysisSource,
+          openAIPrimaryUsed: analysisWithMeta._meta.openAIPrimaryUsed,
+          deterministicFallbackUsed: analysisWithMeta._meta.deterministicFallbackUsed,
+          candidatePoolUsedAsContext: analysisWithMeta._meta.candidatePoolUsedAsContext,
+          candidatePoolUsedAsReplacement: analysisWithMeta._meta.candidatePoolUsedAsReplacement,
+          replacementReason: analysisWithMeta._meta.replacementReason,
           finalCountries: analysis.rankedDestinations.map((d: any) => d.destinationName),
           finalRoutes: analysis.rankedDestinations.map((d: any) => d.suggestedRoute?.join(' → ') || d.destinationName),
         })

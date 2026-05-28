@@ -24,11 +24,13 @@ export class ClaudeVerifierService {
   private apiKey?: string
   private timeout: number = 15000 // 15 seconds
   private Anthropic: any = null
+  private model: string
 
   constructor() {
     // Check feature flag
     this.enabled = process.env.ENABLE_CLAUDE_VERIFIER === 'true'
     this.apiKey = process.env.ANTHROPIC_API_KEY
+    this.model = process.env.CLAUDE_MODEL || 'claude-sonnet-4-6'
 
     if (!this.enabled) {
       logger.info('Claude verifier disabled via ENABLE_CLAUDE_VERIFIER flag')
@@ -47,7 +49,9 @@ export class ClaudeVerifierService {
       this.Anthropic = new AnthropicSDK.default({
         apiKey: this.apiKey,
       })
-      logger.info('Claude verifier initialized successfully')
+      logger.info('Claude verifier initialized successfully', {
+        model: this.model,
+      })
     } catch (error) {
       logger.warn('Failed to initialize Claude verifier - @anthropic-ai/sdk not installed', error)
       this.enabled = false
@@ -71,7 +75,7 @@ export class ClaudeVerifierService {
       
       const response = await Promise.race([
         this.Anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022',
+          model: this.model,
           max_tokens: 1024,
           messages: [{
             role: 'user',
@@ -89,6 +93,7 @@ export class ClaudeVerifierService {
       logger.info('Claude verification completed', {
         destination: recommendation.destinationName,
         verified: result.verified,
+        model: this.model,
       })
 
       return result
@@ -221,6 +226,13 @@ Respond in JSON format only.`
    */
   isAvailable(): boolean {
     return this.enabled && this.Anthropic !== null
+  }
+
+  /**
+   * Get the Claude model being used
+   */
+  getModel(): string {
+    return this.model
   }
 }
 

@@ -1058,12 +1058,17 @@ export class TravelAnalysisEngine {
       let claudeVerifierUsed = false
       let claudeVerifierPassed = false
       let claudeVerificationSuccessCount = 0
+      let claudeModelUsed: string | null = null
+      let claudeVerifierError: string | null = null
       try {
         const { getClaudeVerifier } = await import('../services/claude-verifier')
         const claudeVerifier = getClaudeVerifier()
         
         if (claudeVerifier.isAvailable()) {
-          logger.info('Running Claude accuracy verification on recommendations')
+          claudeModelUsed = claudeVerifier.getModel()
+          logger.info('Running Claude accuracy verification on recommendations', {
+            model: claudeModelUsed,
+          })
           claudeVerifierUsed = true
           
           // Verify each recommendation in parallel with error handling
@@ -1093,15 +1098,21 @@ export class TravelAnalysisEngine {
             logger.info('Claude verification completed', {
               successCount: claudeVerificationSuccessCount,
               totalCount: analysis.rankedDestinations.length,
+              model: claudeModelUsed,
             })
           } else {
-            logger.warn('Claude verification failed for all recommendations - continuing with unverified')
+            claudeVerifierError = 'All verification calls failed'
+            logger.warn('Claude verification failed for all recommendations - continuing with unverified', {
+              model: claudeModelUsed,
+            })
           }
         }
       } catch (claudeError) {
         // Claude verification is optional - log but don't fail
+        claudeVerifierError = claudeError instanceof Error ? claudeError.message : String(claudeError)
         logger.warn('Claude verification failed - continuing with unverified recommendations', {
-          error: claudeError instanceof Error ? claudeError.message : String(claudeError),
+          error: claudeVerifierError,
+          model: claudeModelUsed,
         })
         errorTracker.trackProviderError('claude', claudeError, 'verification', {
           nonBlocking: true,
@@ -1260,6 +1271,8 @@ export class TravelAnalysisEngine {
           claudeVerifierUsed,
           claudeVerifierPassed,
           claudeVerificationSuccessCount,
+          claudeModelUsed,
+          claudeVerifierError,
           consultantQualityScore: qualityScore.totalScore,
           consultantQualityGrade: qualityScore.totalScore >= 90 ? 'Excellent' : qualityScore.totalScore >= 80 ? 'Good' : qualityScore.totalScore >= 70 ? 'Acceptable' : 'Needs Improvement',
           consultantQualityIssues: qualityScore.issues,

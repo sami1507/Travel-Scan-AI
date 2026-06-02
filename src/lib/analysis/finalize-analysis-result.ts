@@ -214,7 +214,7 @@ export function finalizeAnalysisResult({
     consultantQualityScore: metadata.consultantQualityScore,
     consultantQualityGrade: metadata.consultantQualityGrade,
     finalQualityPassed: metadata.finalQualityPassed,
-    cacheEligible: metadata.cacheEligible,
+    // Note: cacheEligible determined later in engine after final cache decision
   })
   
   return {

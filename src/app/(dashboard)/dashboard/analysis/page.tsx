@@ -49,6 +49,8 @@ export default function AnalysisPage() {
     budget?: string
     travel_months?: number[]
     interests?: string[]
+    tripLength?: number
+    tripStructure?: string
   } | null>(null)
 
   const handleAnalyze = async (data: {
@@ -126,6 +128,8 @@ export default function AnalysisPage() {
           budget: data.budget,
           travel_months: data.travelMonths,
           interests: data.interests,
+          tripLength: data.tripLength,
+          tripStructure: data.tripStructure,
         })
         setRetryCount(0) // Reset retry count on success
       } else {

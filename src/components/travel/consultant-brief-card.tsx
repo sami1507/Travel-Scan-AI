@@ -13,6 +13,8 @@ interface ConsultantBriefCardProps {
     budget?: string
     travel_months?: number[]
     interests?: string[]
+    tripLength?: number
+    tripStructure?: string
   }
   confidence: number
 }
@@ -76,10 +78,12 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
   }
 
   const getTripLengthText = () => {
-    if (queryContext?.travel_months && queryContext.travel_months.length > 0) {
-      return `${queryContext.travel_months.length}-day`
+    // Use actual tripLength from request, not travel_months.length
+    if (queryContext?.tripLength) {
+      return `${queryContext.tripLength}-day`
     }
-    return '7-day'
+    // If no tripLength specified, use generic text
+    return 'multi-city'
   }
 
   const consultantExplanation = `Because you want a ${getTripLengthText()} ${getTripStructureExplanation()} with ${getInterestsText()} interests, TravelScan compared routes that are realistic to reach, easy to connect, and not too exhausting. These are planning recommendations before booking, not final live prices.`

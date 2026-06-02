@@ -26,13 +26,14 @@ import { costTracker } from '../monitoring/cost-tracker'
 import { cacheManager, CachePresets } from '../cache/cache-manager'
 
 // Analysis cache version - increment to invalidate all cached results after algorithm changes
-const ANALYSIS_CACHE_VERSION = 'consultant-v7-openai-primary-2026-05-28'
+const ANALYSIS_CACHE_VERSION = 'consultant-v8-finalized-analysis-2026-06-02'
 import { withResilience, ProviderConfigs } from '../providers/provider-resilience'
 import { getLearningContextForAnalysis, recordRecommendationEvent } from '../learning/learning-service'
 import { compactAnalysisResponseSchema, CompactAnalysisResponse } from './compact-schema'
 import { buildCompactTravelAnalysisPrompt, getCompactSystemInstructions, TravelDataContext } from './compact-prompt'
 import { buildRouteCandidatePool, filterCandidatesByRequest, RouteCandidate } from './route-candidate-pool'
 import { getAttractionsForRoute, getWeatherForRoute } from '../travel-data/travel-data-loader'
+import { finalizeAnalysisResult, type QualityGateResult, type ClaudeVerificationResult, type RouteContext, type CacheInfo } from './finalize-analysis-result'
 
 export interface AnalysisRequest {
   query: string
@@ -1062,12 +1063,13 @@ export class TravelAnalysisEngine {
         analysis.topRecommendations = analysis.rankedDestinations.map(d => d.destinationName)
       }
 
-      // Step 9: Optional Claude verification for accuracy (non-blocking)
+      // Step 9: Optional Claude verification for accuracy (non-blocking, max 3s)
       let claudeVerifierUsed = false
       let claudeVerifierPassed = false
       let claudeVerificationSuccessCount = 0
       let claudeModelUsed: string | null = null
       let claudeVerifierError: string | null = null
+      let claudeTimedOut = false
       try {
         const { getClaudeVerifier } = await import('../services/claude-verifier')
         const claudeVerifier = getClaudeVerifier()
@@ -1076,10 +1078,11 @@ export class TravelAnalysisEngine {
           claudeModelUsed = claudeVerifier.getModel()
           logger.info('Running Claude accuracy verification on recommendations', {
             model: claudeModelUsed,
+            maxTimeout: 3000,
           })
           claudeVerifierUsed = true
           
-          // Verify each recommendation in parallel with error handling
+          // Verify each recommendation with Promise.allSettled and 3-second timeout
           const verificationPromises = analysis.rankedDestinations.map(async (dest) => {
             try {
               const verification = await claudeVerifier.verifyRecommendation(
@@ -1101,23 +1104,47 @@ export class TravelAnalysisEngine {
             }
           })
           
-          const verifiedDestinations = await Promise.all(verificationPromises)
-          analysis.rankedDestinations = verifiedDestinations
+          // Race with 3-second timeout
+          const timeoutPromise = new Promise<'timeout'>((resolve) => {
+            setTimeout(() => resolve('timeout'), 3000)
+          })
           
-          if (claudeVerificationSuccessCount > 0) {
-            claudeVerifierPassed = true
-            logger.info('Claude verification completed', {
-              successCount: claudeVerificationSuccessCount,
-              totalCount: analysis.rankedDestinations.length,
+          const result = await Promise.race([
+            Promise.allSettled(verificationPromises),
+            timeoutPromise
+          ])
+          
+          if (result === 'timeout') {
+            claudeTimedOut = true
+            claudeVerifierError = 'timeout'
+            logger.warn('Claude verification timed out after 3s - continuing with unverified', {
               model: claudeModelUsed,
+              timeout: 3000,
             })
           } else {
-            claudeVerifierError = 'all_verifications_failed'
-            logger.warn('Claude verification failed for all recommendations - continuing with unverified', {
-              model: claudeModelUsed,
-              error: claudeVerifierError,
-            })
+            // Process settled promises
+            const verifiedDestinations = result.map((r, i) => 
+              r.status === 'fulfilled' ? r.value : analysis.rankedDestinations[i]
+            )
+            analysis.rankedDestinations = verifiedDestinations
+            
+            if (claudeVerificationSuccessCount > 0) {
+              claudeVerifierPassed = true
+              logger.info('Claude verification completed', {
+                successCount: claudeVerificationSuccessCount,
+                totalCount: analysis.rankedDestinations.length,
+                model: claudeModelUsed,
+              })
+            } else {
+              claudeVerifierError = 'all_verifications_failed'
+              logger.warn('Claude verification failed for all recommendations - continuing with unverified', {
+                model: claudeModelUsed,
+                error: claudeVerifierError,
+              })
+            }
           }
+        } else {
+          logger.info('Claude verifier skipped by env flag')
         }
       } catch (claudeError) {
         // Claude verification is optional - log but don't fail

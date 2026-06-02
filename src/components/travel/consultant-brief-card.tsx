@@ -20,7 +20,23 @@ interface ConsultantBriefCardProps {
 }
 
 export function ConsultantBriefCard({ analysis, queryContext, confidence }: ConsultantBriefCardProps) {
+  // Use finalized metadata for confidence
+  const metadata = (analysis as any)._meta
+  const finalQualityPassed = metadata?.finalQualityPassed ?? true
+  const consultantQualityScore = metadata?.consultantQualityScore ?? (confidence * 100)
+  const consultantQualityGrade = metadata?.consultantQualityGrade ?? 'Good'
+  
+  // If quality check failed, cap confidence and show warning
+  const displayConfidence = finalQualityPassed 
+    ? consultantQualityScore / 100 
+    : Math.min(consultantQualityScore, 75) / 100
+  
+  const confidenceLabel = finalQualityPassed
+    ? consultantQualityGrade
+    : 'Good planning confidence — needs booking verification'
+  
   const getConfidenceColor = (conf: number) => {
+    if (!finalQualityPassed) return 'text-yellow-600' // Always yellow if quality failed
     if (conf >= 0.8) return 'text-green-600'
     if (conf >= 0.6) return 'text-blue-600'
     return 'text-yellow-600'
@@ -86,8 +102,7 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
     return 'multi-city'
   }
 
-  // Prefer displaySummary from finalized metadata
-  const metadata = (analysis as any)._meta
+  // Prefer displaySummary from finalized metadata (metadata already declared above)
   const displaySummary = (analysis as any).displaySummary || metadata?.displaySummary
   
   const consultantExplanation = displaySummary?.querySummary || 
@@ -117,10 +132,18 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
             </div>
           </div>
           <div className="text-right">
-            <div className={`text-4xl font-bold ${getConfidenceColor(confidence)}`}>
-              {Math.round(confidence * 100)}%
+            <div className={`text-4xl font-bold ${getConfidenceColor(displayConfidence)}`}>
+              {Math.round(displayConfidence * 100)}%
             </div>
-            <div className="text-sm text-muted-foreground mt-1 font-medium">Confidence</div>
+            <div className="text-sm text-muted-foreground mt-1 font-medium">
+              {confidenceLabel}
+            </div>
+            {!finalQualityPassed && (
+              <div className="flex items-center gap-1 mt-1 text-xs text-yellow-600">
+                <AlertCircle className="h-3 w-3" />
+                <span>Verify before booking</span>
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>

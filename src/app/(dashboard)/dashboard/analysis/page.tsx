@@ -126,6 +126,10 @@ export default function AnalysisPage() {
       // Only set analysis if normalization succeeded
       if (normalizedAnalysis && Array.isArray(normalizedAnalysis.rankedDestinations)) {
         setAnalysis(normalizedAnalysis)
+        // Set first recommendation as selected for itinerary display
+        if (normalizedAnalysis.rankedDestinations.length > 0) {
+          setSelectedDestination(normalizedAnalysis.rankedDestinations[0])
+        }
         setQueryContext({
           query: data.query,
           budget: data.budget,

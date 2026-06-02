@@ -742,23 +742,11 @@ export class TravelAnalysisEngine {
                 finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
               })
               
-              // Cache only if valid (openai_primary or openai_repaired)
-              const canCache = ((analysis as any).analysisSource === 'openai_primary' || (analysis as any).analysisSource === 'openai_repaired') &&
-                (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed
-              
-              if (canCache) {
-                await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
-                ;(analysis as any).cachedResultType = (analysis as any).analysisSource === 'openai_repaired' ? 'openai_repaired' : 'openai'
-                logger.info('Travel Analysis Cache: SET (after rejection)', {
-                  cachedResultType: (analysis as any).cachedResultType,
-                  analysisSource: (analysis as any).analysisSource,
-                  openAIUsed: true,
-                  fallbackUsed: false,
-                  cacheStatus: 'SET',
-                })
-              } else if ((analysis as any).analysisSource === 'fallback_deterministic') {
+              // DO NOT cache here - cache only after finalization
+              // Mark for potential caching later
+              if ((analysis as any).analysisSource === 'fallback_deterministic') {
                 ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
-                logger.info('Travel Analysis Cache: SKIPPED_FALLBACK', {
+                logger.info('Travel Analysis Cache: Will skip (deterministic fallback)', {
                   reason: 'deterministic_fallback',
                   invalidDestinations: finalValidation.invalidDestinations,
                   replacementsApplied,
@@ -892,36 +880,15 @@ export class TravelAnalysisEngine {
               finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
             })
             
-            // Cache only if valid (openai_primary or openai_repaired)
-            const canCache = ((analysis as any).analysisSource === 'openai_primary' || (analysis as any).analysisSource === 'openai_repaired') &&
-              (analysis as any).cacheEligible && (analysis as any).openAIUsed && !(analysis as any).fallbackUsed
-            
-            if (canCache) {
-              await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
-              ;(analysis as any).cacheStatus = 'SET'
-              ;(analysis as any).cachedResultType = (analysis as any).analysisSource === 'openai_repaired' ? 'openai_repaired' : 'openai'
-              logger.info('Travel Analysis Cache: SET', {
-                cachedResultType: (analysis as any).cachedResultType,
-                analysisSource: (analysis as any).analysisSource,
-                openAIUsed: true,
-                fallbackUsed: false,
-                cacheStatus: 'SET',
-              })
-            } else if ((analysis as any).analysisSource === 'fallback_deterministic') {
+            // DO NOT cache here - cache only after finalization
+            // Mark for potential caching later
+            if ((analysis as any).analysisSource === 'fallback_deterministic') {
               ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
               ;(analysis as any).cachedResultType = null
-              logger.info('Travel Analysis Cache: SKIPPED_FALLBACK', {
+              logger.info('Travel Analysis Cache: Will skip (deterministic fallback)', {
                 reason: 'deterministic_fallback',
                 invalidDestinations: finalValidation.invalidDestinations,
                 replacementsApplied,
-              })
-            } else {
-              ;(analysis as any).cachedResultType = null
-              logger.info('Travel Analysis Cache: SKIPPED (not eligible)', {
-                openAIUsed: (analysis as any).openAIUsed,
-                fallbackUsed: (analysis as any).fallbackUsed,
-                cacheEligible: (analysis as any).cacheEligible,
-                cacheStatus: 'MISS',
               })
             }
           }
@@ -1379,8 +1346,7 @@ export class TravelAnalysisEngine {
         travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
       }
       
-      // Set final metadata
-      ;(analysis as any)._meta = completeMetadata
+      // Set displaySummary (metadata set after cache decision)
       ;(analysis as any).displaySummary = displaySummary
       
       // Update querySummary with finalized display summary
@@ -1394,12 +1360,16 @@ export class TravelAnalysisEngine {
         completeMetadata.openAIUsed &&
         !completeMetadata.fallbackUsed
       
+      // Update completeMetadata with correct cacheEligible
+      completeMetadata.cacheEligible = cacheEligible
+      
       // Cache SET only after finalization
       if (cacheEligible && !isCacheHit && cacheKey) {
         try {
           await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
-          ;(analysis as any)._meta.cacheStatus = 'SET'
-          ;(analysis as any)._meta.cachedResultType = completeMetadata.analysisSource
+          completeMetadata.cacheStatus = 'SET'
+          completeMetadata.cachedResultType = completeMetadata.analysisSource
+          completeMetadata.cacheStoredStage = 'finalized'
           logger.info('Travel Analysis Cache: SET (finalized)', {
             cachedResultType: completeMetadata.analysisSource,
             finalQualityPassed: completeMetadata.finalQualityPassed,
@@ -1408,6 +1378,9 @@ export class TravelAnalysisEngine {
           })
         } catch (cacheError) {
           logger.warn('Failed to cache finalized analysis', cacheError)
+          completeMetadata.cacheStatus = 'ERROR'
+          completeMetadata.cacheSkippedReason = 'cache_write_failed'
+          completeMetadata.cacheStoredStage = null
         }
       } else {
         const skipReason = !cacheEligible 
@@ -1415,13 +1388,19 @@ export class TravelAnalysisEngine {
           : isCacheHit 
           ? 'cache_hit'
           : 'no_cache_key'
-        ;(analysis as any)._meta.cacheSkippedReason = skipReason
+        completeMetadata.cacheStatus = 'SKIPPED'
+        completeMetadata.cacheSkippedReason = skipReason
+        completeMetadata.cacheStoredStage = null
+        completeMetadata.cacheEligible = false
         logger.info('Travel Analysis Cache: SKIPPED', {
           reason: skipReason,
           finalQualityPassed: completeMetadata.finalQualityPassed,
           consultantQualityScore: completeMetadata.consultantQualityScore,
         })
       }
+      
+      // Update analysis._meta with final cache metadata
+      ;(analysis as any)._meta = completeMetadata
       
       // Log comprehensive final metadata
       logger.info('Travel Analysis Final Metadata (Finalized)', {

@@ -9,6 +9,7 @@ export const schemas = {
     destination: z.string().max(200).optional(),
     departureCity: z.string().max(200).optional(),
     budget: z.enum(['budget', 'moderate', 'comfortable', 'luxury']).optional(),
+    tripLength: z.number().min(1).max(365).optional(),
     travelMonths: z.array(z.number().min(1).max(12)).max(12).optional(),
     interests: z.array(z.string().max(50)).max(20).optional(),
     travelStyle: z.enum(['solo', 'couple', 'family', 'friends', 'business']).optional(),

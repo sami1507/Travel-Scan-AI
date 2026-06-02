@@ -96,11 +96,13 @@ export default function AnalysisPage() {
       // Sanitize request before sending
       const sanitizedData = sanitizeAnalysisRequest(data)
       
-      // Add fresh run ID if forceFresh is enabled
+      // Always force fresh analysis to ensure OpenAI is called (not cache)
+      // forceFresh can be explicitly set or defaults to true for all analyses
+      const shouldForceFresh = data.forceFresh !== false // Default to true unless explicitly false
       const requestData = {
         ...sanitizedData,
-        forceFresh: data.forceFresh,
-        freshRunId: data.forceFresh ? `fresh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : undefined,
+        forceFresh: shouldForceFresh,
+        freshRunId: shouldForceFresh ? `fresh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : undefined,
         excludeCountries: data.excludeCountries,
         diversityMode: data.diversityMode,
       }

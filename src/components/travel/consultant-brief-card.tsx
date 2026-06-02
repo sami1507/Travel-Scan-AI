@@ -86,7 +86,12 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
     return 'multi-city'
   }
 
-  const consultantExplanation = `Because you want a ${getTripLengthText()} ${getTripStructureExplanation()} with ${getInterestsText()} interests, TravelScan compared routes that are realistic to reach, easy to connect, and not too exhausting. These are planning recommendations before booking, not final live prices.`
+  // Prefer displaySummary from finalized metadata
+  const metadata = (analysis as any)._meta
+  const displaySummary = (analysis as any).displaySummary || metadata?.displaySummary
+  
+  const consultantExplanation = displaySummary?.querySummary || 
+    `Because you want a ${getTripLengthText()} ${getTripStructureExplanation()} with ${getInterestsText()} interests, TravelScan compared routes that are realistic to reach, easy to connect, and not too exhausting. These are planning recommendations before booking, not final live prices.`
 
   return (
     <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 shadow-xl">

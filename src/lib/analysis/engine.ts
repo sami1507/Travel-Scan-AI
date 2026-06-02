@@ -1256,161 +1256,199 @@ export class TravelAnalysisEngine {
         logger.warn('Failed to record learning event, continuing', learningError)
       }
 
-      // Step 11: Score consultant quality and add complete metadata
-      try {
-        const { scoreConsultantQuality } = await import('./consultant-quality-score')
-        const qualityScore = scoreConsultantQuality(analysis, {
-          query: request.query,
-          budget: request.budget,
-          travel_months: request.travelMonths,
-          interests: request.interests,
-          tripStructure: request.tripStructure,
-          tripLength: request.tripLength,
-          departureCity: request.departureCity,
-        })
-
-        // Calculate total duration
-        const durationMs = Date.now() - analysisStartTime
-
-        // Add complete analysis metadata
-        const analysisWithMeta = analysis as any
-        const isCacheHit = analysisWithMeta.cacheStatus === 'HIT'
-        const isCacheRejected = analysisWithMeta.cacheStatus === 'REJECTED'
-        
-        analysisWithMeta._meta = {
-          analysisId: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          // For cache hits, openAIUsed refers to whether OpenAI was used to create the cached result
-          openAIUsed: analysisWithMeta.openAIUsed || false,
-          // currentRequestOpenAIUsed indicates if OpenAI was called in THIS request
-          currentRequestOpenAIUsed: isCacheHit ? false : (analysisWithMeta.openAIUsed || false),
-          fallbackUsed: analysisWithMeta.fallbackUsed || false,
-          fallbackReason: analysisWithMeta.fallbackReason || null,
-          modelUsed: analysisWithMeta.openAIUsed ? this.model : null,
-          durationMs,
-          // For cache hits, openAIDurationMs should be null for current request
-          openAIDurationMs: isCacheHit ? null : (analysisWithMeta.openAIDurationMs ?? null),
-          // Store original cached duration if available
-          cachedOpenAIDurationMs: isCacheHit ? (analysisWithMeta.openAIDurationMs ?? null) : null,
-          cacheStatus: analysisWithMeta.cacheStatus || 'UNKNOWN',
-          cacheRejectionReason: analysisWithMeta.cacheRejectionReason ?? null,
-          cachedResultType: analysisWithMeta.cachedResultType ?? null,
-          compactPromptUsed: true,
-          systemPromptLength: analysisWithMeta.systemPromptLength ?? null,
-          promptTokens: isCacheHit ? null : (analysisWithMeta.promptTokens ?? null),
-          completionTokens: isCacheHit ? null : (analysisWithMeta.completionTokens ?? null),
-          totalTokens: isCacheHit ? null : (analysisWithMeta.totalTokens ?? null),
-          candidatePoolUsed: routeCandidatePool.length > 0,
-          candidatePoolCount: routeCandidatePool.length,
-          routeIntelligenceDestinationCount: routeAnalysisDestinations.length,
-          recommendedRouteType: routeAnalysis.recommendedRoute.routeType,
-          diversityScore: diversityResult.diversityScore,
-          regionSpread: diversityResult.regionSpread,
-          mainstreamCount: diversityResult.mainstreamCount,
-          uniqueOptionIncluded: diversityResult.uniqueOptionIncluded,
-          claudeVerifierUsed,
-          claudeVerifierPassed,
-          claudeVerificationSuccessCount,
-          claudeModelUsed,
-          claudeVerifierError,
-          consultantQualityScore: qualityScore.totalScore,
-          consultantQualityGrade: qualityScore.totalScore >= 90 ? 'Excellent' : qualityScore.totalScore >= 80 ? 'Good' : qualityScore.totalScore >= 70 ? 'Acceptable' : 'Needs Improvement',
-          consultantQualityIssues: qualityScore.issues,
-          consultantQualityRecommendations: qualityScore.recommendations,
-          genericPhraseCount: qualityScore.genericPhrases.length,
-          genericPhrases: qualityScore.genericPhrases,
-          routeCompletenessScore: (analysis.rankedDestinations.filter((d: any) => d.suggestedRoute && d.suggestedRoute.length > 1).length / Math.max(1, analysis.rankedDestinations.length)) * 100,
-          scoreHonestyPassed: qualityResult.passed,
-          finalScopeValidationPassed: analysisWithMeta.finalScopeValidationPassed ?? true,
-          invalidDestinations: analysisWithMeta.invalidDestinations ?? [],
-          replacementsApplied: analysisWithMeta.replacementsApplied ?? [],
-          cacheSkippedReason: analysisWithMeta.cacheSkippedReason ?? null,
-          analysisSource: analysisWithMeta.analysisSource ?? (isCacheHit ? 'cache_openai' : 'openai_primary'),
-          openAIPrimaryUsed: analysisWithMeta.openAIPrimaryUsed ?? true,
-          openAIRepairUsed: analysisWithMeta.openAIRepairUsed ?? false,
-          repairAttempted: analysisWithMeta.repairAttempted ?? false,
-          repairPassed: analysisWithMeta.repairPassed ?? false,
-          repairFailedReason: analysisWithMeta.repairFailedReason ?? null,
-          repairDurationMs: analysisWithMeta.repairDurationMs ?? null,
-          repairPromptTokens: analysisWithMeta.repairPromptTokens ?? null,
-          repairCompletionTokens: analysisWithMeta.repairCompletionTokens ?? null,
-          repairTotalTokens: analysisWithMeta.repairTotalTokens ?? null,
-          validationIssuesBeforeRepair: analysisWithMeta.validationIssuesBeforeRepair ?? [],
-          validationIssuesAfterRepair: analysisWithMeta.validationIssuesAfterRepair ?? [],
-          deterministicFallbackUsed: analysisWithMeta.deterministicFallbackUsed ?? false,
-          candidatePoolUsedAsContext: analysisWithMeta.candidatePoolUsedAsContext ?? (routeCandidatePool.length > 0),
-          candidatePoolUsedAsReplacement: analysisWithMeta.candidatePoolUsedAsReplacement ?? false,
-          replacementReason: analysisWithMeta.replacementReason ?? null,
-          travelDataUsed: routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
-          travelDataRoutesLoaded: routeCandidatePool.filter(r => r.sourceType === 'curated_route_knowledge').length,
-          travelDataCandidateRoutesUsed: routeCandidatePool.length,
-          travelDataAttractionsUsed: analysisWithMeta.travelDataAttractionsUsed ?? 0,
-          travelDataWeatherRecordsUsed: analysisWithMeta.travelDataWeatherRecordsUsed ?? 0,
-          travelDataSourceTypes: [...new Set(routeCandidatePool.map(r => r.sourceType).filter(Boolean))],
-          travelDataConfidenceLevels: [...new Set(routeCandidatePool.map(r => r.confidenceLevel).filter(Boolean))],
-          travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
-        }
-
-        // Log comprehensive final metadata
-        const source = analysisWithMeta.openAIUsed ? 'openai' : analysisWithMeta.fallbackUsed ? 'fallback' : analysisWithMeta.cacheStatus === 'HIT' ? 'cache' : 'unknown'
-        logger.info('Travel Analysis Final Metadata', {
-          analysisId: analysisWithMeta._meta.analysisId,
-          source,
-          openAIUsed: analysisWithMeta._meta.openAIUsed,
-          currentRequestOpenAIUsed: analysisWithMeta._meta.currentRequestOpenAIUsed,
-          fallbackUsed: analysisWithMeta._meta.fallbackUsed,
-          fallbackReason: analysisWithMeta._meta.fallbackReason,
-          modelUsed: analysisWithMeta._meta.modelUsed,
-          durationMs: analysisWithMeta._meta.durationMs,
-          openAIDurationMs: analysisWithMeta._meta.openAIDurationMs,
-          cachedOpenAIDurationMs: analysisWithMeta._meta.cachedOpenAIDurationMs,
-          systemPromptLength: analysisWithMeta._meta.systemPromptLength,
-          promptTokens: analysisWithMeta._meta.promptTokens,
-          completionTokens: analysisWithMeta._meta.completionTokens,
-          totalTokens: analysisWithMeta._meta.totalTokens,
-          cacheStatus: analysisWithMeta._meta.cacheStatus,
-          cacheRejectionReason: analysisWithMeta._meta.cacheRejectionReason,
-          cachedResultType: analysisWithMeta._meta.cachedResultType,
-          cacheSkippedReason: analysisWithMeta._meta.cacheSkippedReason,
-          finalScopeValidationPassed: analysisWithMeta._meta.finalScopeValidationPassed,
-          invalidDestinations: analysisWithMeta._meta.invalidDestinations,
-          replacementsApplied: analysisWithMeta._meta.replacementsApplied,
-          consultantQualityScore: analysisWithMeta._meta.consultantQualityScore,
-          consultantQualityGrade: analysisWithMeta._meta.consultantQualityGrade,
-          genericPhraseCount: analysisWithMeta._meta.genericPhraseCount,
-          regionSpread: analysisWithMeta._meta.regionSpread,
-          uniqueOptionIncluded: analysisWithMeta._meta.uniqueOptionIncluded,
-          candidatePoolUsed: analysisWithMeta._meta.candidatePoolUsed,
-          candidatePoolCount: analysisWithMeta._meta.candidatePoolCount,
-          routeIntelligenceDestinationCount: analysisWithMeta._meta.routeIntelligenceDestinationCount,
-          recommendedRouteType: analysisWithMeta._meta.recommendedRouteType,
-          analysisSource: analysisWithMeta._meta.analysisSource,
-          openAIPrimaryUsed: analysisWithMeta._meta.openAIPrimaryUsed,
-          openAIRepairUsed: analysisWithMeta._meta.openAIRepairUsed,
-          repairAttempted: analysisWithMeta._meta.repairAttempted,
-          repairPassed: analysisWithMeta._meta.repairPassed,
-          repairFailedReason: analysisWithMeta._meta.repairFailedReason,
-          repairDurationMs: analysisWithMeta._meta.repairDurationMs,
-          repairTotalTokens: analysisWithMeta._meta.repairTotalTokens,
-          validationIssuesBeforeRepair: analysisWithMeta._meta.validationIssuesBeforeRepair,
-          validationIssuesAfterRepair: analysisWithMeta._meta.validationIssuesAfterRepair,
-          deterministicFallbackUsed: analysisWithMeta._meta.deterministicFallbackUsed,
-          candidatePoolUsedAsContext: analysisWithMeta._meta.candidatePoolUsedAsContext,
-          candidatePoolUsedAsReplacement: analysisWithMeta._meta.candidatePoolUsedAsReplacement,
-          replacementReason: analysisWithMeta._meta.replacementReason,
-          travelDataUsed: analysisWithMeta._meta.travelDataUsed,
-          travelDataRoutesLoaded: analysisWithMeta._meta.travelDataRoutesLoaded,
-          travelDataCandidateRoutesUsed: analysisWithMeta._meta.travelDataCandidateRoutesUsed,
-          travelDataAttractionsUsed: analysisWithMeta._meta.travelDataAttractionsUsed,
-          travelDataWeatherRecordsUsed: analysisWithMeta._meta.travelDataWeatherRecordsUsed,
-          travelDataSourceTypes: analysisWithMeta._meta.travelDataSourceTypes,
-          travelDataConfidenceLevels: analysisWithMeta._meta.travelDataConfidenceLevels,
-          travelDataFallbackUsed: analysisWithMeta._meta.travelDataFallbackUsed,
-          finalCountries: analysis.rankedDestinations.map((d: any) => d.destinationName),
-          finalRoutes: analysis.rankedDestinations.map((d: any) => d.suggestedRoute?.join(' → ') || d.destinationName),
-        })
-      } catch (qualityError) {
-        logger.warn('Failed to score consultant quality, continuing', qualityError)
+      // Step 11: Finalize analysis with canonical metadata (single source of truth)
+      const analysisWithMeta = analysis as any
+      const isCacheHit = analysisWithMeta.cacheStatus === 'HIT'
+      
+      // Calculate attractions and weather counts
+      const attractionsCount = routeCandidatePool.reduce((sum, route) => {
+        const cities = route.routeCities
+        const routeAttractions = getAttractionsForRoute(route.country, cities, request.interests)
+        return sum + routeAttractions.length
+      }, 0)
+      
+      const weatherCount = request.travelMonths && request.travelMonths.length > 0
+        ? routeCandidatePool.reduce((sum, route) => {
+            const cities = route.routeCities
+            const routeWeather = getWeatherForRoute(route.country, cities, request.travelMonths!)
+            return sum + routeWeather.length
+          }, 0)
+        : 0
+      
+      // Prepare inputs for finalization
+      const qualityGateInput: QualityGateResult = {
+        passed: qualityResult.passed,
+        repaired: qualityResult.repaired || false,
+        repairedPassed: analysisWithMeta.repairPassed ?? false,
+        issues: qualityResult.issues || [],
+        scopeValidationPassed: analysisWithMeta.finalScopeValidationPassed ?? true,
+        formattingIssues: analysisWithMeta.validationIssuesAfterRepair ?? [],
       }
+      
+      const claudeInput: ClaudeVerificationResult = {
+        used: claudeVerifierUsed,
+        passed: claudeVerifierPassed,
+        successCount: claudeVerificationSuccessCount,
+        totalCount: analysis.rankedDestinations.length,
+        error: claudeVerifierError || undefined,
+        modelUsed: claudeModelUsed || undefined,
+        timedOut: claudeTimedOut,
+      }
+      
+      const routeContextInput: RouteContext = {
+        candidateCount: routeCandidatePool.length,
+        regionsIncluded: [...new Set(routeCandidatePool.map(r => r.region).filter(Boolean))],
+        countriesIncluded: [...new Set(routeCandidatePool.map(r => r.country))],
+        attractionsUsed: attractionsCount,
+        weatherRecordsUsed: weatherCount,
+      }
+      
+      const cacheInfoInput: CacheInfo = {
+        status: analysisWithMeta.cacheStatus || 'MISS',
+        eligible: analysisWithMeta.cacheEligible ?? true,
+        reason: analysisWithMeta.cacheSkippedReason,
+      }
+      
+      // Call finalization layer - single source of truth
+      const finalized = finalizeAnalysisResult({
+        analysis,
+        request,
+        routeContext: routeContextInput,
+        qualityGateResult: qualityGateInput,
+        claudeResult: claudeInput,
+        cacheInfo: cacheInfoInput,
+      })
+      
+      // Replace analysis with finalized version
+      analysis = finalized.analysis
+      const finalMetadata = finalized.metadata
+      const displaySummary = finalized.displaySummary
+      
+      // Calculate total duration
+      const durationMs = Date.now() - analysisStartTime
+      
+      // Add additional metadata fields not in finalization layer
+      const completeMetadata = {
+        ...finalMetadata,
+        analysisId: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        finalized: true,
+        cacheStoredStage: 'finalized',
+        currentRequestOpenAIUsed: isCacheHit ? false : (analysisWithMeta.openAIUsed || false),
+        modelUsed: analysisWithMeta.openAIUsed ? this.model : null,
+        durationMs,
+        openAIDurationMs: isCacheHit ? null : (analysisWithMeta.openAIDurationMs ?? null),
+        cachedOpenAIDurationMs: isCacheHit ? (analysisWithMeta.openAIDurationMs ?? null) : null,
+        cacheRejectionReason: analysisWithMeta.cacheRejectionReason ?? null,
+        cachedResultType: analysisWithMeta.cachedResultType ?? null,
+        compactPromptUsed: true,
+        systemPromptLength: analysisWithMeta.systemPromptLength ?? null,
+        promptTokens: isCacheHit ? null : (analysisWithMeta.promptTokens ?? null),
+        completionTokens: isCacheHit ? null : (analysisWithMeta.completionTokens ?? null),
+        totalTokens: isCacheHit ? null : (analysisWithMeta.totalTokens ?? null),
+        candidatePoolUsed: routeCandidatePool.length > 0,
+        candidatePoolCount: routeCandidatePool.length,
+        routeIntelligenceDestinationCount: routeAnalysisDestinations.length,
+        diversityScore: diversityResult.diversityScore,
+        regionSpread: diversityResult.regionSpread,
+        mainstreamCount: diversityResult.mainstreamCount,
+        uniqueOptionIncluded: diversityResult.uniqueOptionIncluded,
+        invalidDestinations: analysisWithMeta.invalidDestinations ?? [],
+        replacementsApplied: analysisWithMeta.replacementsApplied ?? [],
+        cacheSkippedReason: analysisWithMeta.cacheSkippedReason ?? null,
+        analysisSource: analysisWithMeta.analysisSource ?? (isCacheHit ? 'cache_openai' : 'openai_primary'),
+        openAIPrimaryUsed: analysisWithMeta.openAIPrimaryUsed ?? true,
+        openAIRepairUsed: analysisWithMeta.openAIRepairUsed ?? false,
+        repairAttempted: analysisWithMeta.repairAttempted ?? false,
+        repairPassed: analysisWithMeta.repairPassed ?? false,
+        repairFailedReason: analysisWithMeta.repairFailedReason ?? null,
+        repairDurationMs: analysisWithMeta.repairDurationMs ?? null,
+        repairPromptTokens: analysisWithMeta.repairPromptTokens ?? null,
+        repairCompletionTokens: analysisWithMeta.repairCompletionTokens ?? null,
+        repairTotalTokens: analysisWithMeta.repairTotalTokens ?? null,
+        validationIssuesBeforeRepair: analysisWithMeta.validationIssuesBeforeRepair ?? [],
+        validationIssuesAfterRepair: analysisWithMeta.validationIssuesAfterRepair ?? [],
+        deterministicFallbackUsed: analysisWithMeta.deterministicFallbackUsed ?? false,
+        candidatePoolUsedAsContext: analysisWithMeta.candidatePoolUsedAsContext ?? (routeCandidatePool.length > 0),
+        candidatePoolUsedAsReplacement: analysisWithMeta.candidatePoolUsedAsReplacement ?? false,
+        replacementReason: analysisWithMeta.replacementReason ?? null,
+        travelDataUsed: routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
+        travelDataRoutesLoaded: routeCandidatePool.filter(r => r.sourceType === 'curated_route_knowledge').length,
+        travelDataCandidateRoutesUsed: routeCandidatePool.length,
+        travelDataSourceTypes: [...new Set(routeCandidatePool.map(r => r.sourceType).filter(Boolean))],
+        travelDataConfidenceLevels: [...new Set(routeCandidatePool.map(r => r.confidenceLevel).filter(Boolean))],
+        travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
+      }
+      
+      // Set final metadata
+      ;(analysis as any)._meta = completeMetadata
+      ;(analysis as any).displaySummary = displaySummary
+      
+      // Update querySummary with finalized display summary
+      analysis.querySummary = displaySummary.querySummary
+      
+      // Determine cache eligibility based on finalized quality
+      const cacheEligible = 
+        completeMetadata.finalQualityPassed &&
+        completeMetadata.consultantQualityScore >= 75 &&
+        completeMetadata.scopeValidationPassed &&
+        completeMetadata.openAIUsed &&
+        !completeMetadata.fallbackUsed
+      
+      // Cache SET only after finalization
+      if (cacheEligible && !isCacheHit && cacheKey) {
+        try {
+          await cacheManager.set(cacheKey, analysis, CachePresets.OPENAI_ANALYSIS)
+          ;(analysis as any)._meta.cacheStatus = 'SET'
+          ;(analysis as any)._meta.cachedResultType = completeMetadata.analysisSource
+          logger.info('Travel Analysis Cache: SET (finalized)', {
+            cachedResultType: completeMetadata.analysisSource,
+            finalQualityPassed: completeMetadata.finalQualityPassed,
+            consultantQualityScore: completeMetadata.consultantQualityScore,
+            cacheStoredStage: 'finalized',
+          })
+        } catch (cacheError) {
+          logger.warn('Failed to cache finalized analysis', cacheError)
+        }
+      } else {
+        const skipReason = !cacheEligible 
+          ? `quality_check_failed (finalQualityPassed=${completeMetadata.finalQualityPassed}, score=${completeMetadata.consultantQualityScore})`
+          : isCacheHit 
+          ? 'cache_hit'
+          : 'no_cache_key'
+        ;(analysis as any)._meta.cacheSkippedReason = skipReason
+        logger.info('Travel Analysis Cache: SKIPPED', {
+          reason: skipReason,
+          finalQualityPassed: completeMetadata.finalQualityPassed,
+          consultantQualityScore: completeMetadata.consultantQualityScore,
+        })
+      }
+      
+      // Log comprehensive final metadata
+      logger.info('Travel Analysis Final Metadata (Finalized)', {
+        analysisId: completeMetadata.analysisId,
+        finalized: true,
+        tripLength: completeMetadata.tripLength,
+        tripStructure: completeMetadata.tripStructure,
+        recommendedRouteType: completeMetadata.recommendedRouteType,
+        finalCountries: completeMetadata.finalCountries,
+        consultantQualityScore: completeMetadata.consultantQualityScore,
+        consultantQualityGrade: completeMetadata.consultantQualityGrade,
+        finalQualityPassed: completeMetadata.finalQualityPassed,
+        qualityGatePassed: completeMetadata.qualityGatePassed,
+        scopeValidationPassed: completeMetadata.scopeValidationPassed,
+        claudeVerifierUsed: completeMetadata.claudeVerifierUsed,
+        claudeVerifierPassed: completeMetadata.claudeVerifierPassed,
+        claudeVerificationSuccessCount: completeMetadata.claudeVerificationSuccessCount,
+        cacheStatus: completeMetadata.cacheStatus,
+        cacheEligible,
+        cacheStoredStage: 'finalized',
+        openAIUsed: completeMetadata.openAIUsed,
+        currentRequestOpenAIUsed: completeMetadata.currentRequestOpenAIUsed,
+        fallbackUsed: completeMetadata.fallbackUsed,
+        durationMs: completeMetadata.durationMs,
+        travelDataAttractionsUsed: completeMetadata.travelDataAttractionsUsed,
+        travelDataWeatherRecordsUsed: completeMetadata.travelDataWeatherRecordsUsed,
+      })
 
       return analysis
     } catch (error) {

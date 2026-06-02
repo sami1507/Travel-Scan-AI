@@ -69,7 +69,7 @@ export async function generateGlobalCandidates(
       messages: [
         {
           role: 'system',
-          content: 'You are a global travel expert. Generate realistic worldwide destination candidates based on user requirements. Return valid JSON only.',
+          content: 'You are a global travel expert. Generate realistic worldwide destination candidates based on user requirements. Return ONLY valid JSON with no markdown fences or extra text.',
         },
         {
           role: 'user',
@@ -77,17 +77,75 @@ export async function generateGlobalCandidates(
         },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 1500,
       response_format: { type: 'json_object' },
     })
     
     const content = completion.choices[0]?.message?.content || '{}'
-    const result = JSON.parse(content)
+    
+    // Robust JSON parsing with fallback
+    let result: any
+    try {
+      // Strip markdown fences if present
+      let cleanContent = content.trim()
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/```\s*$/, '')
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/```\s*$/, '')
+      }
+      
+      // Find first valid JSON object if there's extra text
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        cleanContent = jsonMatch[0]
+      }
+      
+      result = JSON.parse(cleanContent)
+    } catch (parseError) {
+      logger.warn('Global candidate generation parse failed - continuing with structured candidates', {
+        error: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+        rawLength: content.length,
+        preview: content.substring(0, 200),
+      })
+      return {
+        candidates: [],
+        openAIUsed: false,
+        globalCandidatesGenerated: 0,
+        countriesGenerated: [],
+        error: 'parse_failed',
+      }
+    }
+    
+    // Validate result shape
+    if (!result || typeof result !== 'object' || !Array.isArray(result.candidates)) {
+      logger.warn('Global candidate generation invalid shape - continuing with structured candidates', {
+        hasResult: !!result,
+        hasCandidates: !!(result && result.candidates),
+        isArray: Array.isArray(result?.candidates),
+      })
+      return {
+        candidates: [],
+        openAIUsed: false,
+        globalCandidatesGenerated: 0,
+        countriesGenerated: [],
+        error: 'invalid_shape',
+      }
+    }
+    
     const candidates: GlobalCandidate[] = result.candidates || []
     
     // Validate and normalize candidates
     const validCandidates = candidates
-      .filter(c => c.country && c.routeCities && c.routeCities.length > 0)
+      .filter(c => {
+        // Must have country and routeCities
+        if (!c.country || !c.routeCities) return false
+        // Ensure routeCities is array
+        if (!Array.isArray(c.routeCities)) return false
+        // Must have at least one city
+        if (c.routeCities.length === 0) return false
+        return true
+      })
+      .slice(0, 18) // Cap at 18 candidates
       .map(c => ({
         ...c,
         dataConfidence: 'ai_knowledge' as const,
@@ -126,7 +184,7 @@ function buildGlobalCandidatePrompt(request: AnalysisRequest): string {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const travelMonthsText = request.travelMonths?.map(m => monthNames[m - 1]).join(', ') || 'any'
   
-  return `Generate 20-30 realistic worldwide destination candidates for this traveler:
+  return `Generate 12-18 realistic worldwide destination candidates for this traveler:
 
 TRAVELER PROFILE:
 - Departure: ${request.departureCity || 'flexible'}
@@ -163,22 +221,22 @@ REQUIREMENTS:
 6. Do NOT invent fake prices or direct flights
 7. DO consider visa requirements, safety, and accessibility
 
-Return JSON format:
+Return ONLY valid JSON with this exact format (no markdown, no extra text):
 {
   "candidates": [
     {
       "country": "Japan",
       "routeCities": ["Tokyo", "Kyoto", "Osaka"],
       "region": "East Asia",
-      "whyPotentialFit": "Excellent match for ${request.tripLength || 7} days, ${request.interests?.slice(0, 2).join(' and ') || 'diverse experiences'}, ${travelMonthsText} season",
-      "likelySeasonFit": "good/excellent/fair",
+      "whyPotentialFit": "Good for ${request.tripLength || 7} days, ${request.interests?.slice(0, 2).join(' and ') || 'travel'}",
+      "likelySeasonFit": "good",
       "estimatedFatigue": "moderate",
       "budgetFit": "${request.budget || 'moderate'}",
       "interestsFit": ${JSON.stringify(request.interests?.slice(0, 3) || ['culture', 'food', 'sightseeing'])},
-      "cautions": "Visa requirements, language barrier, higher costs in peak season"
+      "cautions": "Visa required, language barrier"
     }
   ]
 }
 
-Generate 20-30 diverse candidates covering multiple regions and styles.`
+Generate 12-18 diverse candidates. Keep explanations concise.`
 }

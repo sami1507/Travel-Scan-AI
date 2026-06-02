@@ -109,6 +109,22 @@ export interface FinalMetadata {
   cacheEligible: boolean
   openAIUsed: boolean
   fallbackUsed: boolean
+  
+  // AI Decision Audit
+  aiDecisionMode: 'fresh_openai' | 'cached_openai' | 'openai_repaired' | 'fallback_deterministic'
+  inputSummaryUsed: string
+  candidateRoutesComparedCount: number
+  candidateCountriesCompared: string[]
+  candidateRegionsCompared: string[]
+  travelDataContextUsed: boolean
+  travelDataRoutesCount: number
+  travelDataAttractionsCount: number
+  travelDataWeatherCount: number
+  openAIActuallyCalledThisRequest: boolean
+  cacheUsedThisRequest: boolean
+  comparisonRequired: boolean
+  comparisonCompleted: boolean
+  finalSelectionReason: string
 }
 
 export interface DisplaySummary {
@@ -198,6 +214,22 @@ export function finalizeAnalysisResult({
     cacheEligible: cacheInfo.eligible,
     openAIUsed: true,
     fallbackUsed: false,
+    
+    // AI Decision Audit
+    aiDecisionMode: determineAIDecisionMode(cacheInfo, qualityGateResult),
+    inputSummaryUsed: buildInputSummary(request),
+    candidateRoutesComparedCount: routeContext.candidateCount,
+    candidateCountriesCompared: routeContext.countriesIncluded,
+    candidateRegionsCompared: routeContext.regionsIncluded,
+    travelDataContextUsed: routeContext.candidateCount > 0,
+    travelDataRoutesCount: routeContext.candidateCount,
+    travelDataAttractionsCount: routeContext.attractionsUsed,
+    travelDataWeatherCount: routeContext.weatherRecordsUsed,
+    openAIActuallyCalledThisRequest: cacheInfo.status !== 'HIT',
+    cacheUsedThisRequest: cacheInfo.status === 'HIT',
+    comparisonRequired: true,
+    comparisonCompleted: routeContext.candidateCount > 0 && cacheInfo.status !== 'HIT',
+    finalSelectionReason: buildFinalSelectionReason(finalRoutes, routeContext, request),
   }
   
   // STEP 6: Update analysis with finalized metadata
@@ -430,4 +462,67 @@ function buildDisplaySummary({
     routeTypeText,
     confidenceLabel,
   }
+}
+
+/**
+ * Determine AI decision mode based on cache and repair status
+ */
+function determineAIDecisionMode(
+  cacheInfo: CacheInfo,
+  qualityGateResult: QualityGateResult
+): 'fresh_openai' | 'cached_openai' | 'openai_repaired' | 'fallback_deterministic' {
+  if (cacheInfo.status === 'HIT') {
+    return 'cached_openai'
+  }
+  
+  if (qualityGateResult.repaired) {
+    return 'openai_repaired'
+  }
+  
+  // Check if fallback was used (would be in cacheInfo.reason or other metadata)
+  if (cacheInfo.reason?.includes('fallback') || cacheInfo.reason?.includes('deterministic')) {
+    return 'fallback_deterministic'
+  }
+  
+  return 'fresh_openai'
+}
+
+/**
+ * Build input summary for audit
+ */
+function buildInputSummary(request: AnalysisRequest): string {
+  const parts: string[] = []
+  
+  if (request.departureCity) parts.push(`from ${request.departureCity}`)
+  if (request.tripLength) parts.push(`${request.tripLength} days`)
+  if (request.budget) parts.push(`${request.budget} budget`)
+  if (request.travelMonths && request.travelMonths.length > 0) {
+    const months = request.travelMonths.map(m => {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      return monthNames[m - 1]
+    }).join(', ')
+    parts.push(`traveling ${months}`)
+  }
+  if (request.interests && request.interests.length > 0) {
+    parts.push(`interests: ${request.interests.slice(0, 3).join(', ')}`)
+  }
+  if (request.tripStructure) {
+    parts.push(`${request.tripStructure.replace(/_/g, ' ')}`)
+  }
+  
+  return parts.join(', ')
+}
+
+/**
+ * Build final selection reason for audit
+ */
+function buildFinalSelectionReason(
+  finalRoutes: Array<{ country: string; cities: string[] }>,
+  routeContext: RouteContext,
+  request: AnalysisRequest
+): string {
+  const countries = finalRoutes.map(r => r.country).join(', ')
+  const regions = routeContext.regionsIncluded.slice(0, 3).join(', ')
+  
+  return `Selected ${finalRoutes.length} routes (${countries}) from ${routeContext.candidateCount} candidates across ${regions} based on ${request.tripLength || 7}-day duration, ${request.budget || 'moderate'} budget, and ${request.interests?.slice(0, 2).join(', ') || 'general'} interests`
 }

@@ -15,6 +15,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { EnhancedRecommendationCard } from '@/components/travel/enhanced-recommendation-card'
 import { RouteFirstCard } from '@/components/travel/route-first-card'
 import { ConsultantBriefCard } from '@/components/travel/consultant-brief-card'
+import { WhyTheseThree } from '@/components/travel/why-these-three'
 import { BeforeYouBookChecklist } from '@/components/travel/before-you-book-checklist'
 import { RecommendationDetail } from '@/components/travel/recommendation-detail'
 import { PersonalizationIndicator } from '@/components/travel/personalization-indicator'
@@ -537,6 +538,14 @@ export default function AnalysisPage() {
               queryContext={queryContext}
               confidence={analysis.confidence}
             />
+          </SectionErrorBoundary>
+
+          {/* Why these 3 routes? */}
+          <SectionErrorBoundary
+            sectionName="Route Selection Explanation"
+            fallbackMessage="Route selection explanation is temporarily unavailable."
+          >
+            <WhyTheseThree analysis={analysis} />
           </SectionErrorBoundary>
 
           {/* Warnings & Assumptions */}

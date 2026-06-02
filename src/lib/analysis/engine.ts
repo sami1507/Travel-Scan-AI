@@ -1291,6 +1291,49 @@ export class TravelAnalysisEngine {
       const finalMetadata = finalized.metadata
       const displaySummary = finalized.displaySummary
       
+      // Log AI Route Comparison Audit
+      logger.info('AI Route Comparison Audit', {
+        openAIActuallyCalledThisRequest: finalMetadata.openAIActuallyCalledThisRequest,
+        aiDecisionMode: finalMetadata.aiDecisionMode,
+        userInput: {
+          departureCity: request.departureCity,
+          tripLength: request.tripLength,
+          budget: request.budget,
+          travelMonths: request.travelMonths,
+          interests: request.interests,
+          tripStructure: request.tripStructure,
+        },
+        candidatesCompared: {
+          count: finalMetadata.candidateRoutesComparedCount,
+          countries: finalMetadata.candidateCountriesCompared,
+          regions: finalMetadata.candidateRegionsCompared,
+        },
+        finalSelection: {
+          countries: finalMetadata.finalCountries,
+          routes: finalMetadata.finalRoutes.map(r => r.cities.join(' → ')),
+          selectionReason: finalMetadata.finalSelectionReason,
+        },
+        dataContext: {
+          routes: finalMetadata.travelDataRoutesCount,
+          attractions: finalMetadata.travelDataAttractionsCount,
+          weather: finalMetadata.travelDataWeatherCount,
+        },
+      })
+      
+      // Log AI Decision Source
+      if (finalMetadata.cacheUsedThisRequest) {
+        logger.info('AI Decision Source: cached OpenAI result — OpenAI not called this request', {
+          aiDecisionMode: finalMetadata.aiDecisionMode,
+          cacheStatus: 'HIT',
+        })
+      } else {
+        logger.info('AI Decision Source: fresh OpenAI analysis — comparing structured candidates', {
+          aiDecisionMode: finalMetadata.aiDecisionMode,
+          candidatesCompared: finalMetadata.candidateRoutesComparedCount,
+          comparisonCompleted: finalMetadata.comparisonCompleted,
+        })
+      }
+      
       // Calculate total duration
       const durationMs = Date.now() - analysisStartTime
       

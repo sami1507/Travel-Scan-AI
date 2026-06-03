@@ -100,57 +100,83 @@ function auditAnalysisHealth(analysis: MockAnalysis): { passed: boolean; issues:
 // Run audit
 console.log('🔍 Running Analysis Health Audit...\n')
 
-const mockAnalyses: MockAnalysis[] = [
-  {
-    query: 'Traveling from Tel Aviv. 15 days in Europe',
-    tripLength: 15,
-    departureCity: 'Tel Aviv',
-    globalCandidatesGenerated: 12,
-    finalComparisonInput: [
-      { id: 'structured-1', sourceType: 'structured_data' },
-      { id: 'global-japan', sourceType: 'ai_global_knowledge' },
-    ],
-    rankedDestinations: [
-      { destinationName: 'Slovenia', suggestedRoute: ['Ljubljana', 'Bled'], recommendedRouteType: '2-city' },
-      { destinationName: 'Croatia', suggestedRoute: ['Zagreb', 'Split', 'Dubrovnik'], recommendedRouteType: '3-city' },
-    ],
-    finalQualityPassed: true,
-    consultantQualityScore: 85,
-    consultantQualityGrade: 'Excellent',
-    cacheEligible: true,
-    cacheStatus: 'SET',
-  },
-  {
-    query: 'I want to travel',
-    tripLength: 7,
-    globalCandidatesGenerated: 0,
-    rankedDestinations: [
-      { destinationName: 'Slovenia - Ljubljana → Bled', suggestedRoute: ['Ljubljana', 'Bled'], recommendedRouteType: 'single-destination' },
-    ],
-    finalQualityPassed: false,
-    consultantQualityScore: 95,
-    consultantQualityGrade: 'Excellent',
-    cacheEligible: false,
-    cacheStatus: 'SET',
-  },
+// Positive fixture: production-like valid analysis
+const positiveFixture: MockAnalysis = {
+  query: 'Traveling from Tel Aviv. 15 days in Europe',
+  tripLength: 15,
+  departureCity: 'Tel Aviv',
+  globalCandidatesGenerated: 12,
+  finalComparisonInput: [
+    { id: 'structured-1', sourceType: 'structured_data' },
+    { id: 'global-japan', sourceType: 'ai_global_knowledge' },
+  ],
+  rankedDestinations: [
+    { destinationName: 'Slovenia', suggestedRoute: ['Ljubljana', 'Bled'], recommendedRouteType: '2-city' },
+    { destinationName: 'Croatia', suggestedRoute: ['Zagreb', 'Split', 'Dubrovnik'], recommendedRouteType: '3-city' },
+  ],
+  finalQualityPassed: true,
+  consultantQualityScore: 85,
+  consultantQualityGrade: 'Excellent',
+  cacheEligible: true,
+  cacheStatus: 'SET',
+}
+
+// Negative fixture: intentionally bad analysis to test contract detection
+const negativeFixture: MockAnalysis = {
+  query: 'I want to travel',
+  tripLength: 7,
+  globalCandidatesGenerated: 0,
+  rankedDestinations: [
+    { destinationName: 'Slovenia - Ljubljana → Bled', suggestedRoute: ['Ljubljana', 'Bled'], recommendedRouteType: 'single-destination' },
+  ],
+  finalQualityPassed: false,
+  consultantQualityScore: 95,
+  consultantQualityGrade: 'Excellent',
+  cacheEligible: false,
+  cacheStatus: 'SET',
+}
+
+const expectedNegativeIssues = [
+  'globalCandidatesGenerated is 0 for broad request',
+  'destinationName contains route separators: "Slovenia - Ljubljana → Bled"',
+  'route has 2 cities but recommendedRouteType is single-destination',
+  'finalQualityPassed=false but grade/score indicates Excellent',
+  'cacheEligible=false but cacheStatus=SET',
 ]
 
-let allPassed = true
-for (let i = 0; i < mockAnalyses.length; i++) {
-  const result = auditAnalysisHealth(mockAnalyses[i])
-  console.log(`Test ${i + 1}:`, result.passed ? '✅ PASS' : '❌ FAIL')
-  if (!result.passed) {
-    console.log('Issues:')
-    result.issues.forEach(issue => console.log(`  - ${issue}`))
-    allPassed = false
-  }
+// Test positive fixture
+console.log('Test 1: Positive production-like analysis')
+const positiveResult = auditAnalysisHealth(positiveFixture)
+if (positiveResult.passed) {
+  console.log('✅ Positive production-like analysis passed\n')
+} else {
+  console.log('❌ Positive fixture failed (should pass):')
+  positiveResult.issues.forEach(issue => console.log(`  - ${issue}`))
+  console.log()
+  process.exit(1)
+}
+
+// Test negative fixture
+console.log('Test 2: Negative fixture - contract catches bad analysis')
+const negativeResult = auditAnalysisHealth(negativeFixture)
+if (!negativeResult.passed && negativeResult.issues.length === expectedNegativeIssues.length) {
+  console.log('✅ Negative bad-analysis fixture correctly detected blocking issues')
+  console.log('   Expected issues found:')
+  negativeResult.issues.forEach(issue => console.log(`   - ${issue}`))
+  console.log()
+} else if (negativeResult.passed) {
+  console.log('❌ Negative fixture passed (should fail):')
+  console.log('   This fixture should detect blocking issues')
+  console.log()
+  process.exit(1)
+} else {
+  console.log('⚠️  Negative fixture failed but with unexpected issue count:')
+  console.log(`   Expected ${expectedNegativeIssues.length} issues, got ${negativeResult.issues.length}`)
+  negativeResult.issues.forEach(issue => console.log(`   - ${issue}`))
   console.log()
 }
 
-if (allPassed) {
-  console.log('✅ All analysis health checks passed!')
-  process.exit(0)
-} else {
-  console.log('❌ Some analysis health checks failed')
-  process.exit(1)
-}
+console.log('✅ Analysis health audit passed!')
+console.log('   - Positive fixture: valid analysis passes')
+console.log('   - Negative fixture: contract correctly detects issues')
+process.exit(0)

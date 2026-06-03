@@ -18,7 +18,52 @@ export function buildCompactTravelAnalysisPrompt(
   let travelDataSection = ''
   
   if (travelDataContext?.routeCandidates && travelDataContext.routeCandidates.length > 0) {
-    const topRoutes = travelDataContext.routeCandidates.slice(0, 6)
+    // Select balanced mix of candidates for final comparison
+    const candidates = travelDataContext.routeCandidates
+    const structured = candidates.filter(c => c.sourceType !== 'ai_global_knowledge')
+    const global = candidates.filter(c => c.sourceType === 'ai_global_knowledge')
+    
+    // Build balanced pool: 8 structured + 8 global + 4 value + 4 unique (max 24)
+    const selectedCandidates: RouteCandidate[] = []
+    
+    // Add top 8 structured candidates
+    selectedCandidates.push(...structured.slice(0, 8))
+    
+    // Add top 8 global candidates
+    selectedCandidates.push(...global.slice(0, 8))
+    
+    // Add 4 value candidates (budget/moderate tier)
+    const valueCandidates = candidates
+      .filter(c => !selectedCandidates.includes(c) && (c.priceTier === 'budget' || c.priceTier === 'moderate'))
+      .slice(0, 4)
+    selectedCandidates.push(...valueCandidates)
+    
+    // Add 4 unique candidates (less-mainstream or different regions)
+    const uniqueCandidates = candidates
+      .filter(c => !selectedCandidates.includes(c) && c.mainstreamLevel !== 'mainstream')
+      .slice(0, 4)
+    selectedCandidates.push(...uniqueCandidates)
+    
+    // Cap at 24 total
+    const topRoutes = selectedCandidates.slice(0, 24)
+    
+    // Log final comparison input
+    const structuredCount = topRoutes.filter(c => c.sourceType !== 'ai_global_knowledge').length
+    const globalCount = topRoutes.filter(c => c.sourceType === 'ai_global_knowledge').length
+    const enrichedCount = topRoutes.filter(c => (c as any).dataCoverage === 'structured_data_enriched').length
+    const countries = [...new Set(topRoutes.map(c => c.country))]
+    const regions = [...new Set(topRoutes.map(c => c.region))]
+    const sourceTypes = [...new Set(topRoutes.map(c => c.sourceType || 'structured_data'))]
+    
+    console.log('[Analysis] Final Comparison Input', {
+      total: topRoutes.length,
+      structuredCount,
+      globalCount,
+      enrichedCount,
+      countries,
+      regions,
+      sourceTypes,
+    })
     
     travelDataSection = `\nTRAVEL DATA CONTEXT (use as planning reference):
 ${topRoutes.map(route => {
@@ -46,7 +91,7 @@ First, internally compare the candidate routes provided using:
 • Trip structure fit (${request.tripStructure?.replace(/_/g, ' ')})
 • Budget alignment (${request.budget || 'moderate'})
 • Travel months/season (${request.travelMonths?.map(m => ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]).join(', ') || 'any'})
-• User interests (${request.interests?.join(', ') || 'general travel'})
+• User interests (${request.interests && request.interests.length > 0 ? request.interests.join(', ') : 'EMPTY - broad trip discovery mode'})
 • Route fatigue level
 • Route realism and transport practicality
 • Attractions match
@@ -82,6 +127,7 @@ DIVERSITY RULES:
 - Avoid all-mainstream Mediterranean set (Spain/Greece/Italy) unless clearly best
 - Include at least one less-mainstream or unique option if alternatives score within 20 points
 - Labels: "Best Overall", "Best Value", "Unique Discovery"
+${!request.interests || request.interests.length === 0 ? '\n⚠️ EMPTY INTERESTS: User did not specify interests. Compare candidates using broad travel appeal, season, budget, practicality, route realism, and diversity. Provide useful broad options and encourage user to refine interests for more personalized results.' : ''}
 ${request.excludeCountries && request.excludeCountries.length > 0 ? `\n⚠️ AVOID REPEATING: ${request.excludeCountries.join(', ')} - User already saw these. Only repeat if clearly the best fit and explain why.` : ''}
 ${request.diversityMode === 'alternative_ideas' ? '\n🔄 MODE: Alternative Ideas - Return different valid alternatives from the travel data context. Avoid excluded countries if possible.' : ''}
 ${request.diversityMode === 'hidden_gems' ? '\n💎 MODE: Hidden Gems - Prioritize less obvious, unique destinations over mainstream options.' : ''}

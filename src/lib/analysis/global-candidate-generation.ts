@@ -49,15 +49,36 @@ export async function generateGlobalCandidates(
   }
   
   try {
-    const prompt = buildGlobalCandidatePrompt(request)
+    // Guard against missing fields with defaults and logging
+    const tripLength = request.tripLength || 7
+    const departureCity = request.departureCity || 'not specified'
+    const tripLengthDefaulted = !request.tripLength
+    const departureCityMissing = !request.departureCity
+    
+    if (tripLengthDefaulted || departureCityMissing) {
+      logger.warn('Global candidate generation using defaults for missing fields', {
+        tripLengthDefaulted,
+        departureCityMissing,
+        tripLength,
+        departureCity,
+      })
+    }
+    
+    const prompt = buildGlobalCandidatePrompt({
+      ...request,
+      tripLength,
+      departureCity,
+    })
     
     logger.info('Generating global candidates with OpenAI', {
-      departureCity: request.departureCity,
-      tripLength: request.tripLength,
+      departureCity,
+      tripLength,
       budget: request.budget,
       travelMonths: request.travelMonths,
       interests: request.interests,
       tripStructure: request.tripStructure,
+      tripLengthDefaulted,
+      departureCityMissing,
     })
     
     const openai = new OpenAI({

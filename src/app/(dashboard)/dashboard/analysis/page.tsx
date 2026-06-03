@@ -47,11 +47,15 @@ export default function AnalysisPage() {
   const [compareSelections, setCompareSelections] = useState<RankedDestination[]>([])
   const [queryContext, setQueryContext] = useState<{
     query: string
+    departureCity?: string
+    passportCountry?: string
     budget?: string
     travel_months?: number[]
     interests?: string[]
     tripLength?: number
     tripStructure?: string
+    travelStyle?: string
+    pace?: string
   } | null>(null)
 
   const handleAnalyze = async (data: {
@@ -132,11 +136,15 @@ export default function AnalysisPage() {
         }
         setQueryContext({
           query: data.query,
+          departureCity: data.departureCity,
+          passportCountry: (data as any).passportCountry,
           budget: data.budget,
           travel_months: data.travelMonths,
           interests: data.interests,
           tripLength: data.tripLength,
           tripStructure: data.tripStructure,
+          travelStyle: (data as any).travelStyle,
+          pace: (data as any).pace,
         })
         setRetryCount(0) // Reset retry count on success
       } else {
@@ -213,12 +221,17 @@ export default function AnalysisPage() {
     if (!queryContext) return
     handleAnalyze({
       query: queryContext.query || '',
+      departureCity: queryContext.departureCity,
+      passportCountry: queryContext.passportCountry,
       budget: queryContext.budget || 'moderate',
+      tripLength: queryContext.tripLength,
       travelMonths: queryContext.travel_months || [],
       interests: queryContext.interests || [],
-      tripStructure: 'single_country_multi_city',
+      tripStructure: (queryContext.tripStructure as any) || 'single_country_multi_city',
+      travelStyle: queryContext.travelStyle,
+      pace: queryContext.pace,
       forceFresh: true,
-    })
+    } as any)
   }
 
   // Helper: Generate different options (exclude current countries)
@@ -232,14 +245,19 @@ export default function AnalysisPage() {
     
     handleAnalyze({
       query: queryContext.query || '',
+      departureCity: queryContext.departureCity,
+      passportCountry: queryContext.passportCountry,
       budget: queryContext.budget || 'moderate',
+      tripLength: queryContext.tripLength,
       travelMonths: queryContext.travel_months || [],
       interests: queryContext.interests || [],
-      tripStructure: 'single_country_multi_city',
+      tripStructure: (queryContext.tripStructure as any) || 'single_country_multi_city',
+      travelStyle: queryContext.travelStyle,
+      pace: queryContext.pace,
       forceFresh: true,
       excludeCountries: currentCountries,
       diversityMode: 'alternative_ideas',
-    })
+    } as any)
   }
 
   return (

@@ -56,27 +56,65 @@ export async function POST(request: NextRequest) {
       diversityMode,
     } = validation.data
 
+    // Normalize request - parse missing fields from query
+    let normalizedTripLength = tripLength
+    let normalizedDepartureCity = departureCity
+    let tripLengthSource: 'explicit' | 'parsed_from_query' | 'default' = 'explicit'
+    let departureCitySource: 'explicit' | 'parsed_from_query' | 'unknown' = 'explicit'
+    
+    // Parse tripLength from query if missing
+    if (!normalizedTripLength && query) {
+      const tripLengthMatch = query.match(/(\d+)\s*(day|days)/i)
+      if (tripLengthMatch) {
+        normalizedTripLength = parseInt(tripLengthMatch[1], 10)
+        tripLengthSource = 'parsed_from_query'
+      }
+    }
+    
+    // Parse departureCity from query if missing
+    if (!normalizedDepartureCity && query) {
+      // Match patterns like "from Tel Aviv (TLV) - Israel" or "Traveling from Tel Aviv"
+      const departureCityMatch = query.match(/from\s+(.+?)(?:\.|,?\s*passport:|,?\s*-?\s*passport|$)/i)
+      if (departureCityMatch) {
+        normalizedDepartureCity = departureCityMatch[1].trim()
+        departureCitySource = 'parsed_from_query'
+      }
+    }
+    
+    if (!normalizedDepartureCity) {
+      departureCitySource = 'unknown'
+    }
+    
     logger.info('Travel analysis requested', {
       userId: user.id,
       query,
       destination,
-      departureCity,
+      departureCity: normalizedDepartureCity,
       budget,
-      tripLength,
+      tripLength: normalizedTripLength,
       tripStructure,
       forceFresh,
       freshRunId,
       excludeCountries,
       diversityMode,
     })
+    
+    logger.info('Normalized Analysis Request', {
+      departureCity: normalizedDepartureCity,
+      tripLength: normalizedTripLength,
+      source: {
+        tripLength: tripLengthSource,
+        departureCity: departureCitySource,
+      },
+    })
 
     // Run analysis with personalization
     const analysis = await travelAnalysisEngine.analyze({
       query,
       destination,
-      departureCity,
+      departureCity: normalizedDepartureCity,
       budget,
-      tripLength,
+      tripLength: normalizedTripLength,
       travelMonths,
       interests,
       travelStyle,

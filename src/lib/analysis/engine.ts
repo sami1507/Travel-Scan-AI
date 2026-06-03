@@ -35,6 +35,7 @@ import { buildRouteCandidatePool, filterCandidatesByRequest, RouteCandidate } fr
 import { getAttractionsForRoute, getWeatherForRoute } from '../travel-data/travel-data-loader'
 import { finalizeAnalysisResult, type QualityGateResult, type ClaudeVerificationResult, type RouteContext, type CacheInfo } from './finalize-analysis-result'
 import { generateGlobalCandidates, type GlobalCandidate } from './global-candidate-generation'
+import { validateAnalysisContract } from './analysis-contract'
 
 export interface AnalysisRequest {
   query: string
@@ -242,11 +243,13 @@ export class TravelAnalysisEngine {
 
       // Build route candidate pool if knowledge retrieval returned 0
       let routeCandidatePool: RouteCandidate[] = []
+      let globalCandidates: GlobalCandidate[] = [] // Track for contract validation
       if (scoredDestinations.length === 0) {
         logger.info('Knowledge retrieval returned 0, building route candidate pool')
         
         // Step 1: Generate global AI candidates (worldwide destinations)
         const globalResult = await generateGlobalCandidates(request)
+        globalCandidates = globalResult.candidates
         
         // Step 2: Build structured CSV candidates
         const allCandidates = buildRouteCandidatePool(request)
@@ -1458,19 +1461,58 @@ export class TravelAnalysisEngine {
         travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
       }
       
+      // Validate analysis contract
+      const contractResult = validateAnalysisContract({
+        request,
+        normalizedRequest: request, // Already normalized
+        globalCandidates: globalCandidates,
+        structuredCandidates: routeCandidatePool.filter(c => c.sourceType !== 'ai_global_knowledge'),
+        mergedCandidates: routeCandidatePool,
+        finalComparisonInput: routeCandidatePool, // This is what was sent to OpenAI
+        finalAnalysis: analysis,
+        finalMetadata: completeMetadata,
+      })
+      
+      logger.info('Analysis Contract Check', {
+        passed: contractResult.passed,
+        issues: contractResult.issues,
+        warnings: contractResult.warnings,
+        blockingIssues: contractResult.blockingIssues,
+      })
+      
+      // If contract has blocking issues, enforce quality constraints
+      if (contractResult.blockingIssues.length > 0) {
+        completeMetadata.finalQualityPassed = false
+        completeMetadata.consultantQualityScore = Math.min(completeMetadata.consultantQualityScore || 75, 75)
+        completeMetadata.consultantQualityGrade = completeMetadata.consultantQualityScore >= 70 ? 'Good' : 'Acceptable'
+        ;(completeMetadata as any).analysisContractPassed = false
+        ;(completeMetadata as any).analysisContractBlockingIssues = contractResult.blockingIssues
+        
+        logger.warn('Analysis contract failed - quality constraints enforced', {
+          blockingIssues: contractResult.blockingIssues,
+          finalQualityPassed: false,
+          consultantQualityScore: completeMetadata.consultantQualityScore,
+        })
+      } else {
+        ;(completeMetadata as any).analysisContractPassed = true
+        ;(completeMetadata as any).analysisContractBlockingIssues = []
+      }
+      
       // Set displaySummary (metadata set after cache decision)
       ;(analysis as any).displaySummary = displaySummary
       
       // Update querySummary with finalized display summary
       analysis.querySummary = displaySummary.querySummary
       
-      // Determine cache eligibility based on finalized quality
+      // Determine cache eligibility based on finalized quality AND contract
       const cacheEligible = 
         completeMetadata.finalQualityPassed &&
         completeMetadata.consultantQualityScore >= 75 &&
         completeMetadata.scopeValidationPassed &&
         completeMetadata.openAIUsed &&
-        !completeMetadata.fallbackUsed
+        !completeMetadata.fallbackUsed &&
+        contractResult.passed && // Contract must pass
+        contractResult.blockingIssues.length === 0 // No blocking issues
       
       // Update completeMetadata with correct cacheEligible
       completeMetadata.cacheEligible = cacheEligible

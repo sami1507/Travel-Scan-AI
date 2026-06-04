@@ -37,6 +37,7 @@ import { finalizeAnalysisResult, type QualityGateResult, type ClaudeVerification
 import { generateGlobalCandidates, type GlobalCandidate } from './global-candidate-generation'
 import { validateAnalysisContract } from './analysis-contract'
 import { enrichRouteCities, type NormalizedPlace } from '../services/google-places-service'
+import { normalizeAllRecommendations, normalizeFinalRecommendation } from './normalize-recommendation'
 
 export interface AnalysisRequest {
   query: string
@@ -571,6 +572,17 @@ export class TravelAnalysisEngine {
             if (!parsed) {
               throw new Error('Failed to parse AI response')
             }
+
+            // CRITICAL: Normalize recommendations immediately after parsing
+            // This ensures clean destinationName (country only) before any downstream processing
+            // Fixes: "Portugal - Lisbon → Porto → Coimbra" → destinationName="Portugal", suggestedRoute=["Lisbon", "Porto", "Coimbra"]
+            parsed.rankedDestinations = normalizeAllRecommendations(parsed.rankedDestinations) as any
+            
+            logger.info('Normalized final recommendations', {
+              count: parsed.rankedDestinations.length,
+              destinationNames: parsed.rankedDestinations.map(d => d.destinationName),
+              routes: parsed.rankedDestinations.map(d => (d as any).routeDisplayName || d.suggestedRoute?.join(' → ')),
+            })
 
             // Track OpenAI cost
             costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
@@ -1157,9 +1169,13 @@ export class TravelAnalysisEngine {
           if (result === 'timeout') {
             claudeTimedOut = true
             claudeVerifierError = 'timeout'
-            logger.warn('Claude verification timed out after 3s - continuing with unverified', {
+            // Aggregated timeout logging (non-blocking)
+            logger.warn('Claude verification timeout', {
+              attempted: analysis.rankedDestinations.length,
+              success: 0,
+              timeoutCount: analysis.rankedDestinations.length,
+              nonBlocking: true,
               model: claudeModelUsed,
-              timeout: 3000,
             })
           } else {
             // Process settled promises
@@ -1502,8 +1518,13 @@ export class TravelAnalysisEngine {
       // Google Places enrichment (after OpenAI decision, before cache)
       const googlePlacesEnabled = process.env.ENABLE_GOOGLE_PLACES_ENRICHMENT === 'true'
       const googlePlacesKey = process.env.GOOGLE_PLACES_API_KEY
-      let googlePlacesStatus: 'success' | 'disabled' | 'missing_key' | 'failed' | 'timeout' = 'disabled'
+      let googlePlacesStatus: 'success' | 'disabled' | 'missing_key' | 'failed' | 'timeout' | 'forbidden' | 'partial' = 'disabled'
       let googlePlacesCount = 0
+      let googlePlacesErrorCode: number | undefined
+      let googlePlacesErrorReason: string | undefined
+      let totalAttempted = 0
+      let totalSuccessful = 0
+      let totalFailed = 0
       
       if (googlePlacesEnabled && googlePlacesKey) {
         logger.info('Google Places enrichment enabled - enriching final recommendations')
@@ -1512,11 +1533,21 @@ export class TravelAnalysisEngine {
           // Enrich each final recommendation
           for (const destination of analysis.rankedDestinations) {
             const routeCities = destination.suggestedRoute || []
-            const country = destination.destinationName || ''
+            const country = destination.destinationName || '' // Now clean: "Portugal" not "Portugal - Lisbon → Porto"
             
             if (routeCities.length > 0 && country) {
               try {
                 const enrichmentResult = await enrichRouteCities(routeCities, country)
+                
+                // Track aggregated stats
+                totalAttempted += enrichmentResult.stats.attemptedRequests
+                totalSuccessful += enrichmentResult.stats.successfulRequests
+                totalFailed += enrichmentResult.stats.failedRequests
+                
+                if (enrichmentResult.stats.errorStatus) {
+                  googlePlacesErrorCode = enrichmentResult.stats.errorStatus
+                  googlePlacesErrorReason = enrichmentResult.stats.errorReason
+                }
                 
                 // Categorize places
                 const livePlacesToVisit = enrichmentResult.byCategory['tourist attractions'] || []
@@ -1531,12 +1562,6 @@ export class TravelAnalysisEngine {
                 ;(destination as any).liveCulturalIdeas = liveCulturalIdeas
                 
                 googlePlacesCount += enrichmentResult.places.length
-                
-                logger.info('Google Places enrichment complete for destination', {
-                  country,
-                  cities: routeCities,
-                  totalPlaces: enrichmentResult.places.length,
-                })
               } catch (destError) {
                 logger.warn('Google Places enrichment failed for destination', {
                   country,
@@ -1546,10 +1571,26 @@ export class TravelAnalysisEngine {
             }
           }
           
-          googlePlacesStatus = 'success'
+          // Determine final status
+          if (googlePlacesCount > 0) {
+            googlePlacesStatus = totalFailed > 0 ? 'partial' : 'success'
+          } else if (totalFailed > 0 && googlePlacesErrorCode === 403) {
+            googlePlacesStatus = 'forbidden'
+          } else if (totalFailed > 0) {
+            googlePlacesStatus = 'failed'
+          } else {
+            googlePlacesStatus = 'success'
+          }
+          
+          // Aggregated logging
           logger.info('Google Places enrichment completed', {
+            status: googlePlacesStatus,
             totalPlaces: googlePlacesCount,
-            destinationsEnriched: analysis.rankedDestinations.length,
+            attemptedRequests: totalAttempted,
+            successfulRequests: totalSuccessful,
+            failedRequests: totalFailed,
+            errorCode: googlePlacesErrorCode,
+            errorReason: googlePlacesErrorReason,
           })
         } catch (error) {
           logger.error('Google Places enrichment failed', error)
@@ -1561,9 +1602,11 @@ export class TravelAnalysisEngine {
       }
       
       // Add Google Places metadata
-      ;(completeMetadata as any).googlePlacesUsed = googlePlacesStatus === 'success'
+      ;(completeMetadata as any).googlePlacesUsed = googlePlacesCount > 0
       ;(completeMetadata as any).googlePlacesStatus = googlePlacesStatus
       ;(completeMetadata as any).googlePlacesCount = googlePlacesCount
+      ;(completeMetadata as any).googlePlacesErrorCode = googlePlacesErrorCode
+      ;(completeMetadata as any).googlePlacesErrorReason = googlePlacesErrorReason
       
       // Set displaySummary (metadata set after cache decision)
       ;(analysis as any).displaySummary = displaySummary

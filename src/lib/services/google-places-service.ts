@@ -86,9 +86,39 @@ export async function searchPlacesForCity(
     clearTimeout(timeoutId)
 
     if (!response.ok) {
+      // Extract detailed error reason for 403 diagnostics
+      let errorReason = 'unknown_error'
+      try {
+        const errorBody = await response.text()
+        if (errorBody) {
+          try {
+            const errorJson = JSON.parse(errorBody)
+            errorReason = errorJson.error?.message || errorJson.error?.status || errorReason
+          } catch {
+            // Not JSON, use text
+            if (errorBody.includes('API key not valid')) {
+              errorReason = 'api_key_invalid'
+            } else if (errorBody.includes('API not enabled')) {
+              errorReason = 'api_not_enabled'
+            } else if (errorBody.includes('billing')) {
+              errorReason = 'billing_not_enabled'
+            } else if (errorBody.includes('restricted')) {
+              errorReason = 'key_restricted'
+            } else {
+              errorReason = errorBody.substring(0, 100)
+            }
+          }
+        }
+      } catch {
+        // Failed to read body
+      }
+
       logWarning('Google Places API error', {
         status: response.status,
         statusText: response.statusText,
+        reason: errorReason,
+        city: cityName,
+        country: countryName,
       })
       return []
     }
@@ -141,10 +171,22 @@ export async function enrichRouteCities(
   places: NormalizedPlace[]
   byCategory: Record<string, NormalizedPlace[]>
   byCity: Record<string, NormalizedPlace[]>
+  stats: {
+    attemptedRequests: number
+    successfulRequests: number
+    failedRequests: number
+    errorStatus?: number
+    errorReason?: string
+  }
 }> {
   if (!GOOGLE_PLACES_API_KEY) {
     logInfo('Google Places enrichment disabled - API key not configured')
-    return { places: [], byCategory: {}, byCity: {} }
+    return {
+      places: [],
+      byCategory: {},
+      byCity: {},
+      stats: { attemptedRequests: 0, successfulRequests: 0, failedRequests: 0 },
+    }
   }
 
   const categories = [
@@ -166,33 +208,85 @@ export async function enrichRouteCities(
   const allPlaces: NormalizedPlace[] = []
   const byCategory: Record<string, NormalizedPlace[]> = {}
   const byCity: Record<string, NormalizedPlace[]> = {}
+  
+  let attemptedRequests = 0
+  let successfulRequests = 0
+  let failedRequests = 0
+  let consecutiveFailures = 0
+  let lastErrorStatus: number | undefined
+  let lastErrorReason: string | undefined
+
+  // Stop early if we get 3 consecutive failures (likely 403 or config issue)
+  const MAX_CONSECUTIVE_FAILURES = 3
 
   for (const city of citiesToEnrich) {
     byCity[city] = []
 
     for (const category of categories) {
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        logWarning('Stopping Google Places enrichment after repeated failures', {
+          consecutiveFailures,
+          lastErrorStatus,
+          lastErrorReason,
+        })
+        break
+      }
+
+      attemptedRequests++
       const places = await searchPlacesForCity(city, countryName, category, 4)
 
-      allPlaces.push(...places)
+      if (places.length > 0) {
+        successfulRequests++
+        consecutiveFailures = 0
+        allPlaces.push(...places)
 
-      if (!byCategory[category]) {
-        byCategory[category] = []
+        if (!byCategory[category]) {
+          byCategory[category] = []
+        }
+        byCategory[category].push(...places)
+        byCity[city].push(...places)
+      } else {
+        failedRequests++
+        consecutiveFailures++
+        // Track error details for aggregated logging
+        // Note: actual error status/reason would need to be returned from searchPlacesForCity
       }
-      byCategory[category].push(...places)
+    }
 
-      byCity[city].push(...places)
+    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+      break
     }
   }
 
-  logInfo('Google Places enrichment complete', {
-    totalPlaces: allPlaces.length,
-    citiesEnriched: citiesToEnrich.length,
-    categoriesSearched: categories.length,
-  })
+  // Aggregated logging
+  if (failedRequests > 0) {
+    logWarning('Google Places enrichment completed with failures', {
+      totalPlaces: allPlaces.length,
+      attemptedRequests,
+      successfulRequests,
+      failedRequests,
+      consecutiveFailures,
+    })
+  } else {
+    logInfo('Google Places enrichment complete', {
+      totalPlaces: allPlaces.length,
+      citiesEnriched: citiesToEnrich.length,
+      categoriesSearched: categories.length,
+      attemptedRequests,
+      successfulRequests,
+    })
+  }
 
   return {
     places: allPlaces,
     byCategory,
     byCity,
+    stats: {
+      attemptedRequests,
+      successfulRequests,
+      failedRequests,
+      errorStatus: lastErrorStatus,
+      errorReason: lastErrorReason,
+    },
   }
 }

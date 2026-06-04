@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { X, MapPin, Calendar, DollarSign, Shield, Plane, AlertTriangle, Info } from 'lucide-react'
+import { X, MapPin, Calendar, DollarSign, Shield, Plane, AlertTriangle, Info, Star } from 'lucide-react'
 import { BeforeYouBookChecklist } from './before-you-book-checklist'
 import type { RankedDestination } from '@/lib/analysis/schemas'
 import { ScoreBreakdown } from './score-breakdown'
@@ -235,6 +235,138 @@ export function RecommendationDetail({ destination, onClose }: RecommendationDet
               )}
             </CardContent>
           </Card>
+
+          {/* Verified Places from Google Places */}
+          {((destination as any).livePlacesToVisit?.length > 0 || 
+            (destination as any).liveFoodIdeas?.length > 0 || 
+            (destination as any).liveNatureIdeas?.length > 0 || 
+            (destination as any).liveCulturalIdeas?.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  Verified Places from Google Places
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(destination as any).livePlacesToVisit?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Tourist Attractions</h4>
+                    <div className="space-y-2">
+                      {(destination as any).livePlacesToVisit.slice(0, 4).map((place: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium">{place.name}</div>
+                            {place.address && (
+                              <div className="text-xs text-muted-foreground">{place.address}</div>
+                            )}
+                            {place.rating && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                <span>{place.rating.toFixed(1)}</span>
+                                {place.userRatingCount && (
+                                  <span>({place.userRatingCount.toLocaleString()} reviews)</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(destination as any).liveFoodIdeas?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Restaurants</h4>
+                    <div className="space-y-2">
+                      {(destination as any).liveFoodIdeas.slice(0, 4).map((place: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium">{place.name}</div>
+                            {place.address && (
+                              <div className="text-xs text-muted-foreground">{place.address}</div>
+                            )}
+                            {place.rating && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                <span>{place.rating.toFixed(1)}</span>
+                                {place.userRatingCount && (
+                                  <span>({place.userRatingCount.toLocaleString()} reviews)</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(destination as any).liveNatureIdeas?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Nature & Parks</h4>
+                    <div className="space-y-2">
+                      {(destination as any).liveNatureIdeas.slice(0, 4).map((place: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium">{place.name}</div>
+                            {place.address && (
+                              <div className="text-xs text-muted-foreground">{place.address}</div>
+                            )}
+                            {place.rating && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                <span>{place.rating.toFixed(1)}</span>
+                                {place.userRatingCount && (
+                                  <span>({place.userRatingCount.toLocaleString()} reviews)</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(destination as any).liveCulturalIdeas?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Museums & Culture</h4>
+                    <div className="space-y-2">
+                      {(destination as any).liveCulturalIdeas.slice(0, 4).map((place: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium">{place.name}</div>
+                            {place.address && (
+                              <div className="text-xs text-muted-foreground">{place.address}</div>
+                            )}
+                            {place.rating && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                <span>{place.rating.toFixed(1)}</span>
+                                {place.userRatingCount && (
+                                  <span>({place.userRatingCount.toLocaleString()} reviews)</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-xs text-muted-foreground pt-2 border-t">
+                  Live data from Google Places API
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Before You Book Checklist */}
           <BeforeYouBookChecklist destination={destination} />

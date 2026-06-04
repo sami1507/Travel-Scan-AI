@@ -109,6 +109,25 @@ function checkEnvHealth(): { passed: boolean; checks: EnvCheck[] } {
     notes: googleMapsKey ? `${googleMapsKey.length} chars` : 'optional for maps',
   })
 
+  // Google Places (server-side only)
+  const googlePlacesKey = process.env.GOOGLE_PLACES_API_KEY
+  const enableGooglePlaces = process.env.ENABLE_GOOGLE_PLACES_ENRICHMENT
+  checks.push({
+    name: 'GOOGLE_PLACES_API_KEY',
+    required: false,
+    present: !!googlePlacesKey,
+    formatValid: googlePlacesKey ? googlePlacesKey.startsWith('AIza') : true,
+    notes: googlePlacesKey ? `${googlePlacesKey.length} chars` : 'optional for enrichment',
+  })
+
+  checks.push({
+    name: 'ENABLE_GOOGLE_PLACES_ENRICHMENT',
+    required: false,
+    present: !!enableGooglePlaces,
+    formatValid: enableGooglePlaces ? ['true', 'false'].includes(enableGooglePlaces) : true,
+    notes: enableGooglePlaces || 'defaults to false',
+  })
+
   // Flags
   const disableCache = process.env.DISABLE_ANALYSIS_CACHE
   checks.push({
@@ -148,6 +167,14 @@ result.checks
   })
 
 console.log()
+
+// Check for configuration warnings
+const googlePlacesEnabled = process.env.ENABLE_GOOGLE_PLACES_ENRICHMENT === 'true'
+const googlePlacesKey = process.env.GOOGLE_PLACES_API_KEY
+if (googlePlacesEnabled && !googlePlacesKey) {
+  console.log('⚠️  Warning: ENABLE_GOOGLE_PLACES_ENRICHMENT=true but GOOGLE_PLACES_API_KEY is missing')
+  console.log('   Google Places enrichment will be disabled at runtime\n')
+}
 
 if (result.passed) {
   console.log('✅ All required environment variables are present and valid')

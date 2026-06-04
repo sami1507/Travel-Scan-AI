@@ -36,6 +36,7 @@ import { getAttractionsForRoute, getWeatherForRoute } from '../travel-data/trave
 import { finalizeAnalysisResult, type QualityGateResult, type ClaudeVerificationResult, type RouteContext, type CacheInfo } from './finalize-analysis-result'
 import { generateGlobalCandidates, type GlobalCandidate } from './global-candidate-generation'
 import { validateAnalysisContract } from './analysis-contract'
+import { enrichRouteCities, type NormalizedPlace } from '../services/google-places-service'
 
 export interface AnalysisRequest {
   query: string
@@ -1497,6 +1498,72 @@ export class TravelAnalysisEngine {
         ;(completeMetadata as any).analysisContractPassed = true
         ;(completeMetadata as any).analysisContractBlockingIssues = []
       }
+      
+      // Google Places enrichment (after OpenAI decision, before cache)
+      const googlePlacesEnabled = process.env.ENABLE_GOOGLE_PLACES_ENRICHMENT === 'true'
+      const googlePlacesKey = process.env.GOOGLE_PLACES_API_KEY
+      let googlePlacesStatus: 'success' | 'disabled' | 'missing_key' | 'failed' | 'timeout' = 'disabled'
+      let googlePlacesCount = 0
+      
+      if (googlePlacesEnabled && googlePlacesKey) {
+        logger.info('Google Places enrichment enabled - enriching final recommendations')
+        
+        try {
+          // Enrich each final recommendation
+          for (const destination of analysis.rankedDestinations) {
+            const routeCities = destination.suggestedRoute || []
+            const country = destination.destinationName || ''
+            
+            if (routeCities.length > 0 && country) {
+              try {
+                const enrichmentResult = await enrichRouteCities(routeCities, country)
+                
+                // Categorize places
+                const livePlacesToVisit = enrichmentResult.byCategory['tourist attractions'] || []
+                const liveFoodIdeas = enrichmentResult.byCategory['restaurants'] || []
+                const liveNatureIdeas = enrichmentResult.byCategory['nature parks'] || []
+                const liveCulturalIdeas = enrichmentResult.byCategory['museums'] || []
+                
+                // Add to destination
+                ;(destination as any).livePlacesToVisit = livePlacesToVisit
+                ;(destination as any).liveFoodIdeas = liveFoodIdeas
+                ;(destination as any).liveNatureIdeas = liveNatureIdeas
+                ;(destination as any).liveCulturalIdeas = liveCulturalIdeas
+                
+                googlePlacesCount += enrichmentResult.places.length
+                
+                logger.info('Google Places enrichment complete for destination', {
+                  country,
+                  cities: routeCities,
+                  totalPlaces: enrichmentResult.places.length,
+                })
+              } catch (destError) {
+                logger.warn('Google Places enrichment failed for destination', {
+                  country,
+                  error: (destError as Error).message,
+                })
+              }
+            }
+          }
+          
+          googlePlacesStatus = 'success'
+          logger.info('Google Places enrichment completed', {
+            totalPlaces: googlePlacesCount,
+            destinationsEnriched: analysis.rankedDestinations.length,
+          })
+        } catch (error) {
+          logger.error('Google Places enrichment failed', error)
+          googlePlacesStatus = 'failed'
+        }
+      } else if (googlePlacesEnabled && !googlePlacesKey) {
+        logger.warn('Google Places enrichment enabled but API key missing')
+        googlePlacesStatus = 'missing_key'
+      }
+      
+      // Add Google Places metadata
+      ;(completeMetadata as any).googlePlacesUsed = googlePlacesStatus === 'success'
+      ;(completeMetadata as any).googlePlacesStatus = googlePlacesStatus
+      ;(completeMetadata as any).googlePlacesCount = googlePlacesCount
       
       // Set displaySummary (metadata set after cache decision)
       ;(analysis as any).displaySummary = displaySummary

@@ -46,6 +46,7 @@ export class ClaudeVerifierService {
     // Dynamically import Anthropic SDK only if enabled
     try {
       const AnthropicSDK = require('@anthropic-ai/sdk')
+      // DEP0169: url.parse() warning is from node-fetch@2.7.0 via @anthropic-ai/sdk@0.32.1 — safe to ignore until upgrade to 0.50.1+
       this.Anthropic = new AnthropicSDK.default({
         apiKey: this.apiKey,
       })

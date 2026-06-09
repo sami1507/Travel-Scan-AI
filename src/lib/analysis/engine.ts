@@ -705,277 +705,16 @@ export class TravelAnalysisEngine {
               ;(analysis as any).cacheStatus = 'REJECTED'
               ;(analysis as any).cacheRejectionReason = validation.reason
               
-              // Validate final recommendations before caching
-              const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
-              const validationIssuesBeforeRepair = [...finalValidation.validationIssues]
-              
-              // Initialize repair metadata
-              let repairAttempted = false
-              let repairPassed = false
-              let repairFailedReason: string | null = null
-              let repairDurationMs = 0
-              let repairTokens: { prompt: number; completion: number; total: number } | null = null
-              let replacementsApplied: string[] = []
-              
-              if (!finalValidation.valid) {
-                // Attempt OpenAI repair before falling back to deterministic replacement
-                repairAttempted = true
-                const repairResult = await this.repairInvalidOpenAIAnalysis(
-                  analysis,
-                  finalValidation.validationIssues,
-                  request,
-                  routeCandidatePool,
-                  analysisContext
-                )
-                
-                repairDurationMs = repairResult.repairDurationMs
-                repairTokens = repairResult.repairTokens
-                
-                if (repairResult.success && repairResult.repairedAnalysis) {
-                  // Validate repaired result
-                  const repairedValidation = this.validateFinalRecommendations(
-                    repairResult.repairedAnalysis,
-                    request,
-                    routeCandidatePool
-                  )
-                  
-                  if (repairedValidation.valid) {
-                    // Repair succeeded
-                    analysis = repairResult.repairedAnalysis
-                    repairPassed = true
-                    ;(analysis as any).analysisSource = 'openai_repaired'
-                    ;(analysis as any).deterministicFallbackUsed = false
-                    ;(analysis as any).candidatePoolUsedAsReplacement = false
-                    
-                    logger.info('OpenAI repair succeeded', {
-                      validationIssuesBeforeRepair,
-                      validationIssuesAfterRepair: repairedValidation.validationIssues,
-                      repairDurationMs,
-                      repairTokensUsed: repairTokens?.total,
-                    })
-                  } else {
-                    // Repair failed validation - use deterministic fallback
-                    repairFailedReason = 'repair_still_invalid'
-                    const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
-                    analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
-                    const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
-                    replacementsApplied = fallbackCountriesBefore
-                      .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
-                      .filter(Boolean) as string[]
-                    
-                    ;(analysis as any).analysisSource = 'fallback_deterministic'
-                    ;(analysis as any).deterministicFallbackUsed = true
-                    ;(analysis as any).candidatePoolUsedAsReplacement = true
-                    ;(analysis as any).replacementReason = 'repair_failed_validation'
-                    
-                    logger.warn('OpenAI repair failed validation, using deterministic fallback', {
-                      repairValidationIssues: repairedValidation.validationIssues,
-                      replacementsApplied,
-                    })
-                  }
-                } else {
-                  // Repair call failed - use deterministic fallback
-                  repairFailedReason = 'repair_call_failed'
-                  const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
-                  analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
-                  const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
-                  replacementsApplied = fallbackCountriesBefore
-                    .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
-                    .filter(Boolean) as string[]
-                  
-                  ;(analysis as any).analysisSource = 'fallback_deterministic'
-                  ;(analysis as any).deterministicFallbackUsed = true
-                  ;(analysis as any).candidatePoolUsedAsReplacement = true
-                  ;(analysis as any).replacementReason = 'repair_call_failed'
-                  
-                  logger.warn('OpenAI repair call failed, using deterministic fallback', {
-                    replacementsApplied,
-                  })
-                }
-              } else {
-                // Validation passed - no repair needed
-                ;(analysis as any).analysisSource = 'openai_primary'
-                ;(analysis as any).deterministicFallbackUsed = false
-                ;(analysis as any).candidatePoolUsedAsReplacement = false
-              }
-              
-              // Set common metadata
-              ;(analysis as any).finalScopeValidationPassed = finalValidation.valid || repairPassed
-              ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
-              ;(analysis as any).replacementsApplied = replacementsApplied
-              ;(analysis as any).openAIPrimaryUsed = true
-              ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
-              ;(analysis as any).openAIRepairUsed = repairPassed
-              ;(analysis as any).repairAttempted = repairAttempted
-              ;(analysis as any).repairPassed = repairPassed
-              ;(analysis as any).repairFailedReason = repairFailedReason
-              ;(analysis as any).repairDurationMs = repairDurationMs
-              ;(analysis as any).repairPromptTokens = repairTokens?.prompt ?? null
-              ;(analysis as any).repairCompletionTokens = repairTokens?.completion ?? null
-              ;(analysis as any).repairTotalTokens = repairTokens?.total ?? null
-              ;(analysis as any).validationIssuesBeforeRepair = validationIssuesBeforeRepair
-              ;(analysis as any).validationIssuesAfterRepair = repairPassed ? [] : validationIssuesBeforeRepair
-              
-              logger.info('Final recommendation validation and repair flow', {
-                initialValidationPassed: finalValidation.valid,
-                repairAttempted,
-                repairPassed,
-                repairFailedReason,
-                analysisSource: (analysis as any).analysisSource,
-                invalidDestinations: finalValidation.invalidDestinations,
-                replacementsApplied,
-                finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
-              })
-              
-              // DO NOT cache here - cache only after finalization
-              // Mark for potential caching later
-              if ((analysis as any).analysisSource === 'fallback_deterministic') {
-                ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
-                logger.info('Travel Analysis Cache: Will skip (deterministic fallback)', {
-                  reason: 'deterministic_fallback',
-                  invalidDestinations: finalValidation.invalidDestinations,
-                  replacementsApplied,
-                })
-              }
+              // Validate and repair analysis
+              analysis = await this.validateAndRepairAnalysis(analysis, request, routeCandidatePool, analysisContext)
             }
           } else {
             // Fetch fresh
             analysis = await fetchFresh()
             ;(analysis as any).cacheStatus = 'MISS'
             
-            // Validate final recommendations before caching
-            const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
-            const validationIssuesBeforeRepair = [...finalValidation.validationIssues]
-            
-            // Initialize repair metadata
-            let repairAttempted = false
-            let repairPassed = false
-            let repairFailedReason: string | null = null
-            let repairDurationMs = 0
-            let repairTokens: { prompt: number; completion: number; total: number } | null = null
-            let replacementsApplied: string[] = []
-            
-            if (!finalValidation.valid) {
-              // Attempt OpenAI repair before falling back to deterministic replacement
-              repairAttempted = true
-              const repairResult = await this.repairInvalidOpenAIAnalysis(
-                analysis,
-                finalValidation.validationIssues,
-                request,
-                routeCandidatePool,
-                analysisContext
-              )
-              
-              repairDurationMs = repairResult.repairDurationMs
-              repairTokens = repairResult.repairTokens
-              
-              if (repairResult.success && repairResult.repairedAnalysis) {
-                // Validate repaired result
-                const repairedValidation = this.validateFinalRecommendations(
-                  repairResult.repairedAnalysis,
-                  request,
-                  routeCandidatePool
-                )
-                
-                if (repairedValidation.valid) {
-                  // Repair succeeded
-                  analysis = repairResult.repairedAnalysis
-                  repairPassed = true
-                  ;(analysis as any).analysisSource = 'openai_repaired'
-                  ;(analysis as any).deterministicFallbackUsed = false
-                  ;(analysis as any).candidatePoolUsedAsReplacement = false
-                  
-                  logger.info('OpenAI repair succeeded', {
-                    validationIssuesBeforeRepair,
-                    validationIssuesAfterRepair: repairedValidation.validationIssues,
-                    repairDurationMs,
-                    repairTokensUsed: repairTokens?.total,
-                  })
-                } else {
-                  // Repair failed validation - use deterministic fallback
-                  repairFailedReason = 'repair_still_invalid'
-                  const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
-                  analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
-                  const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
-                  replacementsApplied = fallbackCountriesBefore
-                    .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
-                    .filter(Boolean) as string[]
-                  
-                  ;(analysis as any).analysisSource = 'fallback_deterministic'
-                  ;(analysis as any).deterministicFallbackUsed = true
-                  ;(analysis as any).candidatePoolUsedAsReplacement = true
-                  ;(analysis as any).replacementReason = 'repair_failed_validation'
-                  
-                  logger.warn('OpenAI repair failed validation, using deterministic fallback', {
-                    repairValidationIssues: repairedValidation.validationIssues,
-                    replacementsApplied,
-                  })
-                }
-              } else {
-                // Repair call failed - use deterministic fallback
-                repairFailedReason = 'repair_call_failed'
-                const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
-                analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
-                const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
-                replacementsApplied = fallbackCountriesBefore
-                  .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
-                  .filter(Boolean) as string[]
-                
-                ;(analysis as any).analysisSource = 'fallback_deterministic'
-                ;(analysis as any).deterministicFallbackUsed = true
-                ;(analysis as any).candidatePoolUsedAsReplacement = true
-                ;(analysis as any).replacementReason = 'repair_call_failed'
-                
-                logger.warn('OpenAI repair call failed, using deterministic fallback', {
-                  replacementsApplied,
-                })
-              }
-            } else {
-              // Validation passed - no repair needed
-              ;(analysis as any).analysisSource = 'openai_primary'
-              ;(analysis as any).deterministicFallbackUsed = false
-              ;(analysis as any).candidatePoolUsedAsReplacement = false
-            }
-            
-            // Set common metadata
-            ;(analysis as any).finalScopeValidationPassed = finalValidation.valid || repairPassed
-            ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
-            ;(analysis as any).replacementsApplied = replacementsApplied
-            ;(analysis as any).openAIPrimaryUsed = true
-            ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
-            ;(analysis as any).openAIRepairUsed = repairPassed
-            ;(analysis as any).repairAttempted = repairAttempted
-            ;(analysis as any).repairPassed = repairPassed
-            ;(analysis as any).repairFailedReason = repairFailedReason
-            ;(analysis as any).repairDurationMs = repairDurationMs
-            ;(analysis as any).repairPromptTokens = repairTokens?.prompt ?? null
-            ;(analysis as any).repairCompletionTokens = repairTokens?.completion ?? null
-            ;(analysis as any).repairTotalTokens = repairTokens?.total ?? null
-            ;(analysis as any).validationIssuesBeforeRepair = validationIssuesBeforeRepair
-            ;(analysis as any).validationIssuesAfterRepair = repairPassed ? [] : validationIssuesBeforeRepair
-            
-            logger.info('Final recommendation validation and repair flow', {
-              initialValidationPassed: finalValidation.valid,
-              repairAttempted,
-              repairPassed,
-              repairFailedReason,
-              analysisSource: (analysis as any).analysisSource,
-              invalidDestinations: finalValidation.invalidDestinations,
-              replacementsApplied,
-              finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
-            })
-            
-            // DO NOT cache here - cache only after finalization
-            // Mark for potential caching later
-            if ((analysis as any).analysisSource === 'fallback_deterministic') {
-              ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
-              ;(analysis as any).cachedResultType = null
-              logger.info('Travel Analysis Cache: Will skip (deterministic fallback)', {
-                reason: 'deterministic_fallback',
-                invalidDestinations: finalValidation.invalidDestinations,
-                replacementsApplied,
-              })
-            }
+            // Validate and repair analysis
+            analysis = await this.validateAndRepairAnalysis(analysis, request, routeCandidatePool, analysisContext)
           }
         }
       } catch (aiError) {
@@ -1373,6 +1112,8 @@ export class TravelAnalysisEngine {
         qualityGateResult: qualityGateInput,
         claudeResult: claudeInput,
         cacheInfo: cacheInfoInput,
+        openAIUsed: (analysis as any).openAIUsed ?? true,
+        fallbackUsed: (analysis as any).fallbackUsed ?? false,
       })
       
       // Replace analysis with finalized version
@@ -2054,6 +1795,151 @@ export class TravelAnalysisEngine {
     }
 
     return data
+  }
+
+  /**
+   * Validate and repair analysis with full metadata tracking
+   * Handles validation, OpenAI repair attempt, and deterministic fallback
+   */
+  private async validateAndRepairAnalysis(
+    analysis: TravelAnalysisResponse,
+    request: AnalysisRequest,
+    routeCandidatePool: RouteCandidate[],
+    analysisContext: string
+  ): Promise<TravelAnalysisResponse> {
+    // Validate final recommendations before caching
+    const finalValidation = this.validateFinalRecommendations(analysis, request, routeCandidatePool)
+    const validationIssuesBeforeRepair = [...finalValidation.validationIssues]
+    
+    // Initialize repair metadata
+    let repairAttempted = false
+    let repairPassed = false
+    let repairFailedReason: string | null = null
+    let repairDurationMs = 0
+    let repairTokens: { prompt: number; completion: number; total: number } | null = null
+    let replacementsApplied: string[] = []
+    
+    if (!finalValidation.valid) {
+      // Attempt OpenAI repair before falling back to deterministic replacement
+      repairAttempted = true
+      const repairResult = await this.repairInvalidOpenAIAnalysis(
+        analysis,
+        finalValidation.validationIssues,
+        request,
+        routeCandidatePool,
+        analysisContext
+      )
+      
+      repairDurationMs = repairResult.repairDurationMs
+      repairTokens = repairResult.repairTokens
+      
+      if (repairResult.success && repairResult.repairedAnalysis) {
+        // Validate repaired result
+        const repairedValidation = this.validateFinalRecommendations(
+          repairResult.repairedAnalysis,
+          request,
+          routeCandidatePool
+        )
+        
+        if (repairedValidation.valid) {
+          // Repair succeeded
+          analysis = repairResult.repairedAnalysis
+          repairPassed = true
+          ;(analysis as any).analysisSource = 'openai_repaired'
+          ;(analysis as any).deterministicFallbackUsed = false
+          ;(analysis as any).candidatePoolUsedAsReplacement = false
+          
+          logger.info('OpenAI repair succeeded', {
+            validationIssuesBeforeRepair,
+            validationIssuesAfterRepair: repairedValidation.validationIssues,
+            repairDurationMs,
+            repairTokensUsed: repairTokens?.total,
+          })
+        } else {
+          // Repair failed validation - use deterministic fallback
+          repairFailedReason = 'repair_still_invalid'
+          const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
+          analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
+          const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
+          replacementsApplied = fallbackCountriesBefore
+            .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
+            .filter(Boolean) as string[]
+          
+          ;(analysis as any).analysisSource = 'fallback_deterministic'
+          ;(analysis as any).deterministicFallbackUsed = true
+          ;(analysis as any).candidatePoolUsedAsReplacement = true
+          ;(analysis as any).replacementReason = 'repair_failed_validation'
+          
+          logger.warn('OpenAI repair failed validation, using deterministic fallback', {
+            repairValidationIssues: repairedValidation.validationIssues,
+            replacementsApplied,
+          })
+        }
+      } else {
+        // Repair call failed - use deterministic fallback
+        repairFailedReason = 'repair_call_failed'
+        const fallbackCountriesBefore = analysis.rankedDestinations.map(d => d.destinationName)
+        analysis = this.applyDeterministicFallback(analysis, finalValidation.invalidDestinations, routeCandidatePool)
+        const fallbackCountriesAfter = analysis.rankedDestinations.map(d => d.destinationName)
+        replacementsApplied = fallbackCountriesBefore
+          .map((before, i) => before !== fallbackCountriesAfter[i] ? `${before} → ${fallbackCountriesAfter[i]}` : null)
+          .filter(Boolean) as string[]
+        
+        ;(analysis as any).analysisSource = 'fallback_deterministic'
+        ;(analysis as any).deterministicFallbackUsed = true
+        ;(analysis as any).candidatePoolUsedAsReplacement = true
+        ;(analysis as any).replacementReason = 'repair_call_failed'
+        
+        logger.warn('OpenAI repair call failed, using deterministic fallback', {
+          replacementsApplied,
+        })
+      }
+    } else {
+      // Validation passed - no repair needed
+      ;(analysis as any).analysisSource = 'openai_primary'
+      ;(analysis as any).deterministicFallbackUsed = false
+      ;(analysis as any).candidatePoolUsedAsReplacement = false
+    }
+    
+    // Set common metadata
+    ;(analysis as any).finalScopeValidationPassed = finalValidation.valid || repairPassed
+    ;(analysis as any).invalidDestinations = finalValidation.invalidDestinations
+    ;(analysis as any).replacementsApplied = replacementsApplied
+    ;(analysis as any).openAIPrimaryUsed = true
+    ;(analysis as any).candidatePoolUsedAsContext = routeCandidatePool.length > 0
+    ;(analysis as any).openAIRepairUsed = repairPassed
+    ;(analysis as any).repairAttempted = repairAttempted
+    ;(analysis as any).repairPassed = repairPassed
+    ;(analysis as any).repairFailedReason = repairFailedReason
+    ;(analysis as any).repairDurationMs = repairDurationMs
+    ;(analysis as any).repairPromptTokens = repairTokens?.prompt ?? null
+    ;(analysis as any).repairCompletionTokens = repairTokens?.completion ?? null
+    ;(analysis as any).repairTotalTokens = repairTokens?.total ?? null
+    ;(analysis as any).validationIssuesBeforeRepair = validationIssuesBeforeRepair
+    ;(analysis as any).validationIssuesAfterRepair = repairPassed ? [] : validationIssuesBeforeRepair
+    
+    logger.info('Final recommendation validation and repair flow', {
+      initialValidationPassed: finalValidation.valid,
+      repairAttempted,
+      repairPassed,
+      repairFailedReason,
+      analysisSource: (analysis as any).analysisSource,
+      invalidDestinations: finalValidation.invalidDestinations,
+      replacementsApplied,
+      finalCountries: analysis.rankedDestinations.map(d => d.destinationName),
+    })
+    
+    // Mark for potential caching later
+    if ((analysis as any).analysisSource === 'fallback_deterministic') {
+      ;(analysis as any).cacheSkippedReason = 'deterministic_fallback'
+      logger.info('Travel Analysis Cache: Will skip (deterministic fallback)', {
+        reason: 'deterministic_fallback',
+        invalidDestinations: finalValidation.invalidDestinations,
+        replacementsApplied,
+      })
+    }
+    
+    return analysis
   }
 
   /**

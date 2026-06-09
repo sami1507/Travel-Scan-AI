@@ -144,6 +144,8 @@ export function finalizeAnalysisResult({
   qualityGateResult,
   claudeResult,
   cacheInfo,
+  openAIUsed,
+  fallbackUsed,
 }: {
   analysis: TravelAnalysisResponse
   request: AnalysisRequest
@@ -151,6 +153,8 @@ export function finalizeAnalysisResult({
   qualityGateResult: QualityGateResult
   claudeResult: ClaudeVerificationResult
   cacheInfo: CacheInfo
+  openAIUsed?: boolean
+  fallbackUsed?: boolean
 }): FinalizedAnalysis {
   
   // STEP 1: Compute final routes and countries
@@ -212,8 +216,8 @@ export function finalizeAnalysisResult({
     // Cache
     cacheStatus: cacheInfo.status,
     cacheEligible: cacheInfo.eligible,
-    openAIUsed: true,
-    fallbackUsed: false,
+    openAIUsed: openAIUsed ?? true,
+    fallbackUsed: fallbackUsed ?? false,
     
     // AI Decision Audit
     aiDecisionMode: determineAIDecisionMode(cacheInfo, qualityGateResult),
@@ -268,13 +272,21 @@ function computeFinalRoutes(analysis: TravelAnalysisResponse): Array<{
   
   for (const dest of analysis.rankedDestinations || []) {
     const cities = dest.suggestedRoute || []
-    const nights = dest.recommendedNights
+    const nightsRaw = dest.recommendedNights
+    
+    // Handle both object and array formats for recommendedNights
+    let nightsArray: number[] | undefined
+    if (Array.isArray(nightsRaw) && nightsRaw.length > 0) {
+      nightsArray = nightsRaw
+    } else if (nightsRaw && typeof nightsRaw === 'object' && !Array.isArray(nightsRaw)) {
+      nightsArray = Object.values(nightsRaw as Record<string, number>)
+    }
     
     if (cities.length > 0) {
       routes.push({
         country: dest.destinationName || 'Unknown',
         cities,
-        nights: Array.isArray(nights) && nights.length > 0 ? nights : undefined,
+        nights: nightsArray,
       })
     }
   }
@@ -434,7 +446,7 @@ function buildDisplaySummary({
   // Trip length text
   const tripLengthText = request.tripLength 
     ? `${request.tripLength}-day`
-    : 'multi-city'
+    : 'flexible-length'
   
   // Route type text
   const routeTypeText = recommendedRouteType

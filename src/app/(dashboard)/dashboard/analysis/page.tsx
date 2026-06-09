@@ -47,6 +47,8 @@ export default function AnalysisPage() {
   const [compareMode, setCompareMode] = useState(false)
   const [compareSelections, setCompareSelections] = useState<RankedDestination[]>([])
   const [showRevealBanner, setShowRevealBanner] = useState(false)
+  const [limitReached, setLimitReached] = useState(false)
+  const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number } | null>(null)
   const [queryContext, setQueryContext] = useState<{
     query: string
     departureCity?: string
@@ -91,6 +93,7 @@ export default function AnalysisPage() {
     setValidationErrors([])
     setLoading(true)
     setError(null)
+    setLimitReached(false)
     
     // Only clear analysis if not retrying
     if (!isRetry) {
@@ -118,6 +121,16 @@ export default function AnalysisPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
       })
+
+      if (response.status === 429) {
+        const errorData = await response.json()
+        if (errorData.code === 'LIMIT_REACHED') {
+          setLimitReached(true)
+          setLimitInfo({ used: errorData.analysesUsed, limit: errorData.analysesLimit })
+          setLoading(false)
+          return
+        }
+      }
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -343,6 +356,36 @@ export default function AnalysisPage() {
             </ul>
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Upgrade Prompt — shown when free limit reached */}
+      {limitReached && (
+        <Card className="border-2 border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-700">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">✈️</div>
+            <h3 className="text-xl font-bold mb-2">
+              You&apos;ve used all {limitInfo?.limit ?? 3} free analyses this month
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Upgrade to Pro for unlimited analyses, real-time research, and advanced route planning.
+            </p>
+            <Button
+              size="lg"
+              className="font-bold text-white border-0 shadow-lg"
+              style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
+              onClick={async () => {
+                const res = await fetch('/api/subscription/checkout', { method: 'POST' })
+                if (res.ok) {
+                  const { url } = await res.json()
+                  if (url) window.location.href = url
+                }
+              }}
+            >
+              Upgrade to Pro — $9/month
+            </Button>
+            <p className="text-xs text-muted-foreground mt-3">7-day free trial • Cancel anytime</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Error State */}

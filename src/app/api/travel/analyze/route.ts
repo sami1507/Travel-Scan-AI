@@ -6,6 +6,7 @@ import { logger } from '@/lib/utils'
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { validateRequest, schemas } from '@/lib/validation'
 import { errorTracker } from '@/lib/monitoring/error-tracker'
+import { canUserAnalyze, incrementAnalysisUsage } from '@/lib/services/subscription'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,21 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.ANALYSIS)
     if (rateLimitResponse) {
       return rateLimitResponse
+    }
+
+    // Subscription usage gate
+    const usageCheck = await canUserAnalyze(user.id)
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Analysis limit reached',
+          code: 'LIMIT_REACHED',
+          analysesUsed: usageCheck.analysesUsed,
+          analysesLimit: usageCheck.analysesLimit,
+          upgradeUrl: '/dashboard/pricing',
+        },
+        { status: 429 }
+      )
     }
 
     // Parse and validate request body
@@ -126,6 +142,9 @@ export async function POST(request: NextRequest) {
       excludeCountries,
       diversityMode,
     })
+
+    // Increment usage counter (non-blocking)
+    incrementAnalysisUsage(user.id).catch(() => {})
 
     // Track in history (async, don't block response)
     const { SavedItemsService } = await import('@/lib/services/saved-items')

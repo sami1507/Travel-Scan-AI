@@ -37,6 +37,7 @@ import { finalizeAnalysisResult, type QualityGateResult, type ClaudeVerification
 import { generateGlobalCandidates, type GlobalCandidate } from './global-candidate-generation'
 import { validateAnalysisContract } from './analysis-contract'
 import { enrichRouteCities, type NormalizedPlace } from '../services/google-places-service'
+import { searchTravelContext, type TravelSearchContext } from '../services/tavily-search'
 import { normalizeAllRecommendations, normalizeFinalRecommendation } from './normalize-recommendation'
 
 export interface AnalysisRequest {
@@ -143,6 +144,30 @@ export class TravelAnalysisEngine {
       let userPreferenceProfile: UserPreferenceProfile | null = null
       let isPersonalized = false
       let feedbackHistory: any[] = []
+
+      // Step 0b: Real-time web search via Tavily
+      let tavilyContext: TravelSearchContext | null = null
+      try {
+        const tavilyEnabled = process.env.TAVILY_API_KEY &&
+                              process.env.TAVILY_API_KEY.length > 10
+        if (tavilyEnabled) {
+          tavilyContext = await searchTravelContext({
+            destination: request.destination,
+            departureCity: request.departureCity,
+            budget: request.budget,
+            tripLength: request.tripLength,
+            travelMonths: request.travelMonths,
+            interests: request.interests,
+          })
+          if (tavilyContext.searchSuccess) {
+            logger.info('Tavily search completed', {
+              sourcesCount: tavilyContext.sources.length,
+            })
+          }
+        }
+      } catch (error) {
+        logger.warn('Tavily search failed, continuing without web context', error)
+      }
 
       // Step 0a: Load AI learning context (Phase 1)
       let learningContext: any = null
@@ -454,7 +479,8 @@ export class TravelAnalysisEngine {
         providerData,
         isPersonalized,
         personalizationExplanations,
-        routeAnalysis
+        routeAnalysis,
+        tavilyContext
       )
 
       // Step 7: Call OpenAI for structured analysis (with caching, resilience, and fallback)
@@ -1217,6 +1243,8 @@ export class TravelAnalysisEngine {
         travelDataSourceTypes: [...new Set(routeCandidatePool.map(r => r.sourceType).filter(Boolean))],
         travelDataConfidenceLevels: [...new Set(routeCandidatePool.map(r => r.confidenceLevel).filter(Boolean))],
         travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
+        tavilySearchUsed: tavilyContext?.searchSuccess ?? false,
+        tavilySourcesCount: tavilyContext?.sources.length ?? 0,
       }
       
       // Validate analysis contract
@@ -1459,7 +1487,8 @@ export class TravelAnalysisEngine {
     providerData: any,
     isPersonalized: boolean = false,
     personalizationExplanations: string[] = [],
-    routeAnalysis?: any
+    routeAnalysis?: any,
+    tavilyContext?: TravelSearchContext | null
   ): string {
     const sections: string[] = []
 
@@ -1657,6 +1686,26 @@ export class TravelAnalysisEngine {
         })
         sections.push('')
       }
+    }
+
+    if (tavilyContext?.searchSuccess) {
+      sections.push('=== REAL-TIME WEB RESEARCH ===')
+      sections.push('The following data was retrieved live from the web:')
+      if (tavilyContext.destinationOverview)
+        sections.push(`Destination Overview: ${tavilyContext.destinationOverview}`)
+      if (tavilyContext.budgetReality)
+        sections.push(`Real Budget Data: ${tavilyContext.budgetReality}`)
+      if (tavilyContext.bestTimeToVisit)
+        sections.push(`Best Time (real sources): ${tavilyContext.bestTimeToVisit}`)
+      if (tavilyContext.currentVisaInfo)
+        sections.push(`Visa Info: ${tavilyContext.currentVisaInfo}`)
+      if (tavilyContext.safetyAndAdvisories)
+        sections.push(`Safety: ${tavilyContext.safetyAndAdvisories}`)
+      if (tavilyContext.hiddenGems)
+        sections.push(`Local Tips: ${tavilyContext.hiddenGems}`)
+      if (tavilyContext.sources.length > 0)
+        sections.push(`Sources: ${tavilyContext.sources.slice(0, 3).join(', ')}`)
+      sections.push('')
     }
 
     sections.push('=== ANALYSIS INSTRUCTIONS ===')

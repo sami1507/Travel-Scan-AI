@@ -1,10 +1,29 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Brain, Info, TrendingUp, AlertCircle } from 'lucide-react'
 import type { TravelAnalysisResponse } from '@/lib/analysis/schemas'
 import { formatScore } from '@/lib/utils/format-score'
+
+function useTypewriter(text: string, speed: number = 30) {
+  const [displayed, setDisplayed] = useState('')
+  useEffect(() => {
+    setDisplayed('')
+    let i = 0
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        setDisplayed(text.slice(0, i + 1))
+        i++
+      } else {
+        clearInterval(interval)
+      }
+    }, speed)
+    return () => clearInterval(interval)
+  }, [text, speed])
+  return displayed
+}
 
 interface ConsultantBriefCardProps {
   analysis: TravelAnalysisResponse
@@ -108,6 +127,9 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
   const consultantExplanation = displaySummary?.querySummary || 
     `Because you want a ${getTripLengthText()} ${getTripStructureExplanation()} with ${getInterestsText()} interests, TravelScan compared routes that are realistic to reach, easy to connect, and not too exhausting. These are planning recommendations before booking, not final live prices.`
 
+  const typedExplanation = useTypewriter(consultantExplanation, 30)
+  const isTyping = typedExplanation.length < consultantExplanation.length
+
   return (
     <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 shadow-xl">
       <CardHeader className="pb-5">
@@ -118,7 +140,10 @@ export function ConsultantBriefCard({ analysis, queryContext, confidence }: Cons
               <CardTitle className="text-2xl font-bold">AI Travel Consultant Brief</CardTitle>
             </div>
             <CardDescription className="text-base leading-relaxed mb-4">
-              {consultantExplanation}
+              {typedExplanation}
+              {isTyping && (
+                <span className="animate-pulse font-normal text-primary ml-0.5">|</span>
+              )}
             </CardDescription>
             <div className="flex flex-wrap gap-2">
               <Badge variant={dataSource.variant} className="text-xs">

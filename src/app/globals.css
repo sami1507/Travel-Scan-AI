@@ -36,6 +36,14 @@
     --sky-blue: 213 94% 68%;
     --teal: 174 84% 40%;
     --sunset: 38 92% 50%;
+
+    /* Travel identity palette */
+    --travel-sunset: 22 100% 62%;
+    --travel-ocean: 199 89% 48%;
+    --travel-sand: 43 74% 66%;
+    --travel-forest: 152 45% 38%;
+    --travel-night: 230 35% 18%;
+    --travel-glow: 22 100% 62% / 0.15;
   }
 
   .dark {

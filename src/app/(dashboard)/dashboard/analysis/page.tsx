@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -45,6 +46,7 @@ export default function AnalysisPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [compareMode, setCompareMode] = useState(false)
   const [compareSelections, setCompareSelections] = useState<RankedDestination[]>([])
+  const [showRevealBanner, setShowRevealBanner] = useState(false)
   const [queryContext, setQueryContext] = useState<{
     query: string
     departureCity?: string
@@ -130,6 +132,8 @@ export default function AnalysisPage() {
       // Only set analysis if normalization succeeded
       if (normalizedAnalysis && Array.isArray(normalizedAnalysis.rankedDestinations)) {
         setAnalysis(normalizedAnalysis)
+        setShowRevealBanner(true)
+        setTimeout(() => setShowRevealBanner(false), 1500)
         // Set first recommendation as selected for itinerary display
         if (normalizedAnalysis.rankedDestinations.length > 0) {
           setSelectedDestination(normalizedAnalysis.rankedDestinations[0])
@@ -262,31 +266,64 @@ export default function AnalysisPage() {
 
   return (
     <div className="space-y-8">
-      {/* Premium Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 p-8 md:p-10 border border-primary/20 shadow-travel">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImRvdHMiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9ImhzbCgyMTcgOTElIDYwJSAvIDAuMSkiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZG90cykiLz48L3N2Zz4=')] opacity-40"></div>
+      {/* Hero Header */}
+      <div
+        className="relative overflow-hidden rounded-3xl p-8 md:p-10 shadow-2xl"
+        style={{
+          background: 'linear-gradient(135deg, hsl(230,35%,18%) 0%, hsl(199,89%,28%) 50%, hsl(22,100%,40%) 100%)',
+        }}
+      >
+        {/* Floating particles */}
+        {[0, 1, 2, 3, 4].map(i => (
+          <div
+            key={i}
+            className="absolute text-white/20 animate-float select-none pointer-events-none"
+            style={{
+              left: `${10 + i * 18}%`,
+              top: `${20 + (i % 3) * 25}%`,
+              fontSize: `${14 + (i % 3) * 6}px`,
+              animationDelay: `${i * 0.6}s`,
+              animationDuration: `${3 + i * 0.4}s`,
+            }}
+          >
+            ✈
+          </div>
+        ))}
         <div className="relative space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+            <Badge className="bg-[hsl(199,89%,48%)]/20 text-[hsl(199,89%,75%)] border-[hsl(199,89%,48%)]/40 border">
               <Brain className="h-3 w-3 mr-1" />
               AI-Powered
             </Badge>
-            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+            <Badge className="bg-[hsl(152,45%,38%)]/20 text-[hsl(152,45%,75%)] border-[hsl(152,45%,38%)]/40 border">
               <Shield className="h-3 w-3 mr-1" />
               Passport-Aware
             </Badge>
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+            <Badge className="bg-[hsl(22,100%,62%)]/20 text-[hsl(22,100%,80%)] border-[hsl(22,100%,62%)]/40 border">
               <Route className="h-3 w-3 mr-1" />
               Route Logic
             </Badge>
-            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+            <Badge className="bg-[hsl(43,74%,66%)]/20 text-[hsl(43,74%,85%)] border-[hsl(43,74%,66%)]/40 border">
               <Sparkles className="h-3 w-3 mr-1" />
               Smart Itineraries
             </Badge>
           </div>
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">AI Travel Consultant</h1>
-            <p className="text-lg text-foreground/80 max-w-3xl">
+            <h1
+              className="text-4xl md:text-5xl font-bold tracking-tight mb-2 bg-clip-text text-transparent"
+              style={{ backgroundImage: 'linear-gradient(90deg, hsl(22,100%,72%), hsl(199,89%,68%))' }}
+            >
+              AI Travel Consultant
+            </h1>
+            {/* Shimmer underline */}
+            <div
+              className="h-0.5 w-48 rounded-full mb-3 animate-shimmer"
+              style={{
+                background: 'linear-gradient(90deg, transparent, hsl(22,100%,62%), hsl(199,89%,48%), transparent)',
+                backgroundSize: '200% 100%',
+              }}
+            />
+            <p className="text-lg text-white/70 max-w-3xl">
               Understand where to go, why, when, and how — before you book
             </p>
           </div>
@@ -356,6 +393,31 @@ export default function AnalysisPage() {
       {/* Results */}
       {analysis && !loading && (
         <>
+          {/* Reveal Banner */}
+          <AnimatePresence>
+            {showRevealBanner && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="fixed top-16 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+              >
+                <div
+                  className="rounded-2xl py-4 px-8 text-center shadow-2xl pointer-events-auto w-full max-w-2xl"
+                  style={{ background: 'linear-gradient(135deg, hsl(230,35%,18%) 0%, hsl(199,89%,38%) 100%)' }}
+                >
+                  <p className="text-white font-semibold text-base">✈ Analysis Complete — Here are your top destinations</p>
+                  {(analysis as any)?.displaySummary?.querySummary && (
+                    <p className="text-white/70 text-sm mt-1 line-clamp-2">
+                      {(analysis as any).displaySummary.querySummary}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Emergency check for malformed analysis */}
           {!Array.isArray(analysis.rankedDestinations) || analysis.rankedDestinations.length === 0 ? (
             <Card className="border-orange-200 bg-orange-50">
@@ -557,11 +619,17 @@ export default function AnalysisPage() {
             sectionName="Consultant Brief"
             fallbackMessage="Consultant brief is temporarily unavailable, but your route recommendations are still available below."
           >
-            <ConsultantBriefCard 
-              analysis={analysis}
-              queryContext={queryContext}
-              confidence={analysis.confidence}
-            />
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 }}
+            >
+              <ConsultantBriefCard 
+                analysis={analysis}
+                queryContext={queryContext}
+                confidence={analysis.confidence}
+              />
+            </motion.div>
           </SectionErrorBoundary>
 
           {/* Why these 3 routes? */}
@@ -638,28 +706,40 @@ export default function AnalysisPage() {
             fallbackMessage="Route recommendations are temporarily unavailable. Please try refreshing the analysis."
           >
             <div>
-              <h2 className="text-3xl font-bold mb-6 animate-fade-up opacity-0">
-                Recommended Routes ({analysis.rankedDestinations.length})
-              </h2>
+              <div className="relative mb-6 inline-block">
+                <h2 className="text-3xl font-bold">
+                  Recommended Routes ({analysis.rankedDestinations.length})
+                </h2>
+                <motion.div
+                  className="absolute bottom-0 left-0 h-0.5 rounded-full"
+                  style={{ background: 'linear-gradient(90deg, hsl(22,100%,62%), hsl(199,89%,48%))' }}
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+                />
+              </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {analysis.rankedDestinations.slice(0, 3).map((destination, index) => {
-                  const delayClass = index === 0 ? 'delay-100' : index === 1 ? 'delay-200' : 'delay-300'
-                  return (
-                    <div
-                      key={destination.destinationId}
-                      className={`animate-scale-in opacity-0 ${delayClass}`}
-                    >
-                      <RouteFirstCard
-                        destination={destination}
-                        rank={index + 1}
-                        onViewDetails={() => setSelectedDestination(destination)}
-                        onSaveRoute={() => handleSaveDestination(destination)}
-                        queryContext={queryContext || undefined}
-                        analysisMeta={(analysis as any)?._meta}
-                      />
-                    </div>
-                  )
-                })}
+                {analysis.rankedDestinations.slice(0, 3).map((destination, index) => (
+                  <motion.div
+                    key={destination.destinationId}
+                    initial={
+                      index === 0 ? { opacity: 0, x: -30 } :
+                      index === 1 ? { opacity: 0, y: 30 } :
+                      { opacity: 0, x: 30 }
+                    }
+                    animate={{ opacity: 1, x: 0, y: 0 }}
+                    transition={{ duration: 0.5, delay: index === 0 ? 0.1 : index === 1 ? 0.3 : 0.5 }}
+                  >
+                    <RouteFirstCard
+                      destination={destination}
+                      rank={index + 1}
+                      onViewDetails={() => setSelectedDestination(destination)}
+                      onSaveRoute={() => handleSaveDestination(destination)}
+                      queryContext={queryContext || undefined}
+                      analysisMeta={(analysis as any)?._meta}
+                    />
+                  </motion.div>
+                ))}
               </div>
             </div>
           </SectionErrorBoundary>

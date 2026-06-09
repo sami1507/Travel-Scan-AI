@@ -22,7 +22,7 @@ export interface ClaudeVerifierConfig {
 export class ClaudeVerifierService {
   private enabled: boolean = false
   private apiKey?: string
-  private timeout: number = 3000 // 3 seconds max for production
+  private timeout: number = 8000 // 8 seconds max for production
   private Anthropic: any = null
   private model: string
 

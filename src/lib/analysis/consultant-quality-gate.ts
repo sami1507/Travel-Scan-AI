@@ -41,8 +41,11 @@ export function applyConsultantQualityGate(
   const issues: string[] = []
   let repaired = false
 
+  // Normalize spacing/text BEFORE checks — prevents false positives from OpenAI whitespace
+  const normalizedRecs = recommendations.map(rec => normalizeRecommendation(rec))
+
   // Check for generic phrases
-  recommendations.forEach((rec, index) => {
+  normalizedRecs.forEach((rec, index) => {
     const textToCheck = [
       rec.destinationSummary || '',
       ...rec.whyRecommended,
@@ -54,11 +57,6 @@ export function applyConsultantQualityGate(
         issues.push(`Recommendation ${index + 1} (${rec.destinationName}): Contains generic phrase matching ${pattern}`)
       }
     })
-
-    // Check for broken spacing
-    if (/\w\s\w(?=\s)/.test(textToCheck) || /\s{2,}/.test(textToCheck)) {
-      issues.push(`Recommendation ${index + 1}: Contains broken spacing`)
-    }
 
     // Check for concrete route
     if (!rec.suggestedRoute || rec.suggestedRoute.length === 0) {
@@ -72,21 +70,17 @@ export function applyConsultantQualityGate(
   })
 
   // Repair if issues found
-  let repairedRecommendations = recommendations
+  let repairedRecommendations = normalizedRecs
   if (issues.length > 0) {
     logger.warn('Consultant quality gate found issues', {
       issueCount: issues.length,
       issues: issues.slice(0, 5), // Log first 5
     })
 
-    repairedRecommendations = recommendations.map((rec, index) => {
-      const normalized = normalizeRecommendation(rec)
-      return repairRecommendation(normalized, request, index)
+    repairedRecommendations = normalizedRecs.map((rec, index) => {
+      return repairRecommendation(rec, request, index)
     })
     repaired = true
-  } else {
-    // Always apply text normalization even if no other issues
-    repairedRecommendations = recommendations.map(rec => normalizeRecommendation(rec))
   }
 
   const passed = issues.length === 0
@@ -163,7 +157,6 @@ function isGeneric(text: string): boolean {
 function normalizeText(text: string): string {
   return text
     .replace(/\s{2,}/g, ' ') // Collapse multiple spaces
-    .replace(/(\w)\s(\w)(?=\s)/g, '$1$2') // Fix broken words like "wi th" → "with"
     .trim()
 }
 

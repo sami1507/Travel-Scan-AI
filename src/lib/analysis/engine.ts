@@ -895,7 +895,7 @@ export class TravelAnalysisEngine {
           claudeModelUsed = claudeVerifier.getModel()
           logger.info('Running Claude accuracy verification on recommendations', {
             model: claudeModelUsed,
-            maxTimeout: 3000,
+            maxTimeout: 8000,
           })
           claudeVerifierUsed = true
           
@@ -923,7 +923,7 @@ export class TravelAnalysisEngine {
           
           // Race with 3-second timeout
           const timeoutPromise = new Promise<'timeout'>((resolve) => {
-            setTimeout(() => resolve('timeout'), 3000)
+            setTimeout(() => resolve('timeout'), 8000)
           })
           
           const result = await Promise.race([
@@ -1384,14 +1384,19 @@ export class TravelAnalysisEngine {
       analysis.querySummary = displaySummary.querySummary
       
       // Determine cache eligibility based on finalized quality AND contract
-      const cacheEligible = 
-        completeMetadata.finalQualityPassed &&
+      const qualityPassedOrRepaired =
+        completeMetadata.finalQualityPassed ||
+        (completeMetadata.consultantQualityScore >= 75 &&
+         completeMetadata.repairPassed === true)
+
+      const cacheEligible =
+        qualityPassedOrRepaired &&
         completeMetadata.consultantQualityScore >= 75 &&
         completeMetadata.scopeValidationPassed &&
         completeMetadata.openAIUsed &&
         !completeMetadata.fallbackUsed &&
-        contractResult.passed && // Contract must pass
-        contractResult.blockingIssues.length === 0 // No blocking issues
+        contractResult.passed &&
+        contractResult.blockingIssues.length === 0
       
       // Update completeMetadata with correct cacheEligible
       completeMetadata.cacheEligible = cacheEligible

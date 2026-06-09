@@ -74,6 +74,8 @@ export async function searchPlacesForCity(
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
           'X-Goog-FieldMask': FIELD_MASK,
+          'Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://travelscan.vercel.app',
+          'Origin': process.env.NEXT_PUBLIC_APP_URL || 'https://travelscan.vercel.app',
         },
         body: JSON.stringify({
           textQuery: `${category} in ${cityName}, ${countryName}`,

@@ -18,10 +18,18 @@ export default async function DashboardLayout({
       redirect("/login")
     }
 
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    const isAdmin = profile?.role === 'admin'
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-muted/20 to-background">
-        <DashboardNav user={user} />
-        <main className="container mx-auto px-4 lg:px-8 py-8 lg:py-10">
+        <DashboardNav user={user} isAdmin={isAdmin} />
+        <main className="container mx-auto px-4 lg:px-8 py-8 pb-24 lg:pb-10 lg:py-10">
           {children}
         </main>
       </div>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route, RefreshCw, Shuffle, Gem, DollarSign, Palmtree } from 'lucide-react'
+import { AlertTriangle, Info, TrendingUp, MapPin, Bookmark, GitCompare, Share2, Search, Sparkles, Brain, Shield, Compass, Route, RefreshCw, Shuffle, Gem, DollarSign, Palmtree, MessageCircle, ClipboardList, Download, Loader2 } from 'lucide-react'
 import { GuidedAnalysisForm } from '@/components/travel/guided-analysis-form'
 import { LoadingState } from '@/components/ui/loading-state'
 import { TravelLoading } from '@/components/ui/travel-loading'
@@ -33,6 +33,8 @@ import { AnalysisErrorBoundary } from '@/components/ui/analysis-error-boundary'
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary'
 import { clearAnalysisClientState } from '@/lib/analysis/clear-analysis-state'
 import { validateAnalysisRequest, sanitizeAnalysisRequest } from '@/lib/analysis/validate-analysis-request'
+import { ChatAnalysis } from '@/components/travel/chat-analysis'
+import { cn } from '@/lib/utils'
 
 export default function AnalysisPage() {
   const [loading, setLoading] = useState(false)
@@ -49,6 +51,8 @@ export default function AnalysisPage() {
   const [showRevealBanner, setShowRevealBanner] = useState(false)
   const [limitReached, setLimitReached] = useState(false)
   const [limitInfo, setLimitInfo] = useState<{ used: number; limit: number } | null>(null)
+  const [mode, setMode] = useState<'chat' | 'form'>('chat')
+  const [exportingPDF, setExportingPDF] = useState(false)
   const [queryContext, setQueryContext] = useState<{
     query: string
     departureCity?: string
@@ -203,6 +207,30 @@ export default function AnalysisPage() {
     })
   }
 
+  const handleExportPDF = async () => {
+    if (!analysis) return
+    setExportingPDF(true)
+    try {
+      const response = await fetch('/api/export/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analysis, queryContext }),
+      })
+      if (!response.ok) throw new Error('PDF generation failed')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `travelscan-${Date.now()}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('PDF export error:', err)
+    } finally {
+      setExportingPDF(false)
+    }
+  }
+
   const handleSaveDestination = async (destination: RankedDestination) => {
     try {
       await fetch('/api/saved/destinations', {
@@ -343,6 +371,34 @@ export default function AnalysisPage() {
         </div>
       </div>
 
+      {/* Mode toggle tabs */}
+      <div className="flex rounded-xl border border-border bg-muted/30 p-1 w-fit">
+        <button
+          onClick={() => setMode('chat')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            mode === 'chat'
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <MessageCircle className="h-4 w-4" />
+          Chat Mode
+        </button>
+        <button
+          onClick={() => setMode('form')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            mode === 'form'
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <ClipboardList className="h-4 w-4" />
+          Form Mode
+        </button>
+      </div>
+
       {/* Validation Errors */}
       {validationErrors.length > 0 && (
         <Alert className="border-orange-200 bg-orange-50">
@@ -409,28 +465,51 @@ export default function AnalysisPage() {
         />
       )}
 
-      {/* Form */}
-      {(!analysis || error) && (
-        <GuidedAnalysisForm
-          onSubmit={handleAnalyze}
-          loading={loading}
+      {/* Chat mode */}
+      {mode === 'chat' && (
+        <ChatAnalysis
+          onAnalysisComplete={(result) => {
+            setAnalysis(result)
+            setLoading(false)
+            setError(null)
+            setLimitReached(false)
+          }}
         />
       )}
 
-      {/* Loading State */}
-      {loading && (
+      {/* Form mode */}
+      {mode === 'form' && (
+        <>
+          {(!analysis || error) && (
+            <GuidedAnalysisForm
+              onSubmit={handleAnalyze}
+              loading={loading}
+            />
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="py-12">
+              <AnalysisLoadingExperience />
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && !analysis && (
+            <EmptyState
+              icon={Search}
+              title="Ready to explore?"
+              description="Enter your travel preferences above to get AI-powered destination recommendations with intelligent route planning."
+            />
+          )}
+        </>
+      )}
+
+      {/* Loading State for chat mode */}
+      {mode === 'chat' && loading && (
         <div className="py-12">
           <AnalysisLoadingExperience />
         </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && !error && !analysis && (
-        <EmptyState
-          icon={Search}
-          title="Ready to explore?"
-          description="Enter your travel preferences above to get AI-powered destination recommendations with intelligent route planning."
-        />
       )}
 
       {/* Results */}
@@ -530,6 +609,18 @@ export default function AnalysisPage() {
             <Button variant="outline" onClick={() => setShareDialogOpen(true)} className="group border-2 hover:border-primary/50 transition-all hover:-translate-y-0.5">
               <Share2 className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
               Share
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportPDF}
+              disabled={exportingPDF}
+              className="group border-2 hover:border-primary/50 transition-all hover:-translate-y-0.5"
+            >
+              {exportingPDF ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating PDF...</>
+              ) : (
+                <><Download className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />Export PDF</>
+              )}
             </Button>
             <Button
               onClick={() => {

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Brain, Bell, LogOut, TrendingUp, Compass, User, Bookmark, BarChart2, ShieldCheck, Plane } from "lucide-react"
+import { Bell, LogOut, TrendingUp, User, Bookmark, BarChart2, ShieldCheck, Plane } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -47,8 +47,8 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
             {/* Left: logo + nav */}
             <div className="flex items-center gap-6 lg:gap-8">
               <Link href="/dashboard/analysis" className="flex items-center gap-2.5 shrink-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-md shadow-primary/20">
-                  <Brain className="h-4 w-4 text-primary-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl shadow-md shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}>
+                  <Plane className="h-4 w-4 text-white" />
                 </div>
                 <span className="font-bold text-base hidden sm:inline">TravelScan</span>
               </Link>
@@ -67,7 +67,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                         className={cn(
                           "gap-2 h-9 px-3 font-medium transition-all duration-150",
                           active
-                            ? "bg-secondary text-secondary-foreground opacity-100 shadow-sm"
+                            ? "opacity-100 shadow-sm bg-[hsl(199,89%,68%)]/15 text-[hsl(199,60%,35%)]"
                             : "opacity-80 hover:opacity-100 hover:bg-accent"
                         )}
                       >
@@ -93,7 +93,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                         className={cn(
                           "gap-1.5 h-8 px-2.5 transition-all duration-150",
                           active
-                            ? "bg-secondary text-secondary-foreground opacity-100 shadow-sm font-medium"
+                            ? "opacity-100 shadow-sm font-medium bg-[hsl(199,89%,68%)]/15 text-[hsl(199,60%,35%)]"
                             : "opacity-60 hover:opacity-80 hover:bg-accent font-normal"
                         )}
                       >
@@ -113,7 +113,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                       className={cn(
                         "gap-1.5 h-8 px-2.5 transition-all duration-150",
                         isActive("/dashboard/admin")
-                          ? "bg-secondary text-secondary-foreground opacity-100 shadow-sm font-medium"
+                          ? "opacity-100 shadow-sm font-medium bg-[hsl(199,89%,68%)]/15 text-[hsl(199,60%,35%)]"
                           : "opacity-60 hover:opacity-80 hover:bg-accent font-normal"
                       )}
                     >
@@ -152,15 +152,15 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                 className={cn(
                   "flex flex-1 flex-col items-center justify-center gap-1 text-xs font-medium transition-all duration-150",
                   active
-                    ? "text-primary opacity-100"
+                    ? "opacity-100 text-[hsl(22,100%,62%)]"
                     : "text-muted-foreground opacity-70 hover:opacity-90"
                 )}
               >
                 <div className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-xl transition-all",
-                  active ? "bg-primary/10" : ""
+                  active ? "bg-[hsl(22,100%,62%)]/10 rounded-xl" : ""
                 )}>
-                  <Icon className={cn("h-5 w-5", active ? "text-primary" : "")} />
+                  <Icon className="h-5 w-5" style={active ? { color: 'hsl(22,100%,62%)' } : {}} />
                 </div>
                 <span>{item.label}</span>
               </Link>

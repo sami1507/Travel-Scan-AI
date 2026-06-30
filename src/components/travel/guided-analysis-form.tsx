@@ -228,18 +228,19 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
                     currentStep === step
-                      ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                      ? 'text-white ring-4 ring-[hsl(22,100%,62%)]/25'
                       : currentStep > step
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'text-white'
                       : 'bg-muted text-muted-foreground'
                   }`}
+                  style={currentStep >= step ? { background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' } : {}}
                 >
                   {currentStep > step ? <Check className="h-5 w-5" /> : step}
                 </div>
                 {step < 4 && (
                   <div
                     className={`w-12 md:w-20 h-1 mx-2 transition-all ${
-                      currentStep > step ? 'bg-primary' : 'bg-muted'
+                      currentStep > step ? 'bg-[hsl(22,100%,62%)]' : 'bg-muted'
                     }`}
                   />
                 )}
@@ -321,7 +322,8 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     onClick={goToNextStep}
                     disabled={!canGoToStep2}
                     size="lg"
-                    className="min-w-[200px]"
+                    className="min-w-[200px] border-0 text-white shadow-orange-200"
+                    style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
                     Next <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -441,7 +443,8 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     onClick={goToNextStep}
                     disabled={!canGoToStep3}
                     size="lg"
-                    className="min-w-[200px]"
+                    className="min-w-[200px] border-0 text-white shadow-orange-200"
+                    style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
                     Next <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -480,13 +483,13 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                           disabled={loading}
                           className={`p-5 rounded-lg border-2 transition-all text-left relative ${
                             tripStructure === structure.value
-                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                              : 'border-input hover:border-primary/50'
+                              ? 'border-[hsl(199,89%,68%)] bg-[hsl(199,89%,68%)]/8 ring-2 ring-[hsl(199,89%,68%)]/25'
+                              : 'border-input hover:border-[hsl(199,89%,68%)]/50'
                           }`}
                         >
                           {tripStructure === structure.value && (
                             <div className="absolute top-3 right-3">
-                              <Check className="h-5 w-5 text-primary" />
+                              <Check className="h-5 w-5" style={{ color: 'hsl(22,100%,62%)' }} />
                             </div>
                           )}
                           <div className="text-3xl mb-3">{structure.icon}</div>
@@ -511,8 +514,8 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                           disabled={loading}
                           className={`px-4 py-2 rounded-full border-2 transition-all flex items-center gap-2 ${
                             travelStyles.includes(style.value)
-                              ? 'border-primary bg-primary/5 text-primary font-medium'
-                              : 'border-input hover:border-primary/50'
+                              ? 'border-[hsl(199,89%,68%)] bg-[hsl(199,89%,68%)]/8 text-[hsl(199,60%,35%)] font-medium'
+                              : 'border-input hover:border-[hsl(199,89%,68%)]/50'
                           }`}
                         >
                           <span className="text-lg">{style.icon}</span>
@@ -537,7 +540,8 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     onClick={goToNextStep}
                     disabled={!canGoToStep4}
                     size="lg"
-                    className="min-w-[200px]"
+                    className="min-w-[200px] border-0 text-white shadow-orange-200"
+                    style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
                     Next <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -574,13 +578,13 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                         disabled={loading}
                         className={`p-6 rounded-lg border-2 transition-all text-left relative ${
                           budget === 'budget'
-                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                            : 'border-input hover:border-primary/50'
+                            ? 'border-[hsl(199,89%,68%)] bg-[hsl(199,89%,68%)]/8 ring-2 ring-[hsl(199,89%,68%)]/25'
+                            : 'border-input hover:border-[hsl(199,89%,68%)]/50'
                         }`}
                       >
                         {budget === 'budget' && (
                           <div className="absolute top-3 right-3">
-                            <Check className="h-5 w-5 text-primary" />
+                            <Check className="h-5 w-5" style={{ color: 'hsl(22,100%,62%)' }} />
                           </div>
                         )}
                         <div className="text-3xl mb-2">💰</div>
@@ -594,13 +598,13 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                         disabled={loading}
                         className={`p-6 rounded-lg border-2 transition-all text-left relative ${
                           budget === 'moderate'
-                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                            : 'border-input hover:border-primary/50'
+                            ? 'border-[hsl(199,89%,68%)] bg-[hsl(199,89%,68%)]/8 ring-2 ring-[hsl(199,89%,68%)]/25'
+                            : 'border-input hover:border-[hsl(199,89%,68%)]/50'
                         }`}
                       >
                         {budget === 'moderate' && (
                           <div className="absolute top-3 right-3">
-                            <Check className="h-5 w-5 text-primary" />
+                            <Check className="h-5 w-5" style={{ color: 'hsl(22,100%,62%)' }} />
                           </div>
                         )}
                         <div className="text-3xl mb-2">💵</div>
@@ -614,13 +618,13 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                         disabled={loading}
                         className={`p-6 rounded-lg border-2 transition-all text-left relative ${
                           budget === 'comfortable'
-                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                            : 'border-input hover:border-primary/50'
+                            ? 'border-[hsl(199,89%,68%)] bg-[hsl(199,89%,68%)]/8 ring-2 ring-[hsl(199,89%,68%)]/25'
+                            : 'border-input hover:border-[hsl(199,89%,68%)]/50'
                         }`}
                       >
                         {budget === 'comfortable' && (
                           <div className="absolute top-3 right-3">
-                            <Check className="h-5 w-5 text-primary" />
+                            <Check className="h-5 w-5" style={{ color: 'hsl(22,100%,62%)' }} />
                           </div>
                         )}
                         <div className="text-3xl mb-2">💳</div>
@@ -634,13 +638,13 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                         disabled={loading}
                         className={`p-6 rounded-lg border-2 transition-all text-left relative ${
                           budget === 'luxury'
-                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                            : 'border-input hover:border-primary/50'
+                            ? 'border-[hsl(199,89%,68%)] bg-[hsl(199,89%,68%)]/8 ring-2 ring-[hsl(199,89%,68%)]/25'
+                            : 'border-input hover:border-[hsl(199,89%,68%)]/50'
                         }`}
                       >
                         {budget === 'luxury' && (
                           <div className="absolute top-3 right-3">
-                            <Check className="h-5 w-5 text-primary" />
+                            <Check className="h-5 w-5" style={{ color: 'hsl(22,100%,62%)' }} />
                           </div>
                         )}
                         <div className="text-3xl mb-2">💎</div>
@@ -678,7 +682,8 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     type="submit"
                     disabled={loading || !isFormValid}
                     size="lg"
-                    className="min-w-[250px] h-12"
+                    className="min-w-[250px] h-12 border-0 text-white shadow-orange-200"
+                    style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
                     {loading ? (
                       <>

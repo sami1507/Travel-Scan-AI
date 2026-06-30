@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Brain, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Plane, AlertCircle, CheckCircle2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function UpdatePasswordPage() {
@@ -92,11 +92,12 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-gradient-to-br from-primary/5 via-background to-background">
+    <div className="min-h-screen flex items-center justify-center p-8 bg-gradient-to-br from-[hsl(22,100%,62%)]/5 via-background to-background relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-flex items-center gap-2.5 mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-            <Brain className="h-5 w-5 text-primary-foreground" />
+        <Link href="/" className="inline-flex items-center gap-2.5 mb-8 relative">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}>
+            <Plane className="h-5 w-5 text-white" />
           </div>
           <span className="text-xl font-bold">TravelScan</span>
         </Link>
@@ -124,7 +125,7 @@ export default function UpdatePasswordPage() {
               </div>
 
               <Link href="/reset-password">
-                <Button className="w-full">
+                <Button className="w-full border-0 text-white shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}>
                   Request new reset link
                 </Button>
               </Link>
@@ -184,7 +185,8 @@ export default function UpdatePasswordPage() {
 
               <Button 
                 type="submit" 
-                className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20" 
+                className="w-full h-11 text-base font-semibold border-0 text-white shadow-lg shadow-orange-200" 
+                style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                 disabled={loading || !validSession}
               >
                 {loading ? "Updating password..." : "Update password"}

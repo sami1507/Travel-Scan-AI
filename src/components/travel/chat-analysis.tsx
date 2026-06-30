@@ -181,7 +181,7 @@ export function ChatAnalysis({ onAnalysisComplete }: ChatAnalysisProps) {
         {isProcessing && (
           <div className="flex items-end gap-2">
             <BotAvatar />
-            <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-3">
+            <div className="rounded-2xl rounded-bl-sm bg-[hsl(199,89%,68%)]/10 px-4 py-3">
               <div className="flex gap-1 items-center h-5">
                 {[0, 1, 2].map(i => (
                   <span
@@ -207,7 +207,7 @@ export function ChatAnalysis({ onAnalysisComplete }: ChatAnalysisProps) {
               onClick={() =>
                 runAnalysis({ ...lastParams, diversityMode: qr.diversityMode }, true)
               }
-              className="text-xs font-medium px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+              className="text-xs font-medium px-3 py-1.5 rounded-full border border-[hsl(199,89%,68%)]/40 bg-[hsl(199,89%,68%)]/8 text-[hsl(199,60%,35%)] hover:bg-[hsl(199,89%,68%)]/15 transition-colors"
             >
               {qr.label}
             </button>
@@ -226,13 +226,14 @@ export function ChatAnalysis({ onAnalysisComplete }: ChatAnalysisProps) {
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Tell me about your dream trip…"
             disabled={isProcessing}
-            className="flex-1 rounded-xl border border-border bg-muted/30 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 disabled:opacity-50 transition-all"
+            className="flex-1 rounded-xl border border-border bg-muted/30 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[hsl(199,89%,68%)]/40 focus:border-[hsl(199,89%,68%)]/50 disabled:opacity-50 transition-all"
           />
           <Button
             size="sm"
             onClick={handleSend}
             disabled={!input.trim() || isProcessing}
-            className="h-10 w-10 p-0 rounded-xl shrink-0"
+            className="h-10 w-10 p-0 rounded-xl shrink-0 border-0 text-white"
+            style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -244,8 +245,8 @@ export function ChatAnalysis({ onAnalysisComplete }: ChatAnalysisProps) {
 
 function BotAvatar() {
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-      <Plane className="h-4 w-4 text-primary" />
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[hsl(199,89%,68%)]/15">
+      <Plane className="h-4 w-4" style={{ color: 'hsl(199,60%,35%)' }} />
     </div>
   )
 }
@@ -264,9 +265,10 @@ function MessageBubble({ message }: { message: ChatMsg }) {
         className={cn(
           'max-w-[82%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap leading-relaxed',
           isUser
-            ? 'rounded-br-sm bg-primary text-primary-foreground'
-            : 'rounded-bl-sm bg-muted text-foreground',
+            ? 'rounded-br-sm text-white'
+            : 'rounded-bl-sm text-foreground bg-[hsl(199,89%,68%)]/10',
         )}
+        style={isUser ? { background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' } : {}}
       >
         {message.content}
       </div>
@@ -294,7 +296,7 @@ function AnalysisResultCard({ analysis }: { analysis: TravelAnalysisResponse }) 
                   key={dest.destinationId ?? i}
                   className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/70 p-3"
                 >
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}>
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">

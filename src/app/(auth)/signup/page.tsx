@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Brain, Shield, Zap, CheckCircle2 } from "lucide-react"
+import { Plane, Shield, Zap, CheckCircle2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function SignupPage() {
@@ -79,11 +79,12 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left Panel - Form */}
-      <div className="flex items-center justify-center p-8 lg:p-12">
+      <div className="flex items-center justify-center p-8 lg:p-12 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
         <div className="w-full max-w-md">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-              <Brain className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}>
+              <Plane className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold">TravelScan</span>
           </Link>
@@ -148,7 +149,7 @@ export default function SignupPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20" disabled={loading || success}>
+            <Button type="submit" className="w-full h-11 text-base font-semibold border-0 text-white shadow-lg shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} disabled={loading || success}>
               {loading ? "Creating your account..." : success ? "Success!" : "Create account"}
             </Button>
           </form>
@@ -166,7 +167,7 @@ export default function SignupPage() {
       </div>
 
       {/* Right Panel - Trust Elements */}
-      <div className="hidden lg:flex flex-col justify-center p-12 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-l">
+      <div className="hidden lg:flex flex-col justify-center p-12 bg-gradient-to-br from-[hsl(199,89%,68%)]/10 via-[hsl(22,100%,62%)]/5 to-background border-l">
         <div className="max-w-md">
           <h2 className="text-3xl font-bold mb-6">Start your journey</h2>
           <p className="text-lg text-muted-foreground mb-12">
@@ -175,8 +176,8 @@ export default function SignupPage() {
 
           <div className="space-y-6">
             <div className="flex gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <Zap className="h-6 w-6 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl shrink-0" style={{ background: 'hsl(199,89%,68%,0.15)' }}>
+                <Zap className="h-6 w-6" style={{ color: 'hsl(199,60%,35%)' }} />
               </div>
               <div>
                 <h3 className="font-semibold mb-1">Real-time monitoring</h3>
@@ -185,8 +186,8 @@ export default function SignupPage() {
             </div>
 
             <div className="flex gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <Shield className="h-6 w-6 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl shrink-0" style={{ background: 'hsl(199,89%,68%,0.15)' }}>
+                <Shield className="h-6 w-6" style={{ color: 'hsl(199,60%,35%)' }} />
               </div>
               <div>
                 <h3 className="font-semibold mb-1">Secure & private</h3>
@@ -195,8 +196,8 @@ export default function SignupPage() {
             </div>
 
             <div className="flex gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl shrink-0" style={{ background: 'hsl(199,89%,68%,0.15)' }}>
+                <CheckCircle2 className="h-6 w-6" style={{ color: 'hsl(199,60%,35%)' }} />
               </div>
               <div>
                 <h3 className="font-semibold mb-1">Smart alerts</h3>

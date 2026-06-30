@@ -39,6 +39,8 @@ import { validateAnalysisContract } from './analysis-contract'
 import { enrichRouteCities, type NormalizedPlace } from '../services/google-places-service'
 import { searchTravelContext, type TravelSearchContext } from '../services/tavily-search'
 import { normalizeAllRecommendations, normalizeFinalRecommendation } from './normalize-recommendation'
+import { estimatePricing } from '../services/price-estimation'
+import type { FlightData, HotelData } from '../providers/interfaces'
 
 export interface AnalysisRequest {
   query: string
@@ -1245,6 +1247,8 @@ export class TravelAnalysisEngine {
         travelDataFallbackUsed: routeCandidatePool.length > 0 && !routeCandidatePool.some(r => r.sourceType === 'curated_route_knowledge'),
         tavilySearchUsed: tavilyContext?.searchSuccess ?? false,
         tavilySourcesCount: tavilyContext?.sources.length ?? 0,
+        priceEstimationUsed: providerData.priceEstimationUsed ?? false,
+        priceEstimationConfidence: providerData.priceEstimationConfidence ?? null,
       }
       
       // Validate analysis contract
@@ -1546,28 +1550,33 @@ export class TravelAnalysisEngine {
     })
 
     sections.push('=== PROVIDER DATA ===')
-    sections.push('Note: Weather=structured, Currency=structured, Visa=knowledge-based, Flights/Hotels=demo (estimated)')
+    const flightHotelSource = providerData.priceEstimationUsed
+      ? `AI-estimated from Tavily web search (confidence: ${providerData.priceEstimationConfidence ?? 'low'})`
+      : 'live API data'
+    sections.push(`Note: Weather=structured, Currency=structured, Visa=knowledge-based, Flights/Hotels=${flightHotelSource}`)
     sections.push('')
-    
+
     // Flight data summary
     if (providerData.flights && providerData.flights.length > 0) {
       const cheapest = providerData.flights.reduce((min: any, f: any) => f.price < min.price ? f : min, providerData.flights[0])
-      sections.push(`Flights: ${providerData.flights.length} options found`)
-      sections.push(`  Cheapest: $${Math.round(cheapest.price)} (${cheapest.stops} stops, ${cheapest.airline})`)
-      sections.push(`  Source: demo (estimated pricing)`)
+      const mostExpensive = providerData.flights.reduce((max: any, f: any) => f.price > max.price ? f : max, providerData.flights[0])
+      const flightSrc = cheapest.source === 'ai_estimated' ? 'AI-estimated from Tavily web search' : 'live API data'
+      sections.push(`Flights: estimated price range $${Math.round(cheapest.price)}–$${Math.round(mostExpensive.price)} USD (round trip)`)
+      if (cheapest.source === 'ai_estimated' && providerData.flights.some((f: any) => f.airline && !f.airline.includes('(est.)'))) {
+        const airlines = [...new Set(providerData.flights.map((f: any) => f.airline).filter((a: string) => !a.includes('(est.)')))]
+        if (airlines.length > 0) sections.push(`  Typical airlines: ${airlines.join(', ')}`)
+      }
+      sections.push(`  Source: ${flightSrc}`)
       sections.push('')
     }
-    
+
     // Hotel data summary
     if (providerData.hotels && providerData.hotels.length > 0) {
-      const bestValue = providerData.hotels.reduce((best: any, h: any) => {
-        const hValue = h.rating / (h.pricePerNight / 100)
-        const bestV = best.rating / (best.pricePerNight / 100)
-        return hValue > bestV ? h : best
-      }, providerData.hotels[0])
-      sections.push(`Hotels: ${providerData.hotels.length} options found`)
-      sections.push(`  Best Value: ${bestValue.name} - $${Math.round(bestValue.pricePerNight)}/night (${bestValue.rating.toFixed(1)}★)`)
-      sections.push(`  Source: demo (estimated pricing)`)
+      const cheapestHotel = providerData.hotels.reduce((min: any, h: any) => h.pricePerNight < min.pricePerNight ? h : min, providerData.hotels[0])
+      const mostExpensiveHotel = providerData.hotels.reduce((max: any, h: any) => h.pricePerNight > max.pricePerNight ? h : max, providerData.hotels[0])
+      const hotelSrc = cheapestHotel.source === 'ai_estimated' ? 'AI-estimated from Tavily web search' : 'live API data'
+      sections.push(`Hotels: estimated price range $${Math.round(cheapestHotel.pricePerNight)}–$${Math.round(mostExpensiveHotel.pricePerNight)}/night`)
+      sections.push(`  Source: ${hotelSrc}`)
       sections.push('')
     }
     
@@ -1756,6 +1765,8 @@ export class TravelAnalysisEngine {
       visa: [],
       events: null,
       providerScores: new Map<string, { flightValue?: number; hotelValue?: number }>(),
+      priceEstimationUsed: false,
+      priceEstimationConfidence: null as 'high' | 'medium' | 'low' | null,
     }
 
     // Gather data for top 5 destinations
@@ -1763,57 +1774,115 @@ export class TravelAnalysisEngine {
       const dest = topDestinations[i]
 
       try {
-        // Real flight data from Duffel API (with error handling)
+        // Flight data: try real Duffel API first, fall back to AI price estimation
         try {
-          // Use departureCity parameter, fallback to extracting from query, or default to NYC
           const origin = departureCity || (query ? this.extractDepartureCity(query) : null) || 'NYC'
-          
-          const flights = await this.flightsProvider.searchFlights(
+          const tripLen = 7
+
+          let flights = await this.flightsProvider.searchFlights(
             origin,
             dest.destinationName,
             new Date().toISOString().split('T')[0]
           )
-          
-          if (i === 0) {
-            data.flights = flights // Store for first destination
+
+          // If real provider returned nothing, use AI-estimated pricing
+          if (flights.length === 0) {
+            const estimate = await estimatePricing(origin, dest.destinationName, budget, tripLen)
+            const mid = Math.round((estimate.flightPriceRange.min + estimate.flightPriceRange.max) / 2)
+            flights = [
+              {
+                origin, destination: dest.destinationName,
+                departureDate: new Date().toISOString().split('T')[0],
+                price: estimate.flightPriceRange.min,
+                currency: estimate.flightPriceRange.currency,
+                airline: estimate.flightTypicalAirlines[0] || 'Budget carrier (est.)',
+                duration: 480, stops: 1, source: 'ai_estimated',
+              },
+              {
+                origin, destination: dest.destinationName,
+                departureDate: new Date().toISOString().split('T')[0],
+                price: mid,
+                currency: estimate.flightPriceRange.currency,
+                airline: estimate.flightTypicalAirlines[1] || 'Major carrier (est.)',
+                duration: 420, stops: 0, source: 'ai_estimated',
+              },
+              {
+                origin, destination: dest.destinationName,
+                departureDate: new Date().toISOString().split('T')[0],
+                price: estimate.flightPriceRange.max,
+                currency: estimate.flightPriceRange.currency,
+                airline: estimate.flightTypicalAirlines[2] || 'Premium carrier (est.)',
+                duration: 360, stops: 0, source: 'ai_estimated',
+              },
+            ] as FlightData[]
+            data.priceEstimationUsed = true
+            if (!data.priceEstimationConfidence || estimate.confidence === 'high') {
+              data.priceEstimationConfidence = estimate.confidence
+            }
           }
 
-          // Calculate flight value score
+          if (i === 0) {
+            data.flights = flights
+          }
+
           const flightValueScore = this.flightsProvider.getFlightValueScore(flights, budget)
-          
-          data.providerScores.set(dest.destinationId, {
-            flightValue: flightValueScore,
-          })
+          data.providerScores.set(dest.destinationId, { flightValue: flightValueScore })
         } catch (flightError) {
           logger.error(`Flight provider failed for ${dest.destinationName}`, flightError)
-          // Continue without flight data
         }
 
-        // Real hotel data from Hotelbeds API (cities only)
+        // Hotel data: try real Hotelbeds API first (cities only), fall back to AI price estimation
         if (dest.destinationType === 'city') {
           try {
-          const hotels = await this.hotelsProvider.searchHotels(
-            dest.destinationName,
-            new Date().toISOString().split('T')[0],
-            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          )
-          
-          if (i === 0) {
-            data.hotels = hotels // Store for first destination
-          }
+            const origin = departureCity || (query ? this.extractDepartureCity(query) : null) || 'NYC'
+            let hotels = await this.hotelsProvider.searchHotels(
+              dest.destinationName,
+              new Date().toISOString().split('T')[0],
+              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            )
 
-            // Calculate hotel value score
+            // If real provider returned nothing, use AI-estimated pricing
+            if (hotels.length === 0) {
+              const estimate = await estimatePricing(origin, dest.destinationName, budget, 7)
+              const midHotel = Math.round((estimate.hotelPriceRange.min + estimate.hotelPriceRange.max) / 2)
+              hotels = [
+                {
+                  name: estimate.hotelTypicalOptions[0] || `${dest.destinationName} budget option (AI est.)`,
+                  location: 'City area', city: dest.destinationName, country: dest.destinationName,
+                  pricePerNight: estimate.hotelPriceRange.min,
+                  currency: estimate.hotelPriceRange.currency,
+                  rating: 3.5, reviewCount: 0, amenities: ['WiFi'], source: 'ai_estimated',
+                },
+                {
+                  name: estimate.hotelTypicalOptions[1] || `${dest.destinationName} mid-range hotel (AI est.)`,
+                  location: 'City center', city: dest.destinationName, country: dest.destinationName,
+                  pricePerNight: midHotel,
+                  currency: estimate.hotelPriceRange.currency,
+                  rating: 4.0, reviewCount: 0, amenities: ['WiFi', 'Breakfast'], source: 'ai_estimated',
+                },
+                {
+                  name: estimate.hotelTypicalOptions[2] || `${dest.destinationName} boutique hotel (AI est.)`,
+                  location: 'Historic district', city: dest.destinationName, country: dest.destinationName,
+                  pricePerNight: estimate.hotelPriceRange.max,
+                  currency: estimate.hotelPriceRange.currency,
+                  rating: 4.5, reviewCount: 0, amenities: ['WiFi', 'Spa', 'Pool'], source: 'ai_estimated',
+                },
+              ] as HotelData[]
+              data.priceEstimationUsed = true
+              if (!data.priceEstimationConfidence || estimate.confidence === 'high') {
+                data.priceEstimationConfidence = estimate.confidence
+              }
+            }
+
+            if (i === 0) {
+              data.hotels = hotels
+            }
+
             const hotelValueScore = this.hotelsProvider.getHotelValueScore(hotels, budget)
-            
-            // Update provider scores with hotel data
             const existing = data.providerScores.get(dest.destinationId) || {}
-            data.providerScores.set(dest.destinationId, {
-              ...existing,
-              hotelValue: hotelValueScore,
-            })
+            data.providerScores.set(dest.destinationId, { ...existing, hotelValue: hotelValueScore })
           } catch (hotelError) {
             logger.error(`Hotel provider failed for ${dest.destinationName}`, hotelError)
-            // Continue without hotel data
           }
         }
 

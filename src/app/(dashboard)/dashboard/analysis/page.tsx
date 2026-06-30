@@ -907,6 +907,18 @@ export default function AnalysisPage() {
                     </Badge>
                   ))}
                 </div>
+                {(analysis as any)?._meta?.priceEstimationUsed && (
+                  <div className="flex items-start gap-2 rounded-lg border border-[hsl(199,89%,68%)]/40 bg-[hsl(199,89%,68%)]/8 px-3 py-2 text-xs text-[hsl(199,60%,35%)]">
+                    <span className="mt-0.5 shrink-0">ⓘ</span>
+                    <span>
+                      Flight and hotel price ranges are <strong>AI-estimated</strong> from real-time Tavily web search
+                      {(analysis as any)?._meta?.priceEstimationConfidence && (
+                        <> — confidence: <strong>{(analysis as any)._meta.priceEstimationConfidence}</strong></>
+                      )}
+                      . Verify current prices before booking.
+                    </span>
+                  </div>
+                )}
                 <div className="text-sm text-muted-foreground space-y-1.5">
                   <p><span className="font-medium">Knowledge Base:</span> {analysis.dataFreshness.knowledgeBase || 'Unknown'}</p>
                   <p><span className="font-medium">Provider Data:</span> {analysis.dataFreshness.providerData || 'Unknown'}</p>

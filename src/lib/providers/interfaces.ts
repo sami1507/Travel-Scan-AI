@@ -9,7 +9,7 @@ export interface FlightData {
   airline: string
   duration: number // minutes
   stops: number
-  source: 'demo' | 'api'
+  source: 'demo' | 'api' | 'ai_estimated'
 }
 
 export interface HotelData {
@@ -22,7 +22,7 @@ export interface HotelData {
   rating: number // 1-5
   reviewCount: number
   amenities: string[]
-  source: 'demo' | 'api'
+  source: 'demo' | 'api' | 'ai_estimated'
 }
 
 export interface WeatherData {

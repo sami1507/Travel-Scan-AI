@@ -10,6 +10,7 @@ import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocompl
 import { Loader2, ArrowRight, ArrowLeft, Check, Plane, Shield, Clock, Calendar, Heart, Route, Wallet, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { searchAirports, formatAirportDisplay } from '@/lib/data/airports'
 import { searchCountries, formatCountryDisplay } from '@/lib/data/countries'
 
@@ -72,6 +73,7 @@ const TRIP_STRUCTURES = [
 ]
 
 export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProps) {
+  const t = useTranslations('form')
   const [currentStep, setCurrentStep] = useState(1)
   const [departureCity, setDepartureCity] = useState('')
   const [passport, setPassport] = useState('')
@@ -264,19 +266,19 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 className="space-y-6"
               >
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold mb-2">Let&apos;s plan your trip ✈️</h2>
-                  <p className="text-muted-foreground">A few quick questions and we&apos;ll find your perfect destination</p>
+                  <h2 className="text-2xl font-bold mb-2">{t('title')}</h2>
+                  <p className="text-muted-foreground">{t('subtitle')}</p>
                 </div>
 
                 <div className="space-y-5 max-w-xl mx-auto">
                   <div className="space-y-2.5">
                     <Label htmlFor="departure" className="flex items-center gap-2 text-base font-medium">
                       <Plane className="h-5 w-5" />
-                      Departure City/Airport
+                      {t('departureCity')}
                     </Label>
                     <Autocomplete
                       id="departure"
-                      placeholder="e.g., New York, JFK"
+                      placeholder={t('departurePlaceholder')}
                       value={departureCity}
                       onChange={setDepartureCity}
                       onSearch={(query) => {
@@ -295,11 +297,11 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                   <div className="space-y-2.5">
                     <Label htmlFor="passport" className="flex items-center gap-2 text-base font-medium">
                       <Shield className="h-5 w-5" />
-                      Passport Country
+                      {t('passportCountry')}
                     </Label>
                     <Autocomplete
                       id="passport"
-                      placeholder="e.g., United States, United Kingdom"
+                      placeholder={t('passportPlaceholder')}
                       value={passport}
                       onChange={setPassport}
                       onSearch={(query) => {
@@ -325,7 +327,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     className="min-w-[200px] border-0 text-white shadow-orange-200"
                     style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
-                    Next <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('next')} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               </motion.div>
@@ -344,14 +346,14 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 className="space-y-6"
               >
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold mb-2">When are you traveling?</h2>
+                  <h2 className="text-2xl font-bold mb-2">{t('whenTraveling')}</h2>
                 </div>
 
                 <div className="space-y-6 max-w-xl mx-auto">
                   <div className="space-y-3">
                     <Label htmlFor="tripLength" className="flex items-center gap-2 text-base font-medium">
                       <Clock className="h-5 w-5" />
-                      Trip Length (days)
+                      {t('tripLength')}
                     </Label>
                     <Input
                       id="tripLength"
@@ -369,7 +371,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2 text-base font-medium">
                       <Calendar className="h-5 w-5" />
-                      Season or Month
+                      {t('season')}
                     </Label>
                     <div className="flex gap-2 mb-3">
                       <Button
@@ -379,7 +381,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                         onClick={() => setTimingMode('season')}
                         disabled={loading}
                       >
-                        By Season
+                        {t('bySeason')}
                       </Button>
                       <Button
                         type="button"
@@ -388,7 +390,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                         onClick={() => setTimingMode('month')}
                         disabled={loading}
                       >
-                        Specific Month
+                        {t('specificMonth')}
                       </Button>
                     </div>
 
@@ -436,7 +438,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     variant="outline"
                     size="lg"
                   >
-                    <ArrowLeft className="mr-2 h-5 w-5" /> Back
+                    <ArrowLeft className="mr-2 h-5 w-5" /> {t('back')}
                   </Button>
                   <Button
                     type="button"
@@ -446,7 +448,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     className="min-w-[200px] border-0 text-white shadow-orange-200"
                     style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
-                    Next <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('next')} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               </motion.div>
@@ -465,14 +467,14 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 className="space-y-6"
               >
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold mb-2">What kind of trip?</h2>
+                  <h2 className="text-2xl font-bold mb-2">{t('whatKindTrip')}</h2>
                 </div>
 
                 <div className="space-y-6 max-w-2xl mx-auto">
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2 text-base font-medium">
                       <Route className="h-5 w-5" />
-                      Trip Structure
+                      {t('tripStructure')}
                     </Label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {TRIP_STRUCTURES.map((structure) => (
@@ -503,7 +505,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2 text-base font-medium">
                       <Heart className="h-5 w-5" />
-                      Interests (select all that apply)
+                      {t('interests')}
                     </Label>
                     <div className="flex flex-wrap gap-2">
                       {TRAVEL_STYLES.map((style) => (
@@ -533,7 +535,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     variant="outline"
                     size="lg"
                   >
-                    <ArrowLeft className="mr-2 h-5 w-5" /> Back
+                    <ArrowLeft className="mr-2 h-5 w-5" /> {t('back')}
                   </Button>
                   <Button
                     type="button"
@@ -543,7 +545,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     className="min-w-[200px] border-0 text-white shadow-orange-200"
                     style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
                   >
-                    Next <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('next')} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               </motion.div>
@@ -562,14 +564,14 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                 className="space-y-6"
               >
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold mb-2">What&apos;s your budget level?</h2>
+                  <h2 className="text-2xl font-bold mb-2">{t('budget')}</h2>
                 </div>
 
                 <div className="space-y-6 max-w-2xl mx-auto">
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2 text-base font-medium">
                       <Wallet className="h-5 w-5" />
-                      Daily Budget
+                      {t('dailyBudget')}
                     </Label>
                     <div className="grid grid-cols-2 gap-4">
                       <button
@@ -656,11 +658,11 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
 
                   <div className="space-y-2">
                     <Label htmlFor="note" className="text-base font-medium text-muted-foreground">
-                      Anything specific? (optional)
+                      {t('anythingSpecific')}
                     </Label>
                     <Input
                       id="note"
-                      placeholder="e.g. I love hidden cafes and local markets"
+                      placeholder={t('specificPlaceholder')}
                       value={optionalNote}
                       onChange={(e) => setOptionalNote(e.target.value)}
                       disabled={loading}
@@ -676,7 +678,7 @@ export function GuidedAnalysisForm({ onSubmit, loading }: GuidedAnalysisFormProp
                     variant="outline"
                     size="lg"
                   >
-                    <ArrowLeft className="mr-2 h-5 w-5" /> Back
+                    <ArrowLeft className="mr-2 h-5 w-5" /> {t('back')}
                   </Button>
                   <Button
                     type="submit"

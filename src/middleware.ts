@@ -1,6 +1,18 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const SUPPORTED_LOCALES = ['en', 'ar', 'he', 'es', 'pt', 'fr', 'de', 'it', 'tr', 'ja']
+
+function detectLocale(request: NextRequest): string {
+  const existing = request.cookies.get('NEXT_LOCALE')?.value
+  if (existing && SUPPORTED_LOCALES.includes(existing)) return existing
+  const acceptLang = request.headers.get('accept-language') || ''
+  for (const locale of SUPPORTED_LOCALES) {
+    if (acceptLang.toLowerCase().includes(locale)) return locale
+  }
+  return 'en'
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -96,6 +108,16 @@ export async function middleware(request: NextRequest) {
   `.replace(/\s{2,}/g, ' ').trim()
   
   response.headers.set('Content-Security-Policy', cspHeader)
+
+  // Set locale cookie if not already present
+  if (!request.cookies.get('NEXT_LOCALE')) {
+    const locale = detectLocale(request)
+    response.cookies.set('NEXT_LOCALE', locale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    })
+  }
 
   return response
 }

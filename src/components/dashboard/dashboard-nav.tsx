@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { Bell, LogOut, TrendingUp, User, Bookmark, BarChart2, ShieldCheck, Plane } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
@@ -13,20 +15,21 @@ interface DashboardNavProps {
 }
 
 const primaryNav = [
-  { href: "/dashboard/analysis", label: "Analysis", icon: Plane },
-  { href: "/dashboard/saved", label: "Saved Trips", icon: Bookmark },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
+  { href: "/dashboard/analysis", labelKey: "analysis", icon: Plane },
+  { href: "/dashboard/saved", labelKey: "savedTrips", icon: Bookmark },
+  { href: "/dashboard/profile", labelKey: "profile", icon: User },
 ]
 
 const secondaryNav = [
-  { href: "/dashboard/intelligence", label: "Intelligence", icon: BarChart2 },
-  { href: "/dashboard/alerts", label: "Alerts", icon: Bell },
-  { href: "/dashboard/opportunities", label: "Opportunities", icon: TrendingUp },
+  { href: "/dashboard/intelligence", labelKey: "intelligence", icon: BarChart2 },
+  { href: "/dashboard/alerts", labelKey: "alerts", icon: Bell },
+  { href: "/dashboard/opportunities", labelKey: "opportunities", icon: TrendingUp },
 ]
 
 export default function DashboardNav({ user, isAdmin = false }: DashboardNavProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const t = useTranslations('nav')
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -72,7 +75,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        <span className="text-sm">{item.label}</span>
+                        <span className="text-sm">{t(item.labelKey as any)}</span>
                       </Button>
                     </Link>
                   )
@@ -98,7 +101,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                         )}
                       >
                         <Icon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="text-xs">{item.label}</span>
+                        <span className="text-xs">{t(item.labelKey as any)}</span>
                       </Button>
                     </Link>
                   )
@@ -130,9 +133,10 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
               <span className="text-sm text-muted-foreground hidden lg:inline truncate max-w-[180px]">
                 {user.email}
               </span>
+              <LanguageSwitcher variant="nav" />
               <Button variant="ghost" size="sm" onClick={handleLogout} className="h-9 gap-1.5 opacity-70 hover:opacity-100">
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline text-sm font-medium">Sign out</span>
+                <span className="hidden sm:inline text-sm font-medium">{t('signOut')}</span>
               </Button>
             </div>
           </div>
@@ -162,7 +166,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                 )}>
                   <Icon className="h-5 w-5" style={active ? { color: 'hsl(22,100%,62%)' } : {}} />
                 </div>
-                <span>{item.label}</span>
+                <span>{t(item.labelKey as any)}</span>
               </Link>
             )
           })}

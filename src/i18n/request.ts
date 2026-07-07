@@ -4,16 +4,13 @@ import { cookies } from 'next/headers'
 import { defaultLocale, type Locale, locales } from './config'
 
 export default getRequestConfig(async () => {
-  // Get locale from cookie or use default
+  // Get locale from cookie, falling back to default
   const cookieStore = await cookies()
-  const localeCookie = cookieStore.get('NEXT_LOCALE')
-  const locale = (localeCookie?.value as Locale) || defaultLocale
-
-  // Validate locale
-  const validLocale = locales.includes(locale as Locale) ? locale : defaultLocale
+  const raw = cookieStore.get('NEXT_LOCALE')?.value as Locale | undefined
+  const locale: Locale = raw && locales.includes(raw) ? raw : defaultLocale
 
   return {
-    locale: validLocale,
-    messages: (await import(`./messages/${validLocale}.json`)).default,
+    locale,
+    messages: (await import(`./messages/${locale}.json`)).default,
   }
 })

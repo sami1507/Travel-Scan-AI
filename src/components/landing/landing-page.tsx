@@ -8,6 +8,7 @@ import {
   CheckCircle2, MapPin, Plane, Brain,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { LanguageSwitcher } from '@/components/ui/language-switcher'
 
 /* ─── Reusable fade-in wrapper ─── */
 function FadeIn({
@@ -57,6 +58,7 @@ function Navbar() {
             <span>TravelScan</span>
           </Link>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher variant="landing" />
             <Link href="/login">
               <Button
                 variant="ghost"

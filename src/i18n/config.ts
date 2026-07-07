@@ -1,15 +1,15 @@
 // i18n configuration
 export const locales = [
   'en', // English
-  'ar', // Arabic
-  'he', // Hebrew
-  'fr', // French
+  'ar', // Arabic (RTL)
+  'he', // Hebrew (RTL)
   'es', // Spanish
+  'pt', // Portuguese (Brazilian)
+  'fr', // French
   'de', // German
   'it', // Italian
   'tr', // Turkish
-  'ru', // Russian
-  'zh', // Chinese
+  'ja', // Japanese
 ] as const
 
 export type Locale = (typeof locales)[number]
@@ -20,13 +20,26 @@ export const localeNames: Record<Locale, string> = {
   en: 'English',
   ar: 'العربية',
   he: 'עברית',
-  fr: 'Français',
   es: 'Español',
+  pt: 'Português',
+  fr: 'Français',
   de: 'Deutsch',
   it: 'Italiano',
   tr: 'Türkçe',
-  ru: 'Русский',
-  zh: '中文',
+  ja: '日本語',
+}
+
+export const localeFlags: Record<Locale, string> = {
+  en: '🇬🇧',
+  ar: '🇸🇦',
+  he: '🇮🇱',
+  es: '🇪🇸',
+  pt: '🇧🇷',
+  fr: '🇫🇷',
+  de: '🇩🇪',
+  it: '🇮🇹',
+  tr: '🇹🇷',
+  ja: '🇯🇵',
 }
 
 export const rtlLocales: Locale[] = ['ar', 'he']

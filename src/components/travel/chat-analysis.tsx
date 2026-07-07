@@ -3,11 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Plane, Sparkles, Star, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import type { TravelAnalysisResponse, RankedDestination } from '@/lib/analysis/schemas'
-
-const OPENING_MESSAGE =
-  "Hi! I'm your AI travel consultant ✈️\n\nTell me about your dream trip — where are you thinking, how long, what's your budget, and what do you love doing?"
 
 const QUICK_REPLIES = [
   { label: '💎 Hidden gems', diversityMode: 'hidden_gems' },
@@ -38,8 +36,10 @@ export interface ChatAnalysisProps {
 }
 
 export function ChatAnalysis({ onAnalysisComplete }: ChatAnalysisProps) {
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { id: 'open', role: 'assistant', content: OPENING_MESSAGE },
+  const t = useTranslations('analysis')
+  const openingMessage = `${t('chatWelcome')}\n\n${t('chatPrompt')}`
+  const [messages, setMessages] = useState<ChatMsg[]>(() => [
+    { id: 'open', role: 'assistant', content: openingMessage },
   ])
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -224,7 +224,7 @@ export function ChatAnalysis({ onAnalysisComplete }: ChatAnalysisProps) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Tell me about your dream trip…"
+            placeholder={t('chatPlaceholder')}
             disabled={isProcessing}
             className="flex-1 rounded-xl border border-border bg-muted/30 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[hsl(199,89%,68%)]/40 focus:border-[hsl(199,89%,68%)]/50 disabled:opacity-50 transition-all"
           />

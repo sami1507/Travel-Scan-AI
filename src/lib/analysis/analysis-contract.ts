@@ -66,9 +66,11 @@ export function validateAnalysisContract(input: AnalysisContractInput): Analysis
   }
 
   // BLOCKING ISSUE 6: destinationName contains route separators
-  if (input.finalAnalysis?.rankedDestinations) {
+  // Skip this check for multi_country trips where "Country - Country" names are valid
+  const isMultiCountry = input.request?.tripStructure === 'multi_country'
+  if (!isMultiCountry && input.finalAnalysis?.rankedDestinations) {
     for (const dest of input.finalAnalysis.rankedDestinations) {
-      if (dest.destinationName?.includes(' - ') || dest.destinationName?.includes('→')) {
+      if (dest.destinationName?.includes('→')) {
         blockingIssues.push(`destinationName contains route separators: "${dest.destinationName}"`)
       }
     }

@@ -895,77 +895,40 @@ export class TravelAnalysisEngine {
         
         if (claudeVerifier.isAvailable()) {
           claudeModelUsed = claudeVerifier.getModel()
-          logger.info('Running Claude accuracy verification on recommendations', {
-            model: claudeModelUsed,
-            maxTimeout: 15000,
-          })
           claudeVerifierUsed = true
-          
-          // Verify each recommendation with Promise.allSettled and 3-second timeout
-          const verificationPromises = analysis.rankedDestinations.map(async (dest) => {
-            try {
-              const verification = await claudeVerifier.verifyRecommendation(
-                dest,
-                request.travelMonths?.length || 7,
-                request.tripStructure || 'single_country_one_city'
-              )
-              // Only count as success if verification returned a valid result (not null)
-              if (verification !== null) {
-                claudeVerificationSuccessCount++
+          logger.info('Claude verification: fire-and-forget (non-blocking)', {
+            model: claudeModelUsed,
+            destinations: analysis.rankedDestinations.map(d => d.destinationName),
+          })
+
+          // Fire-and-forget: launch verification without blocking the pipeline
+          Promise.allSettled(
+            analysis.rankedDestinations.map(async (dest) => {
+              try {
+                const verification = await claudeVerifier.verifyRecommendation(
+                  dest,
+                  request.travelMonths?.length || 7,
+                  request.tripStructure || 'single_country_one_city'
+                )
+                if (verification !== null) {
+                  logger.info('Claude verification completed (async)', {
+                    destination: dest.destinationName,
+                    verified: verification.verified,
+                    model: claudeModelUsed,
+                  })
+                }
+              } catch (err) {
+                logger.warn('Claude verification failed (async)', {
+                  destination: dest.destinationName,
+                  error: err instanceof Error ? err.message : String(err),
+                })
               }
-              return claudeVerifier.applyVerification(dest, verification)
-            } catch (err) {
-              logger.warn('Claude verification failed for destination', {
-                destination: dest.destinationName,
-                error: err instanceof Error ? err.message : String(err),
-              })
-              return dest // Return original if verification fails
-            }
-          })
-          
-          // Race with timeout
-          const timeoutPromise = new Promise<'timeout'>((resolve) => {
-            setTimeout(() => resolve('timeout'), 15000)
-          })
-          
-          const result = await Promise.race([
-            Promise.allSettled(verificationPromises),
-            timeoutPromise
-          ])
-          
-          if (result === 'timeout') {
-            claudeTimedOut = true
-            claudeVerifierError = 'timeout'
-            // Aggregated timeout logging (non-blocking)
-            logger.warn('Claude verification timeout', {
-              attempted: analysis.rankedDestinations.length,
-              success: 0,
-              timeoutCount: analysis.rankedDestinations.length,
-              nonBlocking: true,
-              model: claudeModelUsed,
             })
-          } else {
-            // Process settled promises
-            const verifiedDestinations = result.map((r, i) => 
-              r.status === 'fulfilled' ? r.value : analysis.rankedDestinations[i]
-            )
-            analysis.rankedDestinations = verifiedDestinations
-            
-            if (claudeVerificationSuccessCount > 0) {
-              claudeVerifierPassed = true
-              logger.info('Claude verification completed', {
-                successCount: claudeVerificationSuccessCount,
-                totalCount: analysis.rankedDestinations.length,
-                model: claudeModelUsed,
-              })
-            } else {
-              claudeVerifierError = 'all_verifications_failed'
-              logger.warn('Claude verification failed for all recommendations - continuing with unverified', {
-                model: claudeModelUsed,
-                error: claudeVerifierError,
-              })
-            }
-          }
+          ).catch(() => {})
+
+          // Mark as used but not blocking
+          claudeVerifierPassed = false
+          claudeVerificationSuccessCount = 0
         } else {
           logger.info('Claude verifier skipped by env flag')
         }

@@ -897,7 +897,7 @@ export class TravelAnalysisEngine {
           claudeModelUsed = claudeVerifier.getModel()
           logger.info('Running Claude accuracy verification on recommendations', {
             model: claudeModelUsed,
-            maxTimeout: 8000,
+            maxTimeout: 15000,
           })
           claudeVerifierUsed = true
           
@@ -923,9 +923,9 @@ export class TravelAnalysisEngine {
             }
           })
           
-          // Race with 3-second timeout
+          // Race with timeout
           const timeoutPromise = new Promise<'timeout'>((resolve) => {
-            setTimeout(() => resolve('timeout'), 8000)
+            setTimeout(() => resolve('timeout'), 15000)
           })
           
           const result = await Promise.race([

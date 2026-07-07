@@ -98,7 +98,7 @@ export async function generateGlobalCandidates(
         },
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: 4000,
       response_format: { type: 'json_object' },
     })
     
@@ -205,7 +205,7 @@ function buildGlobalCandidatePrompt(request: AnalysisRequest): string {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const travelMonthsText = request.travelMonths?.map(m => monthNames[m - 1]).join(', ') || 'any'
   
-  return `Generate 12-18 realistic worldwide destination candidates for this traveler:
+  return `Generate exactly 12 realistic worldwide destination candidates for this traveler:
 
 TRAVELER PROFILE:
 - Departure: ${request.departureCity || 'flexible'}
@@ -259,5 +259,5 @@ Return ONLY valid JSON with this exact format (no markdown, no extra text):
   ]
 }
 
-Generate 12-18 diverse candidates. Keep explanations concise.`
+Generate exactly 12 diverse candidates. Keep all text fields under 15 words each.`
 }

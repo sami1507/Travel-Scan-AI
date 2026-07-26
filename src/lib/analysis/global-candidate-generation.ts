@@ -97,7 +97,7 @@ export async function generateGlobalCandidates(
           content: prompt,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.8,
       max_tokens: 4000,
       response_format: { type: 'json_object' },
     })
@@ -218,18 +218,20 @@ TRAVELER PROFILE:
 - Travel Style: ${request.travelStyle || 'flexible'}
 
 REQUIREMENTS:
-1. Consider WORLDWIDE destinations, not just Europe
-2. For ${request.tripLength || 7} days and ${request.budget || 'moderate'} budget, valid regions include:
-   - Europe (Western, Central, Eastern, Southern, Northern, Balkans)
-   - Middle East (Turkey, Jordan, UAE, Oman)
-   - North Africa (Morocco, Egypt, Tunisia)
-   - Caucasus (Georgia, Armenia, Azerbaijan)
-   - Central Asia (Uzbekistan, Kazakhstan, Kyrgyzstan)
-   - Southeast Asia (Thailand, Vietnam, Malaysia, Singapore, Indonesia)
-   - East Asia (Japan, South Korea, Taiwan, China)
+1. Consider WORLDWIDE destinations — MANDATORY CONTINENTAL DIVERSITY RULE:
+   At least 4 of the 12 candidates MUST be from outside Europe entirely.
+   Spread across these non-European regions:
+   - East Asia (Japan, South Korea, Taiwan)
+   - Southeast Asia (Thailand, Vietnam, Malaysia, Indonesia, Singapore)
    - South Asia (India, Sri Lanka, Nepal)
-   - Americas (Mexico, Colombia, Peru, Chile, Argentina, USA, Canada)
-   - Other realistic options for duration/budget/season
+   - Middle East (UAE, Oman, Jordan)
+   - North Africa (Morocco, Egypt)
+   - Americas (Mexico, Colombia, Peru, Chile, Argentina)
+   - Caucasus (Georgia, Armenia, Azerbaijan)
+   - Central Asia (Uzbekistan, Kyrgyzstan)
+
+2. WRONG (do not do this): returning 10 European and 2 non-European destinations.
+   RIGHT (do this): 5-8 European + 4-7 non-European, balanced across the regions above.
 
 3. Each candidate must be realistic for:
    - Trip duration (${request.tripLength || 7} days)
@@ -237,10 +239,10 @@ REQUIREMENTS:
    - Travel season (${travelMonthsText})
    - Departure logistics from ${request.departureCity || 'major hub'}
 
-4. Do NOT restrict to only Europe/Caucasus
-5. Do NOT force destinations just because they're popular
-6. Do NOT invent fake prices or direct flights
-7. DO consider visa requirements, safety, and accessibility
+4. Do NOT force destinations just because they're popular
+5. Do NOT invent fake prices or direct flights
+6. DO consider visa requirements, safety, and accessibility
+7. DO prioritize geographic spread — having 3+ candidates from any single country is wrong
 
 Return ONLY valid JSON with this exact format (no markdown, no extra text):
 {

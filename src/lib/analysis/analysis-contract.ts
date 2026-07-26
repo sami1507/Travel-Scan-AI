@@ -107,9 +107,41 @@ export function validateAnalysisContract(input: AnalysisContractInput): Analysis
   // BLOCKING ISSUE 10: recommended itinerary mismatch (checked at UI level, not here)
   // This is validated in UI components
 
+  // BLOCKING ISSUE NEW-A: top destination score below minimum threshold
+  if (input.finalAnalysis?.rankedDestinations && input.finalAnalysis.rankedDestinations.length > 0) {
+    const topScore = input.finalAnalysis.rankedDestinations[0]?.totalMatchScore ?? input.finalAnalysis.rankedDestinations[0]?.matchScore ?? 0
+    if (topScore < 40) {
+      blockingIssues.push(`top destination score (${topScore}) is below minimum threshold of 40 — results may be unreliable`)
+    }
+  }
+
+  // BLOCKING ISSUE NEW-B: 3+ destinations in the same country (except fixed-country mode)
+  if (input.finalAnalysis?.rankedDestinations && !input.request?.destination) {
+    const countryCounts = new Map<string, number>()
+    for (const dest of input.finalAnalysis.rankedDestinations) {
+      const country = (dest.destinationName || '').toLowerCase()
+      countryCounts.set(country, (countryCounts.get(country) || 0) + 1)
+    }
+    for (const [country, count] of countryCounts) {
+      if (count >= 3) {
+        blockingIssues.push(`3+ destinations are in the same country: "${country}" (${count} occurrences) — diversity requirement not met`)
+      }
+    }
+  }
+
   // WARNING 1: interests=[]
   if (input.request?.interests && Array.isArray(input.request.interests) && input.request.interests.length === 0) {
     warnings.push('interests=[] - broad trip discovery mode')
+  }
+
+  // WARNING NEW: more than 2 destinations have confidence 'low'
+  if (input.finalAnalysis?.rankedDestinations) {
+    const lowConfidenceCount = input.finalAnalysis.rankedDestinations.filter(
+      (d: any) => d.confidence === 'low' || d.dataQuality === 'limited'
+    ).length
+    if (lowConfidenceCount > 2) {
+      warnings.push(`${lowConfidenceCount} destinations have low confidence — consider refining the query`)
+    }
   }
 
   // WARNING 2: Claude verifier timeout

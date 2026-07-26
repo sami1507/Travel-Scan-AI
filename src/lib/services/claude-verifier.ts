@@ -5,6 +5,9 @@ import type { RankedDestination } from '../analysis/schemas'
 
 export interface ClaudeVerificationResult {
   verified: boolean
+  valid: boolean
+  issues: string[]
+  confidence: number
   accuracyNotes: string[]
   correctedWarnings: string[]
   suggestedScoreAdjustment?: number
@@ -94,8 +97,13 @@ export class ClaudeVerifierService {
       logger.info('Claude verification completed', {
         destination: recommendation.destinationName,
         verified: result.verified,
+        valid: result.valid,
+        issues: result.issues,
+        confidence: result.confidence,
         model: this.model,
       })
+
+      this.logVerificationAsync(recommendation.destinationName, result, tripLength)
 
       return result
     } catch (error) {
@@ -158,7 +166,10 @@ Respond in JSON format only.`
       const parsed = JSON.parse(jsonMatch[0])
 
       return {
-        verified: parsed.verified ?? true,
+        verified: parsed.valid ?? parsed.verified ?? true,
+        valid: parsed.valid ?? true,
+        issues: Array.isArray(parsed.issues) ? parsed.issues : [],
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.8,
         accuracyNotes: Array.isArray(parsed.accuracyNotes) ? parsed.accuracyNotes : [],
         correctedWarnings: Array.isArray(parsed.correctedWarnings) ? parsed.correctedWarnings : [],
         suggestedScoreAdjustment: typeof parsed.suggestedScoreAdjustment === 'number' ? parsed.suggestedScoreAdjustment : undefined,
@@ -170,9 +181,47 @@ Respond in JSON format only.`
       logger.warn('Failed to parse Claude verification response', error)
       return {
         verified: true,
+        valid: true,
+        issues: [],
+        confidence: 0.5,
         accuracyNotes: [],
         correctedWarnings: [],
       }
+    }
+  }
+
+  /**
+   * Async log verification result to Supabase (non-blocking)
+   */
+  private logVerificationAsync(
+    destination: string,
+    result: ClaudeVerificationResult,
+    tripLength: number
+  ): void {
+    try {
+      const { getAdminSupabaseClient } = require('../supabase/admin')
+      const supabase = getAdminSupabaseClient()
+      if (!supabase) return
+      supabase
+        .from('ai_verification_log')
+        .insert({
+          destination,
+          valid: result.valid,
+          issues: result.issues,
+          confidence: result.confidence,
+          accuracy_notes: result.accuracyNotes,
+          corrected_warnings: result.correctedWarnings,
+          suggested_score_adjustment: result.suggestedScoreAdjustment ?? null,
+          model: this.model,
+          trip_length: tripLength,
+          verified_at: new Date().toISOString(),
+        })
+        .then(({ error }: { error: any }) => {
+          if (error) logger.warn('Failed to log Claude verification to Supabase', { error: error.message })
+        })
+        .catch((err: any) => logger.warn('Claude verification log exception', { err: String(err) }))
+    } catch {
+      // Supabase logging is non-critical — swallow errors silently
     }
   }
 

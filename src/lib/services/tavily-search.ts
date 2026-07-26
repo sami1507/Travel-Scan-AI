@@ -36,10 +36,30 @@ function extractSources(results: any[]): string[] {
     .filter(Boolean)
 }
 
+function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
+function deduplicateByDomain(results: any[]): any[] {
+  const seen = new Set<string>()
+  return results.filter((r: any) => {
+    if (!r.url) return true
+    const domain = extractDomain(r.url)
+    if (seen.has(domain)) return false
+    seen.add(domain)
+    return true
+  })
+}
+
 export async function searchTravelContext(
   request: {
     destination?: string
     departureCity?: string
+    passportCountry?: string
     budget?: string
     tripLength?: number
     travelMonths?: number[]
@@ -55,22 +75,34 @@ export async function searchTravelContext(
   const year = new Date().getFullYear()
   const interestsList = request.interests?.join(' ') || 'culture food sightseeing'
 
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const monthsText = request.travelMonths && request.travelMonths.length > 0
+    ? request.travelMonths.map(m => monthNames[m - 1]).join(' ')
+    : ''
+  const monthContext = monthsText ? `${monthsText} ${year}` : String(year)
+
+  const passportContext = request.passportCountry
+    ? `${request.passportCountry} passport`
+    : request.departureCity
+      ? `travelers from ${request.departureCity}`
+      : 'international travelers'
+
   try {
     // Dynamically import to avoid build-time issues if package is optional
     const { tavily } = await import('@tavily/core')
     const client = tavily({ apiKey })
 
-    const [overviewResult, visaResult, gemsResult] = await Promise.allSettled([
+    const [overviewResult, visaResult, safetyResult] = await Promise.allSettled([
       client.search(
-        `${destination} travel guide ${year} budget tips best time visit`,
+        `${destination} travel ${monthContext} budget ${request.budget || 'moderate'} tips best time visit`,
         { searchDepth: 'advanced', maxResults: 5 }
       ),
       client.search(
-        `${destination} visa requirements US passport 2025 2026`,
+        `${destination} visa requirements ${passportContext} ${year} entry rules tourist`,
         { searchDepth: 'advanced', maxResults: 5 }
       ),
       client.search(
-        `${destination} hidden gems local tips travel ${interestsList}`,
+        `${destination} safety travel advisory ${monthContext} tourist areas ${interestsList}`,
         { searchDepth: 'advanced', maxResults: 5 }
       ),
     ])
@@ -83,7 +115,7 @@ export async function searchTravelContext(
     let bestTimeToVisit = ''
     let safetyAndAdvisories = ''
     if (overviewResult.status === 'fulfilled') {
-      const results = overviewResult.value.results || []
+      const results = deduplicateByDomain(overviewResult.value.results || [])
       const combined = extractContent(results)
       allSources.push(...extractSources(results))
       destinationOverview = combined.slice(0, 400)
@@ -95,17 +127,19 @@ export async function searchTravelContext(
     // Extract visa info from second query
     let currentVisaInfo = ''
     if (visaResult.status === 'fulfilled') {
-      const results = visaResult.value.results || []
+      const results = deduplicateByDomain(visaResult.value.results || [])
       allSources.push(...extractSources(results))
       currentVisaInfo = extractContent(results).slice(0, 500)
     }
 
-    // Extract hidden gems from third query
+    // Extract safety & hidden gems from third query
     let hiddenGems = ''
-    if (gemsResult.status === 'fulfilled') {
-      const results = gemsResult.value.results || []
-      allSources.push(...extractSources(results))
-      hiddenGems = extractContent(results).slice(0, 400)
+    if (safetyResult.status === 'fulfilled') {
+      const dedupedResults = deduplicateByDomain(safetyResult.value.results || [])
+      allSources.push(...extractSources(dedupedResults))
+      const combined = extractContent(dedupedResults)
+      safetyAndAdvisories = safetyAndAdvisories || combined.slice(0, 400)
+      hiddenGems = combined.slice(400, 700)
     }
 
     const uniqueSources = [...new Set(allSources)]

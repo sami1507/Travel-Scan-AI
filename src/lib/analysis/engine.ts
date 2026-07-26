@@ -156,6 +156,7 @@ export class TravelAnalysisEngine {
           tavilyContext = await searchTravelContext({
             destination: request.destination,
             departureCity: request.departureCity,
+            passportCountry: request.passportCountry,
             budget: request.budget,
             tripLength: request.tripLength,
             travelMonths: request.travelMonths,
@@ -615,6 +616,24 @@ export class TravelAnalysisEngine {
             // Track OpenAI cost
             costTracker.trackOpenAI('gpt-4o', completion.usage?.total_tokens)
 
+            // Phase 4: AI Pipeline Observability Metrics
+            const aiMetrics = {
+              sessionId: request.freshRunId || `run-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              model: this.model,
+              promptTokens: completion.usage?.prompt_tokens,
+              completionTokens: completion.usage?.completion_tokens,
+              totalCost: ((completion.usage?.prompt_tokens || 0) * 0.0000025) +
+                         ((completion.usage?.completion_tokens || 0) * 0.00001),
+              destinationsReturned: parsed.rankedDestinations?.length,
+              topScore: parsed.rankedDestinations?.[0]?.totalMatchScore,
+              globalCandidatesUsed: globalCandidates.length,
+              tavilyResultsUsed: tavilyContext?.sources?.length ?? 0,
+              candidatePoolSize,
+              openAIDurationMs,
+            }
+            logger.info('AI Pipeline Metrics', aiMetrics)
+
             // Log diversity metrics
             const countries = parsed.rankedDestinations.map(d => d.destinationName).join(', ')
             const uniqueCountries = new Set(parsed.rankedDestinations.map(d => d.destinationName)).size
@@ -874,6 +893,77 @@ export class TravelAnalysisEngine {
           top3Count: mlResult.top3Recommendations.length,
           accommodationCount: mlResult.accommodationRecommendations.size,
         })
+
+        // Step 8.1: Apply user preference learning signals (diversity bonus + recency penalty)
+        try {
+          const isDev = process.env.NODE_ENV === 'development'
+          const reRankingDecisions: Array<{ destination: string; original_rank: number; new_rank: number; reason: string }> = []
+
+          // Fetch user's past analyses to detect repeated destinations (non-blocking)
+          let pastDestinations: string[] = []
+          if (request.userId) {
+            try {
+              const { getUserPastDestinations } = await import('../db/preferences')
+              pastDestinations = (await getUserPastDestinations(request.userId, 3)) || []
+            } catch {
+              // Non-critical — continue without past history
+            }
+          }
+
+          const seenRegions = new Set<string>()
+          const adjustedDestinations = analysis.rankedDestinations.map((dest, idx) => {
+            let scoreAdjustment = 0
+            const reasons: string[] = []
+
+            // Diversity bonus: boost destinations from regions not yet seen in this result set
+            const destRegion = (dest as any).region || ''
+            if (destRegion && !seenRegions.has(destRegion)) {
+              scoreAdjustment += 0.15
+              reasons.push(`diversity bonus +0.15 (new region: ${destRegion})`)
+              seenRegions.add(destRegion)
+            }
+
+            // Recency penalty: if this destination appeared in user's last 3 analyses, penalise
+            const wasRecentlySeen = pastDestinations.some(
+              past => past.toLowerCase() === dest.destinationName.toLowerCase()
+            )
+            if (wasRecentlySeen) {
+              scoreAdjustment -= 0.20
+              reasons.push(`recency penalty -0.20 (seen in last 3 analyses)`)
+            }
+
+            if (scoreAdjustment !== 0) {
+              const adjustedScore = Math.max(0, Math.min(100, (dest.totalMatchScore || 0) + scoreAdjustment * 100))
+              if (isDev) {
+                reRankingDecisions.push({
+                  destination: dest.destinationName,
+                  original_rank: idx + 1,
+                  new_rank: idx + 1, // Will be corrected after sort
+                  reason: reasons.join('; '),
+                })
+              }
+              return { ...dest, totalMatchScore: adjustedScore }
+            }
+            return dest
+          })
+
+          // Re-sort by adjusted score
+          adjustedDestinations.sort((a, b) => (b.totalMatchScore || 0) - (a.totalMatchScore || 0))
+
+          // Fix new_rank after sort
+          if (isDev && reRankingDecisions.length > 0) {
+            adjustedDestinations.forEach((dest, idx) => {
+              const decision = reRankingDecisions.find(d => d.destination === dest.destinationName)
+              if (decision) decision.new_rank = idx + 1
+            })
+            logger.info('ML Re-ranking Decisions', { decisions: reRankingDecisions })
+          }
+
+          analysis.rankedDestinations = adjustedDestinations.slice(0, 3)
+          analysis.topRecommendations = analysis.rankedDestinations.map(d => d.destinationName)
+        } catch (reRankError) {
+          logger.warn('Re-ranking signals failed, keeping ML order', reRankError)
+        }
       } catch (mlError) {
         errorTracker.trackMLError(mlError, 'inference', { userId: request.userId })
         logger.error('Travel Analysis Engine: ML inference failed, using baseline', mlError)

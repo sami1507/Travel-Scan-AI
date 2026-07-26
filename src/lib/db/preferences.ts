@@ -126,6 +126,34 @@ export async function updateInferredPreferences(
 /**
  * Delete user preferences
  */
+/**
+ * Get destination names from user's recent analyses (for recency penalty in re-ranking)
+ */
+export async function getUserPastDestinations(userId: string, lastNAnalyses: number = 3): Promise<string[]> {
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from('recommendation_events')
+      .select('recommendations')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(lastNAnalyses)
+
+    if (error || !data) return []
+
+    const destinations: string[] = []
+    for (const row of data as Array<{ recommendations: any }>) {
+      const recs = Array.isArray(row.recommendations) ? row.recommendations : []
+      for (const rec of recs) {
+        if (rec?.destinationTitle) destinations.push(rec.destinationTitle)
+      }
+    }
+    return [...new Set(destinations)]
+  } catch {
+    return []
+  }
+}
+
 export async function deleteUserPreferences(userId: string): Promise<void> {
   const supabase = createAdminClient()
 

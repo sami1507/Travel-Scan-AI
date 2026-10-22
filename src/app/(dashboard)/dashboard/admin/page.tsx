@@ -229,12 +229,12 @@ export default function AdminOverviewPage() {
             <CardDescription>System health and monitoring</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/operations">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+<Link href="/dashboard/admin/operations">
                 View Operations
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </CardContent>
         </Card>
 
@@ -247,12 +247,12 @@ export default function AdminOverviewPage() {
             <CardDescription>AI quality and performance</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/ml-monitoring">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+<Link href="/dashboard/admin/ml-monitoring">
                 View ML Metrics
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </CardContent>
         </Card>
 
@@ -265,12 +265,12 @@ export default function AdminOverviewPage() {
             <CardDescription>Recommendation quality metrics</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/quality">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+<Link href="/dashboard/admin/quality">
                 View Quality
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </CardContent>
         </Card>
 
@@ -283,12 +283,12 @@ export default function AdminOverviewPage() {
             <CardDescription>User feedback insights</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/feedback-intelligence">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+<Link href="/dashboard/admin/feedback-intelligence">
                 View Feedback
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </CardContent>
         </Card>
 
@@ -301,12 +301,12 @@ export default function AdminOverviewPage() {
             <CardDescription>System-generated insights</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/intelligence-signals">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+<Link href="/dashboard/admin/intelligence-signals">
                 View Signals
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </CardContent>
         </Card>
 
@@ -319,12 +319,12 @@ export default function AdminOverviewPage() {
             <CardDescription>Provider configuration status</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/sources">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+<Link href="/dashboard/sources">
                 View Providers
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </CardContent>
         </Card>
       </div>

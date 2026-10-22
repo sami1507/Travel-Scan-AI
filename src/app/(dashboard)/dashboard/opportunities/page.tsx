@@ -91,12 +91,12 @@ export default function OpportunitiesPage() {
               <p className="text-sm mt-2">
                 Create travel analyses and save destinations to start receiving opportunity alerts.
               </p>
-              <Link href="/dashboard/analysis">
-                <Button className="mt-4">
+              <Button className="mt-4" asChild>
+<Link href="/dashboard/analysis">
                   Create Travel Analysis
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </div>
           </CardContent>
         </Card>

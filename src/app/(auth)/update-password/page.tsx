@@ -124,11 +124,11 @@ export default function UpdatePasswordPage() {
                 </div>
               </div>
 
-              <Link href="/reset-password">
-                <Button className="w-full border-0 text-white shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}>
+              <Button className="w-full border-0 text-white shadow-orange-200" style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} asChild>
+<Link href="/reset-password">
                   Request new reset link
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </div>
           ) : success ? (
             <div className="space-y-6">

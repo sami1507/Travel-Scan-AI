@@ -58,7 +58,7 @@ export class EnhancedKnowledgeRetrieval {
     context.transportInfo = this.getTransportInfo(destinations)
 
     // Add cultural context
-    context.culturalContext = this.getCulturalContext(destinations, constraints.interests)
+    context.culturalContext = this.getCulturalContext(destinations, constraints.interests ?? undefined)
 
     // Assess confidence factors
     context.confidenceFactors = this.assessConfidence(destinations, constraints)

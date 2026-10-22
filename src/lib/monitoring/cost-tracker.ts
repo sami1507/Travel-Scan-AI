@@ -1,5 +1,8 @@
 // Cost Monitoring and Usage Tracking
+// Usage events are persisted to Supabase (ai_usage_metrics) so they survive
+// serverless cold starts; in-memory arrays are a per-instance fallback for reads.
 import { logger } from '../utils'
+import { createAdminClient } from '../supabase/admin'
 
 export interface UsageMetric {
   provider: string
@@ -50,11 +53,66 @@ class CostTracker {
       this.metrics.shift()
     }
 
+    this.persist(metric)
+
     logger.info('Cost: Tracked usage', {
       provider,
       operation,
       cost: cost.toFixed(4),
     })
+  }
+
+  /**
+   * Persist a usage metric to Supabase (best-effort, fire-and-forget)
+   */
+  private persist(metric: UsageMetric) {
+    try {
+      const supabase = createAdminClient()
+      void Promise.resolve(
+        supabase.from('ai_usage_metrics').insert({
+          provider: metric.provider,
+          operation: metric.operation,
+          count: metric.count,
+          estimated_cost: metric.estimatedCost,
+          created_at: metric.timestamp,
+        } as any)
+      ).catch(persistError => {
+        logger.warn('Cost tracker: failed to persist metric', {
+          error: persistError instanceof Error ? persistError.message : String(persistError),
+        })
+      })
+    } catch {
+      // Admin client unavailable (missing env) — memory-only mode
+    }
+  }
+
+  /**
+   * Load metrics from persisted storage, falling back to in-memory on failure
+   */
+  private async loadMetrics(limit: number = 10000): Promise<UsageMetric[]> {
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from('ai_usage_metrics')
+        .select('provider, operation, count, estimated_cost, created_at')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+
+      return (data || []).map((row: any) => ({
+        provider: row.provider,
+        operation: row.operation,
+        count: row.count,
+        estimatedCost: Number(row.estimated_cost),
+        timestamp: row.created_at,
+      }))
+    } catch (error) {
+      logger.warn('Cost tracker: DB read failed, using in-memory fallback', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return this.metrics
+    }
   }
 
   /**
@@ -92,14 +150,15 @@ class CostTracker {
   /**
    * Get cost summary by provider
    */
-  getCostSummary(): CostSummary[] {
+  async getCostSummary(): Promise<CostSummary[]> {
+    const metrics = await this.loadMetrics()
     const now = Date.now()
     const oneHourAgo = now - 60 * 60 * 1000
     const oneDayAgo = now - 24 * 60 * 60 * 1000
 
     const summaryMap = new Map<string, CostSummary>()
 
-    this.metrics.forEach(metric => {
+    metrics.forEach(metric => {
       const timestamp = new Date(metric.timestamp).getTime()
       
       if (!summaryMap.has(metric.provider)) {
@@ -130,7 +189,8 @@ class CostTracker {
   /**
    * Get total estimated cost
    */
-  getTotalCost(): { total: number; last24Hours: number; lastHour: number } {
+  async getTotalCost(): Promise<{ total: number; last24Hours: number; lastHour: number }> {
+    const metrics = await this.loadMetrics()
     const now = Date.now()
     const oneHourAgo = now - 60 * 60 * 1000
     const oneDayAgo = now - 24 * 60 * 60 * 1000
@@ -139,7 +199,7 @@ class CostTracker {
     let last24Hours = 0
     let lastHour = 0
 
-    this.metrics.forEach(metric => {
+    metrics.forEach(metric => {
       const timestamp = new Date(metric.timestamp).getTime()
       total += metric.estimatedCost
 
@@ -173,15 +233,16 @@ class CostTracker {
   /**
    * Get most expensive operations
    */
-  getMostExpensiveOperations(limit: number = 10): Array<{
+  async getMostExpensiveOperations(limit: number = 10): Promise<Array<{
     provider: string
     operation: string
     totalCost: number
     callCount: number
-  }> {
+  }>> {
+    const metrics = await this.loadMetrics()
     const operationCosts = new Map<string, { cost: number; count: number }>()
 
-    this.metrics.forEach(metric => {
+    metrics.forEach(metric => {
       const key = `${metric.provider}:${metric.operation}`
       if (!operationCosts.has(key)) {
         operationCosts.set(key, { cost: 0, count: 0 })
@@ -208,11 +269,12 @@ class CostTracker {
   /**
    * Check if cost threshold exceeded
    */
-  checkCostThreshold(thresholdUSD: number, periodHours: number = 24): boolean {
+  async checkCostThreshold(thresholdUSD: number, periodHours: number = 24): Promise<boolean> {
+    const metrics = await this.loadMetrics()
     const now = Date.now()
     const cutoff = now - periodHours * 60 * 60 * 1000
 
-    const periodCost = this.metrics
+    const periodCost = metrics
       .filter(m => new Date(m.timestamp).getTime() > cutoff)
       .reduce((sum, m) => sum + m.estimatedCost, 0)
 

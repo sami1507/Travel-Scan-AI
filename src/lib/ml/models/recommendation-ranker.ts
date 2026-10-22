@@ -1,15 +1,17 @@
-// Recommendation Ranker - ML-based ranking model for recommendations
+// Recommendation Ranker - static heuristic scorer for recommendations.
+// NOTE: This is NOT a trained ML model. The weights below are hand-tuned and
+// no training ever runs. Treat all "mlScore" output as a heuristic score.
 import type { RankedDestination } from '../../analysis/schemas'
 import type { UserFeatures, ItemFeatures, ContextFeatures } from '../schemas'
 import { featureEngineer } from '../feature-engineering'
 import { logger } from '../../utils'
 
 /**
- * Simple logistic regression-style scoring for recommendation ranking
- * Uses learned weights from feature importance analysis
+ * Logistic-style weighted scoring for recommendation ranking.
+ * Uses fixed hand-tuned weights (no training pipeline exists).
  */
 export class RecommendationRanker {
-  // Learned weights from feature importance (would be trained from data)
+  // Hand-tuned static weights — not learned from data
   private weights = {
     // User preference alignment (30% total weight)
     user_budget_sensitivity: 0.12,
@@ -34,7 +36,7 @@ export class RecommendationRanker {
     item_rank_position: 0.10,
   }
 
-  private bias = 0.5 // Learned bias term
+  private bias = 0.5 // Fixed bias term (not learned)
 
   /**
    * Predict acceptance probability for a recommendation
@@ -73,7 +75,7 @@ export class RecommendationRanker {
     userFeatures: UserFeatures,
     contextFeatures: ContextFeatures
   ): Array<RankedDestination & { mlScore: number; mlRank: number }> {
-    logger.info('ML Ranker: Ranking recommendations', {
+    logger.info('Heuristic Ranker: Ranking recommendations', {
       count: destinations.length,
     })
 
@@ -97,7 +99,7 @@ export class RecommendationRanker {
       dest.mlRank = index + 1
     })
 
-    logger.info('ML Ranker: Ranking complete', {
+    logger.info('Heuristic Ranker: Ranking complete', {
       topScore: scored[0]?.mlScore,
       topDestination: scored[0]?.destinationName,
     })
@@ -136,7 +138,7 @@ export class RecommendationRanker {
   }
 
   /**
-   * Get feature importance for explainability
+   * Get feature weights for explainability (static, not learned importance)
    */
   getFeatureImportance(): Array<{ feature: string; importance: number }> {
     const total = Object.values(this.weights).reduce((sum, w) => sum + Math.abs(w), 0)

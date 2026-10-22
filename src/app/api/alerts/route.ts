@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { AlertService, NotificationService } from '@/lib/services/alerts'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,7 +44,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { alertId, action } = body
+    const validation = validateRequest(schemas.alertAction, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+    const { alertId, action } = validation.data
 
     if (action === 'read') {
       await AlertService.markAsRead(alertId)

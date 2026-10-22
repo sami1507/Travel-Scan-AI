@@ -19,7 +19,7 @@ export interface CategoryScores {
   transport: number // 0-10
   hotelValue: number // 0-10
   safety: number // 0-10
-  flightValue?: number // 0-10 (optional, from provider data)
+  flightValue: number | null // 0-10, null when no provider data
 }
 
 export interface DestinationScore {
@@ -161,7 +161,7 @@ export class ScoringEngine {
       transport: country.transportQuality,
       hotelValue: providerScores?.hotelValue ?? country.hotelValue,
       safety: country.safetyLevel,
-      flightValue: providerScores?.flightValue,
+      flightValue: providerScores?.flightValue ?? null,
     }
   }
 
@@ -183,7 +183,7 @@ export class ScoringEngine {
       transport: city.transportScore,
       hotelValue: providerScores?.hotelValue ?? city.hotelValueScore,
       safety: city.safetyScore,
-      flightValue: providerScores?.flightValue,
+      flightValue: providerScores?.flightValue ?? null,
     }
   }
 
@@ -253,7 +253,7 @@ export class ScoringEngine {
       categoryScores.safety * this.weights.safety
 
     // If flight value is available, blend it with budget fit (10% influence)
-    if (categoryScores.flightValue !== undefined) {
+    if (categoryScores.flightValue != null) {
       weighted += categoryScores.flightValue * 0.05
     }
 
@@ -309,7 +309,7 @@ export class ScoringEngine {
     if (scores.nature >= 8 && preferences.interests?.includes('nature')) {
       reasons.push('Beautiful natural surroundings')
     }
-    if (scores.flightValue !== undefined && scores.flightValue >= 8) {
+    if (scores.flightValue != null && scores.flightValue >= 8) {
       reasons.push('Affordable flight options available')
     }
     if (scores.hotelValue >= 8) {

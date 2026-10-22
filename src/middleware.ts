@@ -94,9 +94,16 @@ export async function middleware(request: NextRequest) {
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   
   // Content Security Policy
+  // 'unsafe-eval' is only needed for Next.js dev-mode HMR/source maps — dropped in production.
+  // 'unsafe-inline' on script-src is still required because Next.js injects inline bootstrap
+  // scripts without a nonce; removing it needs a nonce-based CSP wired through next.config.js
+  // and would need dedicated testing, so it's left in place rather than guessed at here.
+  const scriptSrc = process.env.NODE_ENV === 'production'
+    ? "script-src 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;"
+    : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;"
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;
+    ${scriptSrc}
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https:;
     font-src 'self' data:;

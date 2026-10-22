@@ -5,15 +5,15 @@
  */
 
 export interface RecommendationToNormalize {
-  destinationName?: string
-  title?: string
-  suggestedRoute?: string[] | string
-  routeDisplayName?: string
-  whyChosen?: string
-  whyBetterThanAlternatives?: string
-  watchOut?: string
-  bestFor?: string
-  summary?: string
+  destinationName?: string | null
+  title?: string | null
+  suggestedRoute?: string[] | string | null
+  routeDisplayName?: string | null
+  whyChosen?: string | null
+  whyBetterThanAlternatives?: string | null
+  watchOut?: string | null
+  bestFor?: string | null
+  summary?: string | null
   [key: string]: any
 }
 

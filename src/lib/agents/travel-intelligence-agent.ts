@@ -1,4 +1,12 @@
 // Travel Intelligence Agent using OpenAI
+//
+// NOTE: Two "TravelIntelligenceAgent" implementations exist and are intentionally
+// separate single-shot structured-output calls (neither is an iterative
+// tool-calling loop despite the name):
+// - THIS one (src/lib/agents): classifies raw data-ingestion signals/changes into
+//   severity-ranked insights (used by /api/agent/analyze).
+// - src/lib/intelligence/agent.ts: generates an evidence-cited intelligence
+//   report from structured travel data (used by /api/intelligence/report).
 import OpenAI from 'openai'
 import { zodResponseFormat } from 'openai/helpers/zod'
 import { travelAnalysisSchema, type TravelAnalysis } from './schemas'
@@ -36,7 +44,7 @@ Output format:
 - Priority actions for the user`
 
 export class TravelIntelligenceAgent {
-  private openai: OpenAI
+  private openai: OpenAI | null = null
   private model: string = 'gpt-4o-2024-08-06'
 
   constructor() {
@@ -119,6 +127,12 @@ export class TravelIntelligenceAgent {
   async analyzeChanges(changeType?: 'new' | 'modified' | 'removed', limit: number = 50): Promise<TravelAnalysis> {
     try {
       logger.info('Travel Intelligence Agent: Analyzing changes', { changeType, limit })
+
+      // Return basic analysis if OpenAI not available
+      if (!this.openai) {
+        logger.warn('Change analysis using basic mode - OpenAI not configured')
+        return this.createBasicAnalysis()
+      }
 
       const changes = changeType
         ? await travelDataTools.getChangeEventsByType(changeType, limit)

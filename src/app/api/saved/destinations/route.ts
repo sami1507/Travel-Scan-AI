@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { SavedItemsService } from '@/lib/services/saved-items'
+import { validateRequest, schemas, isValidUUID } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,14 +71,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, updates } = body
-
-    if (!id || !updates) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    const validation = validateRequest(schemas.savedItemUpdate, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
     }
+    const { id, updates } = validation.data
 
     const updatedDestination = await SavedItemsService.updateDestination(id, updates)
     return NextResponse.json({ destination: updatedDestination })
@@ -102,9 +100,9 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
-    if (!id) {
+    if (!id || !isValidUUID(id)) {
       return NextResponse.json(
-        { error: 'Missing destination ID' },
+        { error: 'Missing or invalid destination ID' },
         { status: 400 }
       )
     }

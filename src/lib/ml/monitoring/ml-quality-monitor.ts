@@ -1,41 +1,48 @@
-// ML Quality Monitor - internal visibility for ML performance
+// ML Quality Monitor - internal visibility for recommendation quality.
+// NOTE: the "ML" layer is a static heuristic ranker (no trained model), and no
+// historical baseline is persisted — comparison sections are null until real
+// baseline data exists.
 import type { UserFeedback } from '../../types/feedback'
 import type { RankedDestination } from '../../analysis/schemas'
 import type { EvaluationMetrics } from '../evaluation/ml-evaluator'
 import { mlEvaluator } from '../evaluation/ml-evaluator'
+import { recommendationRanker } from '../models/recommendation-ranker'
 import { logger } from '../../utils'
 import { createAdminClient } from '../../supabase/admin'
 
 export interface MLQualityReport {
   timestamp: string
-  
-  // Baseline vs ML comparison
+
+  // Current-system quality measured from real feedback.
+  // baselineQuality is null: no pre-ML baseline output is persisted, so no
+  // honest comparison can be computed yet.
   baselineVsML: {
-    baselineQuality: number
+    baselineQuality: number | null
     mlQuality: number
-    improvement: number
-    isMLBetter: boolean
+    improvement: number | null
+    isMLBetter: boolean | null
   }
-  
+
   // Acceptance patterns
   topAcceptedPatterns: Array<{
     pattern: string
     frequency: number
     avgRank: number
   }>
-  
+
   topRejectedPatterns: Array<{
     pattern: string
     frequency: number
     avgRank: number
   }>
-  
-  // Ranking drift
+
+  // Ranking drift — null: historical rankings are not persisted, so drift
+  // cannot be computed honestly yet.
   rankingDrift: {
     avgPositionChange: number
     volatility: number
     stabilityScore: number
-  }
+  } | null
   
   // Feature signals
   featureSignals: Array<{
@@ -121,10 +128,11 @@ export class MLQualityMonitor {
   }
 
   /**
-   * Compare baseline vs ML performance
+   * Report current-system quality from real feedback.
+   * No persisted pre-ML baseline exists, so baseline fields are null —
+   * do not fabricate a comparison.
    */
-  private async compareBaselineVsML(feedback: any[]): Promise<any> {
-    // Simplified comparison - in production, you'd compare actual baseline vs ML rankings
+  private async compareBaselineVsML(feedback: any[]): Promise<MLQualityReport['baselineVsML']> {
     const acceptedCount = feedback.filter(f =>
       f.feedback_type === 'thumbs-up' ||
       f.feedback_type === 'save-trip' ||
@@ -132,15 +140,13 @@ export class MLQualityMonitor {
     ).length
 
     const totalCount = feedback.length
-
     const mlQuality = totalCount > 0 ? acceptedCount / totalCount : 0
-    const baselineQuality = mlQuality * 0.85 // Assume ML is 15% better (placeholder)
 
     return {
-      baselineQuality,
+      baselineQuality: null,
       mlQuality,
-      improvement: mlQuality - baselineQuality,
-      isMLBetter: mlQuality > baselineQuality,
+      improvement: null,
+      isMLBetter: null,
     }
   }
 
@@ -191,36 +197,29 @@ export class MLQualityMonitor {
   }
 
   /**
-   * Analyze ranking drift over time
+   * Ranking drift over time — not computable: historical rankings are not
+   * persisted. Returns null rather than fabricating numbers.
    */
-  private async analyzeRankingDrift(timeRange: any): Promise<any> {
-    // Simplified drift analysis
-    // In production, you'd compare rankings across time periods
-
-    return {
-      avgPositionChange: 0.5, // Average rank change
-      volatility: 0.3, // How much rankings fluctuate
-      stabilityScore: 0.7, // 1 - volatility
-    }
+  private async analyzeRankingDrift(timeRange: any): Promise<MLQualityReport['rankingDrift']> {
+    return null
   }
 
   /**
-   * Analyze feature importance signals
+   * Feature signals from the static heuristic ranker's actual weights.
+   * Trend is always 'stable' because the weights are fixed (no training).
    */
   private analyzeFeatureSignals(feedback: any[]): Array<{
     feature: string
     importance: number
     trend: 'increasing' | 'decreasing' | 'stable'
   }> {
-    // Simplified feature analysis
-    // In production, you'd track feature importance over time
-
-    return [
-      { feature: 'budget_fit', importance: 0.15, trend: 'stable' },
-      { feature: 'safety', importance: 0.12, trend: 'increasing' },
-      { feature: 'total_score', importance: 0.20, trend: 'stable' },
-      { feature: 'evidence_strength', importance: 0.10, trend: 'stable' },
-    ]
+    return recommendationRanker.getFeatureImportance()
+      .slice(0, 10)
+      .map(({ feature, importance }) => ({
+        feature,
+        importance: Math.round(importance * 100) / 100,
+        trend: 'stable' as const,
+      }))
   }
 
   /**
@@ -235,8 +234,17 @@ export class MLQualityMonitor {
       .select('*', { count: 'exact', head: true })
       .gte('quality_score', 0.7)
 
+    // Average quality across all stored examples
+    const { data: qualityRows } = await supabase
+      .from('ml_training_examples')
+      .select('quality_score')
+
+    const scores = (qualityRows || []) as Array<{ quality_score: number }>
+    const qualityScore = scores.length > 0
+      ? scores.reduce((sum, r) => sum + Number(r.quality_score), 0) / scores.length
+      : 0
+
     const newExamplesCount = count || 0
-    const qualityScore = 0.75 // Placeholder
     const isReady = newExamplesCount >= 1000
 
     return {
@@ -335,23 +343,10 @@ export class MLQualityMonitor {
   }
 
   /**
-   * Get feature importance summary
+   * Get feature weight summary from the static heuristic ranker
    */
   getFeatureImportanceSummary(): Array<{ feature: string; importance: number }> {
-    // This would come from the ML model's feature importance
-    // For now, return the learned weights from recommendation ranker
-    return [
-      { feature: 'item_total_score', importance: 0.15 },
-      { feature: 'user_budget_sensitivity', importance: 0.12 },
-      { feature: 'item_budget_fit', importance: 0.08 },
-      { feature: 'user_nightlife_pref', importance: 0.08 },
-      { feature: 'user_nature_pref', importance: 0.08 },
-      { feature: 'item_safety', importance: 0.07 },
-      { feature: 'item_evidence_strength', importance: 0.05 },
-      { feature: 'item_confidence', importance: 0.05 },
-      { feature: 'context_timing_flexibility', importance: 0.05 },
-      { feature: 'context_budget_flexibility', importance: 0.05 },
-    ]
+    return recommendationRanker.getFeatureImportance()
   }
 }
 

@@ -24,16 +24,16 @@ interface RecommendationInput {
 
 interface RecommendationItem {
   rank: number
-  destinationTitle?: string
-  tripType?: string
-  suggestedRoute?: any[]
-  recommendedNights?: Record<string, number>
-  totalScore?: number
-  routeRealismScore?: number
-  travelFatigueLevel?: string
-  transportLogic?: string
-  warnings?: string[]
-  alternatives?: any[]
+  destinationTitle?: string | null
+  tripType?: string | null
+  suggestedRoute?: any[] | null
+  recommendedNights?: Record<string, number> | null
+  totalScore?: number | null
+  routeRealismScore?: number | null
+  travelFatigueLevel?: string | null
+  transportLogic?: string | null
+  warnings?: string[] | null
+  alternatives?: any[] | null
   providerSource?: string
   claudeVerified?: boolean
   claudeAccuracyNotes?: string[]

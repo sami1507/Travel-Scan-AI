@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { travelAnalysisEngine } from '@/lib/analysis/engine'
 import { logger } from '@/lib/utils'
-import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
 import { validateRequest, schemas } from '@/lib/validation'
 import { errorTracker } from '@/lib/monitoring/error-tracker'
 import { canUserAnalyze, incrementAnalysisUsage } from '@/lib/services/subscription'
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting
-    const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.ANALYSIS)
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.TRAVEL_ANALYSIS)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
@@ -165,11 +165,9 @@ export async function POST(request: NextRequest) {
     logger.error('Travel analysis API error', error)
     errorTracker.trackAnalysisError(error, undefined, undefined)
 
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: 'Failed to run travel analysis. Please try again.',
         success: false,
       },
       { status: 500 }

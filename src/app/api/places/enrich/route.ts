@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { enrichRouteCities } from '@/lib/services/google-places-service'
 import { logError, logInfo } from '@/lib/error-logger'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
 
 interface EnrichRequest {
   country: string
@@ -15,6 +17,15 @@ interface EnrichRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.PLACES_ENRICH)
+    if (rateLimitResponse) return rateLimitResponse
+
     const body: EnrichRequest = await request.json()
 
     const { country, routeCities, categories } = body

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getUserSubscription } from '@/lib/services/subscription'
+import { logger } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,8 +17,9 @@ export async function GET(_request: NextRequest) {
     const subscription = await getUserSubscription(user.id)
     return NextResponse.json(subscription)
   } catch (error) {
+    logger.error('Failed to load subscription status', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Failed to load subscription status.' },
       { status: 500 }
     )
   }

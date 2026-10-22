@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,9 +59,21 @@ User: "I want a city break"
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages } = await request.json() as {
-      messages: Array<{ role: string; content: string }>
+    const supabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.CHAT)
+    if (rateLimitResponse) return rateLimitResponse
+
+    const body = await request.json()
+    const validation = validateRequest(schemas.chatTravel, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+    const { messages } = validation.data
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(

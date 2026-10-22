@@ -57,7 +57,9 @@ export class ClaudeVerifierService {
         model: this.model,
       })
     } catch (error) {
-      logger.warn('Failed to initialize Claude verifier - @anthropic-ai/sdk not installed', error)
+      logger.warn('Failed to initialize Claude verifier - @anthropic-ai/sdk not installed', {
+        error: error instanceof Error ? error.message : String(error),
+      })
       this.enabled = false
     }
   }
@@ -178,7 +180,9 @@ Respond in JSON format only.`
         suggestedAlternative: parsed.suggestedAlternative || undefined,
       }
     } catch (error) {
-      logger.warn('Failed to parse Claude verification response', error)
+      logger.warn('Failed to parse Claude verification response', {
+        error: error instanceof Error ? error.message : String(error),
+      })
       return {
         verified: true,
         valid: true,

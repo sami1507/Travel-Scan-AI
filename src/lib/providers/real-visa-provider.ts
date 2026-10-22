@@ -1,6 +1,22 @@
 // Real Visa/Passport Rules Provider using structured knowledge
 import type { IVisaProvider, VisaData } from './interfaces'
 
+type VisaRule = {
+  required: boolean
+  type?: string
+  maxStay?: number
+  notes?: string
+}
+
+// EU/EEA + Switzerland passports share freedom of movement within the bloc and
+// broadly identical third-country tourist rules, so one verified rule set
+// covers all of them (template lives on the 'FR' entry below).
+const EU_PASSPORT_CODES = [
+  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'DE', 'GR', 'HU',
+  'IS', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO',
+  'SK', 'SI', 'ES', 'SE', 'CH',
+]
+
 /**
  * Real Visa Provider
  * Uses structured visa/passport rules based on verified data
@@ -9,12 +25,7 @@ import type { IVisaProvider, VisaData } from './interfaces'
  */
 export class RealVisaProvider implements IVisaProvider {
   // Structured visa rules for common passport-destination combinations
-  private readonly visaRules: Record<string, Record<string, {
-    required: boolean
-    type?: string
-    maxStay?: number
-    notes?: string
-  }>> = {
+  private readonly visaRules: Record<string, Record<string, VisaRule>> = {
     // US Passport holders
     'US': {
       'FR': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
@@ -49,7 +60,7 @@ export class RealVisaProvider implements IVisaProvider {
       'CN': { required: true, type: 'tourist', maxStay: 30, notes: 'Tourist visa required' },
       'IN': { required: true, type: 'e-visa', maxStay: 60, notes: 'E-visa available online' },
     },
-    // EU Passport holders (using France as example)
+    // EU Passport holders (using France as example — applies to any Schengen/EU passport)
     'FR': {
       'ES': { required: false, maxStay: 0, notes: 'EU freedom of movement' },
       'IT': { required: false, maxStay: 0, notes: 'EU freedom of movement' },
@@ -65,6 +76,57 @@ export class RealVisaProvider implements IVisaProvider {
       'CN': { required: true, type: 'tourist', maxStay: 30, notes: 'Tourist visa required' },
       'IN': { required: true, type: 'e-visa', maxStay: 60, notes: 'E-visa available online' },
     },
+    // Canadian Passport holders
+    'CA': {
+      'FR': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'ES': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'IT': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'DE': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'GR': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'GB': { required: false, maxStay: 180, notes: 'Visa-free for tourism' },
+      'US': { required: false, maxStay: 180, notes: 'Visa-free for tourism (no ESTA required)' },
+      'JP': { required: false, maxStay: 90, notes: 'Visa-free for tourism' },
+      'AU': { required: true, type: 'eTA', maxStay: 90, notes: 'Electronic Travel Authority required' },
+      'TH': { required: false, maxStay: 30, notes: 'Visa-free for tourism' },
+      'MX': { required: false, maxStay: 180, notes: 'Visa-free for tourism' },
+      'CN': { required: true, type: 'tourist', maxStay: 30, notes: 'Tourist visa required' },
+      'IN': { required: true, type: 'e-visa', maxStay: 60, notes: 'E-visa available online' },
+    },
+    // Australian Passport holders
+    'AU': {
+      'FR': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'ES': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'IT': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'DE': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'GB': { required: false, maxStay: 180, notes: 'Visa-free for tourism' },
+      'US': { required: false, maxStay: 90, notes: 'ESTA required (online authorization)' },
+      'JP': { required: false, maxStay: 90, notes: 'Visa-free for tourism' },
+      'TH': { required: false, maxStay: 30, notes: 'Visa-free for tourism' },
+      'CA': { required: false, maxStay: 180, notes: 'eTA required (online authorization)' },
+      'CN': { required: true, type: 'tourist', maxStay: 30, notes: 'Tourist visa required' },
+      'IN': { required: true, type: 'e-visa', maxStay: 60, notes: 'E-visa available online' },
+    },
+    // Japanese Passport holders
+    'JP': {
+      'FR': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'ES': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'IT': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'DE': { required: false, maxStay: 90, notes: 'Schengen visa-free for tourism' },
+      'GB': { required: false, maxStay: 180, notes: 'Visa-free for tourism' },
+      'US': { required: false, maxStay: 90, notes: 'ESTA required (online authorization)' },
+      'AU': { required: true, type: 'eTA', maxStay: 90, notes: 'Electronic Travel Authority required' },
+      'TH': { required: false, maxStay: 30, notes: 'Visa-free for tourism' },
+      'CN': { required: true, type: 'tourist', maxStay: 30, notes: 'Tourist visa required' },
+      'IN': { required: true, type: 'e-visa', maxStay: 60, notes: 'E-visa available online' },
+    },
+  }
+
+  constructor() {
+    // Expand EU/EEA/Switzerland passports with the shared bloc rule set
+    const euTemplate = this.visaRules['FR']
+    for (const code of EU_PASSPORT_CODES) {
+      this.visaRules[code] = { ...euTemplate }
+    }
   }
 
   /**
@@ -95,7 +157,7 @@ export class RealVisaProvider implements IVisaProvider {
         maxStayDays: rule.maxStay,
         processingTime: rule.required ? '7-14 days' : undefined,
         cost: rule.required ? (rule.type === 'e-visa' ? 50 : 100) : undefined,
-        notes: [rule.notes],
+        notes: rule.notes ? [rule.notes] : [],
         source: 'knowledge-based',
         metadata: {
           dataType: 'verified-rules',

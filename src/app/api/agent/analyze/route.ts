@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getTravelIntelligenceAgent } from '@/lib/agents'
 import { logger } from '@/lib/utils'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,9 +21,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse request body
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.AI_INTELLIGENCE)
+    if (rateLimitResponse) return rateLimitResponse
+
+    // Parse and validate request body (bounds prevent unbounded-cost AI calls)
     const body = await request.json().catch(() => ({}))
-    const { recordLimit, changeLimit, sourceConfigId } = body
+    const validation = validateRequest(schemas.intelligenceRequest, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+    const { recordLimit, changeLimit, sourceConfigId } = validation.data
 
     logger.info('Agent analysis triggered', { userId: user.id, recordLimit, changeLimit, sourceConfigId })
 
@@ -42,12 +51,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     logger.error('Agent analysis API error', error)
-    
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-    
+
     return NextResponse.json(
-      { 
-        error: errorMessage,
+      {
+        error: 'Failed to run agent analysis. Please try again.',
         success: false,
       },
       { status: 500 }
@@ -68,10 +75,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.AI_INTELLIGENCE)
+    if (rateLimitResponse) return rateLimitResponse
+
     // Get query parameters
     const { searchParams } = new URL(request.url)
     const changeType = searchParams.get('changeType') as 'new' | 'modified' | 'removed' | null
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '50') || 50, 1), 500)
 
     logger.info('Agent change analysis triggered', { userId: user.id, changeType, limit })
 
@@ -88,12 +98,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     logger.error('Agent change analysis API error', error)
-    
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-    
+
     return NextResponse.json(
-      { 
-        error: errorMessage,
+      {
+        error: 'Failed to run change analysis. Please try again.',
         success: false,
       },
       { status: 500 }

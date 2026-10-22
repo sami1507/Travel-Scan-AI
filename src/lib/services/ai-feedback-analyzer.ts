@@ -57,7 +57,7 @@ export interface FeedbackContext {
 }
 
 export class AIFeedbackAnalyzer {
-  private openai: OpenAI
+  private openai: OpenAI | null = null
   private static instance: AIFeedbackAnalyzer | null = null
 
   constructor() {

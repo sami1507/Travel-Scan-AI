@@ -1,4 +1,5 @@
 // Alert and notification services
+import { randomBytes } from 'crypto'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export interface UserAlert {
@@ -298,9 +299,8 @@ export class ShareService {
     if (error) throw error
   }
 
-  // Generate share token
+  // Generate share token — cryptographically random, not guessable/enumerable
   private static generateShareToken(): string {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15)
+    return randomBytes(24).toString('base64url')
   }
 }

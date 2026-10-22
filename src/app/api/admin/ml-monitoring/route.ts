@@ -21,20 +21,20 @@ export async function GET(request: NextRequest) {
     if (authError) return authError
 
     // Get shadow mode comparison statistics
-    const comparisonStats = shadowModeManager.getComparisonStats()
-    const recentComparisons = shadowModeManager.getRecentComparisons(20)
+    const comparisonStats = await shadowModeManager.getComparisonStats()
+    const recentComparisons = await shadowModeManager.getRecentComparisons(20)
     const shadowConfig = shadowModeManager.getConfig()
 
     // Get retraining readiness status
     const retrainingStatus = await retrainingManager.checkRetrainingReadiness()
-    const currentModel = retrainingManager.getCurrentModel()
-    const modelHistory = retrainingManager.getModelHistory()
-    const dataSnapshots = retrainingManager.getDataSnapshots()
-    const retrainingRecommendations = retrainingManager.getRetrainingRecommendations()
+    const currentModel = await retrainingManager.getCurrentModel()
+    const modelHistory = await retrainingManager.getModelHistory()
+    const dataSnapshots = await retrainingManager.getDataSnapshots()
+    const retrainingRecommendations = await retrainingManager.getRetrainingRecommendations()
 
     // Get improvement signals
-    const signalAggregation = signalTracker.getSignalAggregation(24) // Last 24 hours
-    const improvementSignals = signalTracker.getImprovementSignalsForRetraining()
+    const signalAggregation = await signalTracker.getSignalAggregation(24) // Last 24 hours
+    const improvementSignals = await signalTracker.getImprovementSignalsForRetraining()
 
     // Calculate ML health status
     const mlHealth = {

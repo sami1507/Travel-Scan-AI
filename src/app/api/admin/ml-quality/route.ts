@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { mlQualityMonitor } from '@/lib/ml/monitoring/ml-quality-monitor'
 import { mlEvaluator } from '@/lib/ml/evaluation/ml-evaluator'
 import { evaluationScenarios } from '@/lib/ml/evaluation/evaluation-scenarios'
+import { travelAnalysisEngine } from '@/lib/analysis/engine'
+import type { RankedDestination } from '@/lib/analysis/schemas'
 import { logger } from '@/lib/utils'
 import { requireAdmin } from '@/lib/auth/admin-guard'
 
@@ -88,23 +90,52 @@ export async function POST(request: Request) {
       ? evaluationScenarios.filter(s => scenarioIds.includes(s.scenarioId))
       : evaluationScenarios
 
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OPENAI_API_KEY is not configured; evaluation scenarios cannot run' },
+        { status: 503 }
+      )
+    }
+
     logger.info('Admin: Running evaluation scenarios', {
       scenarioCount: scenariosToRun.length,
     })
 
-    // Note: In production, you would run actual evaluations
-    // For now, return a placeholder response
-    const results = scenariosToRun.map(s => ({
-      scenarioId: s.scenarioId,
-      name: s.name,
-      status: 'pending',
-      message: 'Evaluation scenarios require full analysis engine integration',
-    }))
+    // Run each test case through the real analysis engine
+    const analyzeFunction = async (input: any): Promise<RankedDestination[]> => {
+      const analysis = await travelAnalysisEngine.analyze({
+        query: input.query,
+        budget: input.budget === 'low' ? 'budget' : input.budget,
+        travelMonths: input.travelMonths,
+        interests: input.interests,
+        travelStyle: input.travelStyle,
+        pace: input.pace,
+        tripLength: input.tripDuration,
+        forceFresh: true,
+      })
+      return analysis.rankedDestinations || []
+    }
+
+    const evaluationResults = await mlEvaluator.runEvaluationScenarios(
+      scenariosToRun,
+      analyzeFunction
+    )
+
+    const results = scenariosToRun.map(s => {
+      const result = evaluationResults.get(s.scenarioId)
+      return {
+        scenarioId: s.scenarioId,
+        name: s.name,
+        status: result ? (result.passed ? 'passed' : 'failed') : 'error',
+        metrics: result?.metrics || null,
+      }
+    })
 
     return NextResponse.json({
       results,
       metadata: {
         scenariosRun: scenariosToRun.length,
+        scenariosPassed: results.filter(r => r.status === 'passed').length,
         timestamp: new Date().toISOString(),
       },
     })

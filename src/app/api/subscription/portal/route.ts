@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createBillingPortalSession } from '@/lib/services/stripe'
 import { getUserSubscription } from '@/lib/services/subscription'
+import { logger } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +24,9 @@ export async function POST(_request: NextRequest) {
     const url = await createBillingPortalSession(sub.stripeCustomerId)
     return NextResponse.json({ url })
   } catch (error) {
+    logger.error('Billing portal session creation failed', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Failed to open billing portal. Please try again.' },
       { status: 500 }
     )
   }

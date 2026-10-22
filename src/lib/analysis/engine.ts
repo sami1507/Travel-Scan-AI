@@ -1636,7 +1636,8 @@ export class TravelAnalysisEngine {
     const flightHotelSource = providerData.priceEstimationUsed
       ? `AI-estimated from Tavily web search (confidence: ${providerData.priceEstimationConfidence ?? 'low'})`
       : 'live API data'
-    sections.push(`Note: Weather=structured, Currency=structured, Visa=knowledge-based, Flights/Hotels=${flightHotelSource}`)
+    const weatherSource = providerData.weather?.source === 'api' ? 'live climate data (Open-Meteo)' : 'structured'
+    sections.push(`Note: Weather=${weatherSource}, Currency=structured, Visa=knowledge-based, Flights/Hotels=${flightHotelSource}`)
     sections.push('')
 
     // Flight data summary
@@ -1973,7 +1974,10 @@ export class TravelAnalysisEngine {
         // top-ranked destination (not per-destination) — the prompt section they feed
         // is an illustrative summary, not a per-destination breakdown.
         if (i === 0) {
-          data.weather = await this.weatherProvider.getWeather(dest.destinationName)
+          // Weather for the traveller's first requested month (defaults to the current month)
+          const weatherMonth = travelMonths && travelMonths.length > 0 ? travelMonths[0] : new Date().getMonth() + 1
+          const weatherDate = new Date(Date.UTC(new Date().getUTCFullYear(), weatherMonth - 1, 15)).toISOString().split('T')[0]
+          data.weather = await this.weatherProvider.getWeather(dest.destinationName, weatherDate)
 
           // Real currency data — convert to the destination's actual local currency,
           // not a hardcoded EUR (previously wrong for every non-Eurozone destination)

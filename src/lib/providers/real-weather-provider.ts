@@ -1,10 +1,13 @@
 // Real Weather Provider using structured weather data
 import type { IWeatherProvider, WeatherData } from './interfaces'
+import { describeCondition, getClimateNormals } from './live-climate'
 
 /**
  * Real Weather Provider
- * Uses structured weather data with clear seasonal patterns
- * Marks data as 'structured' to distinguish from live API data
+ * Primary: live climate normals from Open-Meteo (observed data for the requested
+ * month from the latest complete year), marked source 'api'.
+ * Fallback: deterministic seasonal patterns by hemisphere/climate zone, marked
+ * 'structured', used when the live service is unreachable.
  */
 export class RealWeatherProvider implements IWeatherProvider {
   /**
@@ -14,6 +17,26 @@ export class RealWeatherProvider implements IWeatherProvider {
   async getWeather(location: string, date?: string): Promise<WeatherData> {
     const targetDate = date ? new Date(date) : new Date()
     const month = targetDate.getMonth() + 1 // 1-12
+
+    const live = await getClimateNormals(location, month)
+    if (live) {
+      return {
+        location,
+        date: targetDate.toISOString().split('T')[0],
+        temperature: Math.round(live.temperature * 10) / 10,
+        condition: describeCondition(live.temperature, live.precipitation),
+        humidity: Math.round(live.humidity),
+        windSpeed: Math.round(live.windSpeed * 10) / 10,
+        precipitation: Math.round(live.precipitation * 10) / 10,
+        source: 'api',
+        metadata: {
+          dataType: 'observed-monthly-average',
+          provider: 'open-meteo.com',
+          basedOnYear: live.yearUsed,
+          note: 'Average daily conditions for this month in the latest complete year; not a forecast',
+        },
+      }
+    }
     
     // Parse location to determine hemisphere and climate zone
     const { hemisphere, climateZone, countryCode } = this.parseLocation(location)
@@ -131,43 +154,43 @@ export class RealWeatherProvider implements IWeatherProvider {
     // Tropical climate (consistent year-round)
     if (climateZone === 'tropical') {
       return {
-        temperature: 28 + Math.random() * 4, // 28-32°C
-        condition: ['Sunny', 'Partly Cloudy', 'Rainy'][Math.floor(Math.random() * 3)],
-        humidity: 70 + Math.random() * 20, // 70-90%
-        windSpeed: 10 + Math.random() * 10, // 10-20 km/h
-        precipitation: 5 + Math.random() * 15, // 5-20mm
+        temperature: 30, // 28-32°C
+        condition: 'Warm with frequent showers',
+        humidity: 80, // 70-90%
+        windSpeed: 15, // 10-20 km/h
+        precipitation: 12.5, // 5-20mm
       }
     }
 
     // Temperate climate (seasonal variation)
     const temperatePatterns: Record<string, any> = {
       winter: {
-        temperature: 5 + Math.random() * 5, // 5-10°C
+        temperature: 7.5, // 5-10°C
         condition: 'Cloudy',
-        humidity: 75 + Math.random() * 15,
-        windSpeed: 15 + Math.random() * 15,
-        precipitation: 3 + Math.random() * 7,
+        humidity: 82.5,
+        windSpeed: 22.5,
+        precipitation: 6.5,
       },
       spring: {
-        temperature: 15 + Math.random() * 5, // 15-20°C
+        temperature: 17.5, // 15-20°C
         condition: 'Partly Cloudy',
-        humidity: 60 + Math.random() * 20,
-        windSpeed: 10 + Math.random() * 10,
-        precipitation: 2 + Math.random() * 5,
+        humidity: 70,
+        windSpeed: 15,
+        precipitation: 4.5,
       },
       summer: {
-        temperature: 25 + Math.random() * 5, // 25-30°C
+        temperature: 27.5, // 25-30°C
         condition: 'Sunny',
-        humidity: 50 + Math.random() * 20,
-        windSpeed: 8 + Math.random() * 8,
-        precipitation: 1 + Math.random() * 4,
+        humidity: 60,
+        windSpeed: 12,
+        precipitation: 3,
       },
       fall: {
-        temperature: 12 + Math.random() * 8, // 12-20°C
+        temperature: 16, // 12-20°C
         condition: 'Partly Cloudy',
-        humidity: 65 + Math.random() * 20,
-        windSpeed: 12 + Math.random() * 12,
-        precipitation: 3 + Math.random() * 6,
+        humidity: 75,
+        windSpeed: 18,
+        precipitation: 6,
       },
     }
 

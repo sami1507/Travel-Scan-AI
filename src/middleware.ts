@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { buildCsp, generateNonce } from '@/lib/security/csp'
 
 const SUPPORTED_LOCALES = ['en', 'ar', 'he', 'es', 'pt', 'fr', 'de', 'it', 'tr', 'ja']
 
@@ -14,11 +15,16 @@ function detectLocale(request: NextRequest): string {
 }
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  // Per-request nonce: Next.js reads it from the request CSP header and stamps it on
+  // its inline bootstrap scripts, so no 'unsafe-inline' is needed for scripts.
+  const nonce = generateNonce()
+  const csp = buildCsp(nonce, process.env.NODE_ENV === 'production')
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', csp)
+  const nextWithNonce = () => NextResponse.next({ request: { headers: requestHeaders } })
+
+  let response = nextWithNonce()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,11 +40,7 @@ export async function middleware(request: NextRequest) {
             value,
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          response = nextWithNonce()
           response.cookies.set({
             name,
             value,
@@ -51,11 +53,7 @@ export async function middleware(request: NextRequest) {
             value: '',
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          response = nextWithNonce()
           response.cookies.set({
             name,
             value: '',
@@ -93,28 +91,7 @@ export async function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   
-  // Content Security Policy
-  // 'unsafe-eval' is only needed for Next.js dev-mode HMR/source maps — dropped in production.
-  // 'unsafe-inline' on script-src is still required because Next.js injects inline bootstrap
-  // scripts without a nonce; removing it needs a nonce-based CSP wired through next.config.js
-  // and would need dedicated testing, so it's left in place rather than guessed at here.
-  const scriptSrc = process.env.NODE_ENV === 'production'
-    ? "script-src 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;"
-    : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;"
-  const cspHeader = `
-    default-src 'self';
-    ${scriptSrc}
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' blob: data: https:;
-    font-src 'self' data:;
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vercel.live https://maps.googleapis.com;
-    frame-src 'self' https://vercel.live;
-    frame-ancestors 'none';
-    base-uri 'self';
-    form-action 'self';
-  `.replace(/\s{2,}/g, ' ').trim()
-  
-  response.headers.set('Content-Security-Policy', cspHeader)
+  response.headers.set('Content-Security-Policy', csp)
 
   // Set locale cookie if not already present
   if (!request.cookies.get('NEXT_LOCALE')) {

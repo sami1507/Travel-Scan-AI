@@ -61,6 +61,15 @@ const DEFAULT_WEIGHTS: ScoringWeights = {
   safety: 0.10,
 }
 
+// Interests that map onto a scored category. Selecting one emphasises that category;
+// selecting other interests but not this one de-emphasises it.
+const INTEREST_CATEGORIES: Partial<Record<'nightlife' | 'nature', string[]>> = {
+  nightlife: ['nightlife', 'party', 'bars', 'clubs'],
+  nature: ['nature', 'hiking', 'adventure', 'wildlife', 'outdoors', 'beach'],
+}
+const INTEREST_BOOST = 2
+const INTEREST_DAMPEN = 0.6
+
 export class ScoringEngine {
   private weights: ScoringWeights
 
@@ -73,6 +82,29 @@ export class ScoringEngine {
    */
   setWeights(weights: ScoringWeights): void {
     this.weights = weights
+  }
+
+  /**
+   * Weights adjusted for the traveller's stated interests, renormalised to keep the
+   * same total so scores stay on the 0-100 scale. With no interests the base weights
+   * are returned unchanged. Deterministic.
+   */
+  effectiveWeights(preferences: UserPreferences): ScoringWeights {
+    const interests = (preferences.interests ?? []).map((i) => i.toLowerCase())
+    if (interests.length === 0) return { ...this.weights }
+
+    const adjusted: ScoringWeights = { ...this.weights }
+    for (const category of ['nightlife', 'nature'] as const) {
+      const keywords = INTEREST_CATEGORIES[category] ?? []
+      const selected = interests.some((i) => keywords.includes(i))
+      adjusted[category] = this.weights[category] * (selected ? INTEREST_BOOST : INTEREST_DAMPEN)
+    }
+
+    const baseTotal = Object.values(this.weights).reduce((sum, w) => sum + w, 0)
+    const newTotal = Object.values(adjusted).reduce((sum, w) => sum + w, 0)
+    const scale = baseTotal / newTotal
+    for (const key of Object.keys(adjusted) as Array<keyof ScoringWeights>) adjusted[key] *= scale
+    return adjusted
   }
 
   /**
@@ -91,7 +123,7 @@ export class ScoringEngine {
     providerScores?: { flightValue?: number; hotelValue?: number }
   ): DestinationScore {
     const categoryScores = this.calculateCountryScores(country, preferences, providerScores)
-    const totalScore = this.calculateTotalScore(categoryScores)
+    const totalScore = this.calculateTotalScore(categoryScores, this.effectiveWeights(preferences))
     const reasons = this.generateReasons(country, categoryScores, preferences)
     const warnings = country.warnings
 
@@ -118,7 +150,7 @@ export class ScoringEngine {
     providerScores?: { flightValue?: number; hotelValue?: number }
   ): DestinationScore {
     const categoryScores = this.calculateCityScores(city, country, preferences, providerScores)
-    const totalScore = this.calculateTotalScore(categoryScores)
+    const totalScore = this.calculateTotalScore(categoryScores, this.effectiveWeights(preferences))
     const reasons = this.generateCityReasons(city, categoryScores, preferences)
     const warnings = city.practicalNotes.filter(note => 
       note.toLowerCase().includes('avoid') || 
@@ -241,16 +273,16 @@ export class ScoringEngine {
   /**
    * Calculate total score with weights
    */
-  private calculateTotalScore(categoryScores: CategoryScores): number {
+  private calculateTotalScore(categoryScores: CategoryScores, weights: ScoringWeights = this.weights): number {
     let weighted = 
-      categoryScores.budgetFit * this.weights.budgetFit +
-      categoryScores.weatherFit * this.weights.weatherFit +
-      categoryScores.passportEase * this.weights.passportEase +
-      categoryScores.nightlife * this.weights.nightlife +
-      categoryScores.nature * this.weights.nature +
-      categoryScores.transport * this.weights.transport +
-      categoryScores.hotelValue * this.weights.hotelValue +
-      categoryScores.safety * this.weights.safety
+      categoryScores.budgetFit * weights.budgetFit +
+      categoryScores.weatherFit * weights.weatherFit +
+      categoryScores.passportEase * weights.passportEase +
+      categoryScores.nightlife * weights.nightlife +
+      categoryScores.nature * weights.nature +
+      categoryScores.transport * weights.transport +
+      categoryScores.hotelValue * weights.hotelValue +
+      categoryScores.safety * weights.safety
 
     // If flight value is available, blend it with budget fit (10% influence)
     if (categoryScores.flightValue != null) {

@@ -1,4 +1,12 @@
 // Evidence-based Travel Intelligence Agent
+//
+// NOTE: Two "TravelIntelligenceAgent" implementations exist and are intentionally
+// separate single-shot structured-output calls (neither is an iterative
+// tool-calling loop despite the name):
+// - src/lib/agents/travel-intelligence-agent.ts: classifies raw data-ingestion
+//   signals/changes into severity-ranked insights (used by /api/agent/analyze).
+// - THIS one (src/lib/intelligence): generates an evidence-cited intelligence
+//   report with strict no-invention rules (used by /api/intelligence/report).
 import OpenAI from 'openai'
 import { zodResponseFormat } from 'openai/helpers/zod'
 import { intelligenceReportSchema, type IntelligenceReport, type Evidence } from './schemas'
@@ -55,7 +63,7 @@ When analyzing:
 - Recommend actions only when justified by evidence`
 
 export class TravelIntelligenceAgent {
-  private openai: OpenAI
+  private openai: OpenAI | null = null
   private model: string = 'gpt-4o-2024-08-06'
 
   constructor() {

@@ -12,7 +12,7 @@ import {
 import type { TravelStrategyTips } from '@/lib/analysis/schemas'
 
 interface TravelStrategyTipsProps {
-  tips?: TravelStrategyTips
+  tips?: TravelStrategyTips | null
   onTipInteraction?: (tipType: string, action: string) => void
 }
 

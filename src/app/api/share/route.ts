@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { ShareService } from '@/lib/services/alerts'
-import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
 import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting
-    const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.SHARE)
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.SHARE)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

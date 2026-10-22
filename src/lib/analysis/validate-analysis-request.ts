@@ -100,10 +100,10 @@ export function sanitizeAnalysisRequest(request: any): any {
       ? Math.max(1, Math.min(365, Math.round(request.tripLength)))
       : undefined,
     travelMonths: Array.isArray(request.travelMonths)
-      ? request.travelMonths.filter(m => typeof m === 'number' && m >= 1 && m <= 12)
+      ? request.travelMonths.filter((m: unknown) => typeof m === 'number' && m >= 1 && m <= 12)
       : undefined,
     interests: Array.isArray(request.interests)
-      ? request.interests.filter(i => typeof i === 'string' && i.trim().length > 0)
+      ? request.interests.filter((i: unknown) => typeof i === 'string' && i.trim().length > 0)
       : undefined,
     budget: typeof request.budget === 'string' && ALLOWED_BUDGETS.includes(request.budget.toLowerCase())
       ? request.budget.toLowerCase()

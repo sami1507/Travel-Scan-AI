@@ -67,11 +67,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error('Admin analytics API error', error)
 
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: 'Failed to load analytics data.',
         success: false,
       },
       { status: 500 }

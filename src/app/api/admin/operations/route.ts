@@ -20,13 +20,13 @@ export async function GET(request: NextRequest) {
     if (authError) return authError
 
     // Get error statistics
-    const errorStats = errorTracker.getErrorStats()
-    const recentErrors = errorTracker.getRecentErrors(50)
+    const errorStats = await errorTracker.getErrorStats()
+    const recentErrors = await errorTracker.getRecentErrors(50)
 
     // Get cost statistics
-    const costSummary = costTracker.getCostSummary()
-    const totalCost = costTracker.getTotalCost()
-    const expensiveOps = costTracker.getMostExpensiveOperations(10)
+    const costSummary = await costTracker.getCostSummary()
+    const totalCost = await costTracker.getTotalCost()
+    const expensiveOps = await costTracker.getMostExpensiveOperations(10)
 
     // Get cache statistics
     const cacheStats = cacheManager.getStats()

@@ -86,24 +86,14 @@ export async function incrementAnalysisUsage(userId: string): Promise<void> {
   const db = getDb()
   const month = getCurrentMonth()
 
-  const { data: existing } = await db
-    .from('usage_tracking')
-    .select('analyses_count')
-    .eq('user_id', userId)
-    .eq('month', month)
-    .maybeSingle()
+  // Atomic DB-side increment (see migration 20260817_atomic_usage_and_plan_rls.sql) —
+  // a read-then-write here would let concurrent requests bypass the free-tier cap.
+  const { error } = await db.rpc('increment_analysis_usage', {
+    p_user_id: userId,
+    p_month: month,
+  })
 
-  const currentCount = (existing as { analyses_count: number } | null)?.analyses_count ?? 0
-
-  await db.from('usage_tracking').upsert(
-    {
-      user_id: userId,
-      month,
-      analyses_count: currentCount + 1,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,month' }
-  )
+  if (error) throw error
 }
 
 export async function canUserAnalyze(userId: string): Promise<{

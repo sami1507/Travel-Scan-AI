@@ -1,5 +1,9 @@
 // Retraining Readiness and Model Version Management
+// State is persisted to Supabase (ml_model_versions / ml_data_snapshots) so it
+// survives serverless cold starts. Rows are cached in memory per instance and
+// hydrated lazily on first access.
 import { logger } from '../../utils'
+import { createAdminClient } from '../../supabase/admin'
 
 export interface ModelVersion {
   version: string
@@ -53,24 +57,87 @@ export interface RetrainingReadinessStatus {
 }
 
 class RetrainingManager {
-  private currentModelVersion: ModelVersion | null = null
   private modelHistory: ModelVersion[] = []
   private dataSnapshots: TrainingDataSnapshot[] = []
-  
+  private loaded = false
+  private loading: Promise<void> | null = null
+
   private readonly MIN_TRAINING_EXAMPLES = 100
   private readonly MIN_DATA_QUALITY = 0.7
   private readonly FEATURE_SCHEMA_VERSION = '1.0.0'
 
   /**
+   * Hydrate in-memory cache from Supabase (once per instance)
+   */
+  private async ensureLoaded(): Promise<void> {
+    if (this.loaded) return
+    if (this.loading) return this.loading
+
+    this.loading = (async () => {
+      const supabase = createAdminClient()
+
+      const [modelsResult, snapshotsResult] = await Promise.all([
+        supabase.from('ml_model_versions').select('*').order('training_date', { ascending: true }),
+        supabase.from('ml_data_snapshots').select('*').order('created_at', { ascending: true }),
+      ])
+
+      if (modelsResult.error) {
+        logger.error('Failed to load model versions', modelsResult.error)
+        throw modelsResult.error
+      }
+      if (snapshotsResult.error) {
+        logger.error('Failed to load data snapshots', snapshotsResult.error)
+        throw snapshotsResult.error
+      }
+
+      this.modelHistory = (modelsResult.data || []).map((row: any) => ({
+        version: row.version,
+        trainingDate: row.training_date,
+        datasetVersion: row.dataset_version,
+        featureSchemaVersion: row.feature_schema_version,
+        trainingExampleCount: row.training_example_count,
+        evaluationMetrics: row.evaluation_metrics,
+        modelArtifacts: row.model_artifacts || {},
+        status: row.status,
+        deployedAt: row.deployed_at || undefined,
+        notes: row.notes || undefined,
+      }))
+
+      this.dataSnapshots = (snapshotsResult.data || []).map((row: any) => ({
+        snapshotId: row.snapshot_id,
+        createdAt: row.created_at,
+        exampleCount: row.example_count,
+        dateRange: row.date_range,
+        featureSchemaVersion: row.feature_schema_version,
+        dataQuality: row.data_quality,
+        exportPath: row.export_path || undefined,
+        format: row.format || 'jsonl',
+      }))
+
+      this.loaded = true
+    })()
+
+    try {
+      await this.loading
+    } finally {
+      this.loading = null
+    }
+  }
+
+  /**
    * Check if system is ready for retraining
    */
   async checkRetrainingReadiness(): Promise<RetrainingReadinessStatus> {
+    await this.ensureLoaded()
+
     const reasons: string[] = []
     const recommendedActions: string[] = []
     let ready = true
 
     // Get latest data snapshot
-    const latestSnapshot = this.getLatestDataSnapshot()
+    const latestSnapshot = this.dataSnapshots.length > 0
+      ? this.dataSnapshots[this.dataSnapshots.length - 1]
+      : null
 
     // Check 1: Sufficient training data
     if (!latestSnapshot || latestSnapshot.exampleCount < this.MIN_TRAINING_EXAMPLES) {
@@ -137,16 +204,34 @@ class RetrainingManager {
       ready,
       reasons,
       dataSnapshot: latestSnapshot,
-      currentModel: this.currentModelVersion,
+      currentModel: this.getDeployedModel(),
       recommendedActions,
       estimatedTrainingTime,
     }
   }
 
   /**
-   * Register a new training data snapshot
+   * Register a new training data snapshot (persisted to Supabase)
    */
-  registerDataSnapshot(snapshot: TrainingDataSnapshot) {
+  async registerDataSnapshot(snapshot: TrainingDataSnapshot): Promise<void> {
+    await this.ensureLoaded()
+
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('ml_data_snapshots').insert({
+      snapshot_id: snapshot.snapshotId,
+      example_count: snapshot.exampleCount,
+      date_range: snapshot.dateRange,
+      feature_schema_version: snapshot.featureSchemaVersion,
+      data_quality: snapshot.dataQuality,
+      export_path: snapshot.exportPath,
+      format: snapshot.format,
+    } as any)
+
+    if (error) {
+      logger.error('Failed to persist data snapshot', error)
+      throw error
+    }
+
     this.dataSnapshots.push(snapshot)
     logger.info('Training data snapshot registered', {
       snapshotId: snapshot.snapshotId,
@@ -155,12 +240,32 @@ class RetrainingManager {
   }
 
   /**
-   * Register a new model version
+   * Register a new model version (persisted to Supabase)
    */
-  registerModelVersion(model: ModelVersion) {
+  async registerModelVersion(model: ModelVersion): Promise<void> {
+    await this.ensureLoaded()
+
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('ml_model_versions').insert({
+      version: model.version,
+      training_date: model.trainingDate,
+      dataset_version: model.datasetVersion,
+      feature_schema_version: model.featureSchemaVersion,
+      training_example_count: model.trainingExampleCount,
+      evaluation_metrics: model.evaluationMetrics,
+      model_artifacts: model.modelArtifacts,
+      status: model.status,
+      deployed_at: model.deployedAt,
+      notes: model.notes,
+    } as any)
+
+    if (error) {
+      logger.error('Failed to persist model version', error)
+      throw error
+    }
+
     this.modelHistory.push(model)
     if (model.status === 'deployed') {
-      this.currentModelVersion = model
       logger.info('Model version deployed', {
         version: model.version,
         ndcg: model.evaluationMetrics.ndcg,
@@ -171,43 +276,54 @@ class RetrainingManager {
   /**
    * Get latest data snapshot
    */
-  getLatestDataSnapshot(): TrainingDataSnapshot | null {
+  async getLatestDataSnapshot(): Promise<TrainingDataSnapshot | null> {
+    await this.ensureLoaded()
     if (this.dataSnapshots.length === 0) return null
     return this.dataSnapshots[this.dataSnapshots.length - 1]
   }
 
+  private getDeployedModel(): ModelVersion | null {
+    return this.modelHistory.find(m => m.status === 'deployed') || null
+  }
+
   /**
-   * Get current model version
+   * Get current (deployed) model version
    */
-  getCurrentModel(): ModelVersion | null {
-    return this.currentModelVersion
+  async getCurrentModel(): Promise<ModelVersion | null> {
+    await this.ensureLoaded()
+    return this.getDeployedModel()
   }
 
   /**
    * Get model history
    */
-  getModelHistory(): ModelVersion[] {
+  async getModelHistory(): Promise<ModelVersion[]> {
+    await this.ensureLoaded()
     return this.modelHistory
   }
 
   /**
    * Get all data snapshots
    */
-  getDataSnapshots(): TrainingDataSnapshot[] {
+  async getDataSnapshots(): Promise<TrainingDataSnapshot[]> {
+    await this.ensureLoaded()
     return this.dataSnapshots
   }
 
   /**
    * Compare current model with baseline
    */
-  compareWithBaseline(): {
+  async compareWithBaseline(): Promise<{
     hasTrainedModel: boolean
     modelVersion?: string
     deployedAt?: string
     evaluationMetrics?: ModelVersion['evaluationMetrics']
     isUsingML: boolean
-  } {
-    if (!this.currentModelVersion) {
+  }> {
+    await this.ensureLoaded()
+    const currentModel = this.getDeployedModel()
+
+    if (!currentModel) {
       return {
         hasTrainedModel: false,
         isUsingML: false,
@@ -216,10 +332,10 @@ class RetrainingManager {
 
     return {
       hasTrainedModel: true,
-      modelVersion: this.currentModelVersion.version,
-      deployedAt: this.currentModelVersion.deployedAt,
-      evaluationMetrics: this.currentModelVersion.evaluationMetrics,
-      isUsingML: this.currentModelVersion.status === 'deployed',
+      modelVersion: currentModel.version,
+      deployedAt: currentModel.deployedAt,
+      evaluationMetrics: currentModel.evaluationMetrics,
+      isUsingML: currentModel.status === 'deployed',
     }
   }
 
@@ -243,36 +359,54 @@ class RetrainingManager {
       format: 'jsonl',
     }
 
-    this.registerDataSnapshot(snapshot)
+    await this.registerDataSnapshot(snapshot)
     return snapshot
   }
 
   /**
-   * Archive old model version
+   * Archive old model version (persisted to Supabase)
    */
-  archiveModel(version: string) {
+  async archiveModel(version: string): Promise<void> {
+    await this.ensureLoaded()
+
     const model = this.modelHistory.find(m => m.version === version)
-    if (model) {
-      model.status = 'archived'
-      logger.info('Model version archived', { version })
+    if (!model) return
+
+    const supabase = createAdminClient()
+    const { error } = await (supabase.from('ml_model_versions') as any)
+      .update({ status: 'archived' })
+      .eq('version', version)
+
+    if (error) {
+      logger.error('Failed to archive model version', error)
+      throw error
     }
+
+    model.status = 'archived'
+    logger.info('Model version archived', { version })
   }
 
   /**
    * Get retraining recommendations
    */
-  getRetrainingRecommendations(): string[] {
+  async getRetrainingRecommendations(): Promise<string[]> {
+    await this.ensureLoaded()
+
     const recommendations: string[] = []
-    const latestSnapshot = this.getLatestDataSnapshot()
+    const latestSnapshot = this.dataSnapshots.length > 0
+      ? this.dataSnapshots[this.dataSnapshots.length - 1]
+      : null
 
     if (!latestSnapshot) {
       recommendations.push('Create initial training data snapshot')
       return recommendations
     }
 
+    const currentModel = this.getDeployedModel()
+
     // Check if enough new data since last training
-    if (this.currentModelVersion) {
-      const lastTrainingDate = new Date(this.currentModelVersion.trainingDate)
+    if (currentModel) {
+      const lastTrainingDate = new Date(currentModel.trainingDate)
       const snapshotDate = new Date(latestSnapshot.createdAt)
       const daysSinceTraining = (snapshotDate.getTime() - lastTrainingDate.getTime()) / (1000 * 60 * 60 * 24)
 
@@ -280,7 +414,7 @@ class RetrainingManager {
         recommendations.push('Consider retraining: 30+ days since last training')
       }
 
-      const newExamples = latestSnapshot.exampleCount - this.currentModelVersion.trainingExampleCount
+      const newExamples = latestSnapshot.exampleCount - currentModel.trainingExampleCount
       if (newExamples > 100) {
         recommendations.push(`${newExamples} new training examples available`)
       }

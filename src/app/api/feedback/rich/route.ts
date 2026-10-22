@@ -4,8 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { AIFeedbackAnalyzer } from '@/lib/services/ai-feedback-analyzer'
 import { FeedbackImprovementLoop } from '@/lib/services/feedback-improvement-loop'
 import type { RichFeedbackData } from '@/components/travel/rich-feedback-dialog'
-import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
-import { sanitizeText } from '@/lib/validation'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
+import { sanitizeText, validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,27 +20,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting
-    const rateLimitResponse = rateLimit(user.id, RATE_LIMITS.FEEDBACK)
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.FEEDBACK)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
 
     const body = await request.json()
-    const {
-      feedbackData,
-      destination,
-      userConstraints,
-      queryText,
-      destinationRank,
-      routeData,
-    } = body as {
-      feedbackData: RichFeedbackData
-      destination: any
-      userConstraints: any
-      queryText: string
-      destinationRank: number
-      routeData?: any
+    const validation = validateRequest(schemas.richFeedback, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
     }
+    const { feedbackData, destination, userConstraints, queryText, destinationRank, routeData } =
+      validation.data as {
+        feedbackData: RichFeedbackData
+        destination: any
+        userConstraints: any
+        queryText: string
+        destinationRank: number
+        routeData?: any
+      }
 
     // Store feedback (sanitize comment)
     const { data: feedback, error: insertError } = await supabase

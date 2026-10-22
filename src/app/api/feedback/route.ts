@@ -1,8 +1,9 @@
 // API route for submitting user feedback
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { createFeedback } from '@/lib/db/feedback'
+import { createFeedback, getUserFeedback } from '@/lib/db/feedback'
 import { feedbackSchema } from '@/lib/types/feedback'
+import { ZodError } from 'zod'
 import { logger } from '@/lib/utils'
 import { randomUUID } from 'crypto'
 import { signalTracker } from '@/lib/ml/improvement/signal-tracker'
@@ -69,9 +70,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Feedback submission failed', error)
 
-    if (error instanceof Error && error.message.includes('validation')) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Invalid feedback data', details: error.message },
+        { error: 'Invalid feedback data' },
         { status: 400 }
       )
     }
@@ -98,11 +99,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user feedback (placeholder for future analytics)
-    return NextResponse.json(
-      { message: 'Feedback retrieval endpoint - future implementation' },
-      { status: 200 }
-    )
+    const { searchParams } = new URL(request.url)
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '100') || 100, 1), 500)
+
+    const feedback = await getUserFeedback(user.id, limit)
+
+    return NextResponse.json({ feedback }, { status: 200 })
   } catch (error) {
     logger.error('Feedback retrieval failed', error)
     return NextResponse.json(

@@ -19,6 +19,69 @@ interface MajorEvent {
   description: string
 }
 
+interface CuratedEvent {
+  name: string
+  type: MajorEvent['type']
+  startMonth: number
+  startDay: number
+  endMonth?: number
+  endDay?: number
+  impact: MajorEvent['impact']
+  description: string
+}
+
+// Recurring major events with approximate annual timing (estimated, not live data)
+const CURATED_EVENT_DATABASE: Record<string, CuratedEvent[]> = {
+  'paris': [
+    {
+      name: 'Paris Fashion Week',
+      type: 'cultural',
+      startMonth: 9,
+      startDay: 23,
+      endMonth: 10,
+      endDay: 1,
+      impact: 'high',
+      description: 'Major fashion event attracting global designers and celebrities',
+    },
+  ],
+  'munich': [
+    {
+      name: 'Oktoberfest',
+      type: 'festival',
+      startMonth: 9,
+      startDay: 20,
+      endMonth: 10,
+      endDay: 5,
+      impact: 'extreme',
+      description: 'World\'s largest beer festival with millions of visitors',
+    },
+  ],
+  'rio de janeiro': [
+    {
+      name: 'Carnival',
+      type: 'festival',
+      startMonth: 2,
+      startDay: 9,
+      endMonth: 2,
+      endDay: 14,
+      impact: 'extreme',
+      description: 'Massive carnival celebration with parades and street parties',
+    },
+  ],
+  'edinburgh': [
+    {
+      name: 'Edinburgh Festival Fringe',
+      type: 'cultural',
+      startMonth: 8,
+      startDay: 1,
+      endMonth: 8,
+      endDay: 25,
+      impact: 'high',
+      description: 'World\'s largest arts festival',
+    },
+  ],
+}
+
 export interface EnhancedEventData extends EventData {
   seasonality?: SeasonalityData
   majorEvents?: MajorEvent[]
@@ -100,30 +163,34 @@ export class EnhancedEventsProvider implements IEventsProvider {
   }
 
   /**
-   * Fetch events for a destination
+   * Fetch events for a destination.
+   * Only returns curated events for known cities — never invents events.
+   * Returns an empty array when no curated data exists for the city.
    */
   private async fetchEvents(city: string, startDate?: string, endDate?: string): Promise<EventData[]> {
-    // Demo implementation - returns estimated event data
-    const eventCount = Math.floor(Math.random() * 8) + 3
-    const events: EventData[] = []
-
-    const categories = ['Festival', 'Concert', 'Sports', 'Cultural', 'Food & Wine', 'Conference', 'Exhibition']
     const start = startDate ? new Date(startDate) : new Date()
     const end = endDate ? new Date(endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-    for (let i = 0; i < eventCount; i++) {
-      const eventDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
-      const category = categories[Math.floor(Math.random() * categories.length)]
+    const curated = this.getCuratedEvents(city)
+    const events: EventData[] = []
+
+    for (const event of curated) {
+      const eventStart = this.nextOccurrence(event.startMonth, event.startDay, start)
+      if (eventStart < start || eventStart > end) continue
+
+      const eventEnd = event.endMonth !== undefined && event.endDay !== undefined
+        ? this.nextOccurrence(event.endMonth, event.endDay, eventStart)
+        : undefined
 
       events.push({
-        name: this.generateEventName(category, city),
-        location: `${city} City Center`,
+        name: event.name,
+        location: city,
         city,
         country: this.inferCountry(city),
-        startDate: eventDate.toISOString().split('T')[0],
-        endDate: undefined,
-        category,
-        description: `${category} event in ${city}`,
+        startDate: eventStart.toISOString().split('T')[0],
+        endDate: eventEnd?.toISOString().split('T')[0],
+        category: event.type,
+        description: event.description,
         source: this.source,
       })
     }
@@ -203,60 +270,44 @@ export class EnhancedEventsProvider implements IEventsProvider {
    * Get major events for a destination
    */
   private getMajorEvents(city: string, country: string, month: number): MajorEvent[] {
-    const events: MajorEvent[] = []
-    const cityLower = city.toLowerCase()
+    const now = new Date()
 
-    // Major festivals and events (simplified demo data)
-    const eventDatabase: Record<string, MajorEvent[]> = {
-      'paris': [
-        {
-          name: 'Paris Fashion Week',
-          type: 'cultural',
-          startDate: '2024-09-23',
-          endDate: '2024-10-01',
-          impact: 'high',
-          description: 'Major fashion event attracting global designers and celebrities',
-        },
-      ],
-      'munich': [
-        {
-          name: 'Oktoberfest',
-          type: 'festival',
-          startDate: '2024-09-21',
-          endDate: '2024-10-06',
-          impact: 'extreme',
-          description: 'World\'s largest beer festival with millions of visitors',
-        },
-      ],
-      'rio de janeiro': [
-        {
-          name: 'Carnival',
-          type: 'festival',
-          startDate: '2024-02-09',
-          endDate: '2024-02-14',
-          impact: 'extreme',
-          description: 'Massive carnival celebration with parades and street parties',
-        },
-      ],
-      'edinburgh': [
-        {
-          name: 'Edinburgh Festival Fringe',
-          type: 'cultural',
-          startDate: '2024-08-02',
-          endDate: '2024-08-26',
-          impact: 'high',
-          description: 'World\'s largest arts festival',
-        },
-      ],
+    return this.getCuratedEvents(city)
+      .filter(event => event.startMonth === month)
+      .map(event => {
+        const startDate = this.nextOccurrence(event.startMonth, event.startDay, now)
+        const endDate = event.endMonth !== undefined && event.endDay !== undefined
+          ? this.nextOccurrence(event.endMonth, event.endDay, startDate)
+          : undefined
+
+        return {
+          name: event.name,
+          type: event.type,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate?.toISOString().split('T')[0],
+          impact: event.impact,
+          description: event.description,
+        }
+      })
+  }
+
+  /**
+   * Curated recurring major events (approximate annual timing, estimated data)
+   */
+  private getCuratedEvents(city: string): CuratedEvent[] {
+    return CURATED_EVENT_DATABASE[city.toLowerCase()] || []
+  }
+
+  /**
+   * Compute the next occurrence of an annual month/day on or after `from`
+   */
+  private nextOccurrence(month: number, day: number, from: Date): Date {
+    const year = from.getFullYear()
+    const date = new Date(Date.UTC(year, month - 1, day))
+    if (date < from) {
+      return new Date(Date.UTC(year + 1, month - 1, day))
     }
-
-    const cityEvents = eventDatabase[cityLower] || []
-    
-    // Filter events by month
-    return cityEvents.filter(event => {
-      const eventMonth = new Date(event.startDate).getMonth() + 1
-      return eventMonth === month
-    })
+    return date
   }
 
   /**
@@ -304,25 +355,6 @@ export class EnhancedEventsProvider implements IEventsProvider {
     })
 
     return { advantages, disadvantages }
-  }
-
-  /**
-   * Helper: Generate event name
-   */
-  private generateEventName(category: string, city: string): string {
-    const templates: Record<string, string[]> = {
-      'Festival': ['Music Festival', 'Arts Festival', 'Film Festival', 'Food Festival'],
-      'Concert': ['Summer Concert Series', 'Classical Music Night', 'Jazz Festival'],
-      'Sports': ['Marathon', 'Championship Finals', 'International Tournament'],
-      'Cultural': ['Heritage Week', 'Cultural Celebration', 'Traditional Festival'],
-      'Food & Wine': ['Wine Tasting Event', 'Culinary Festival', 'Street Food Fair'],
-      'Conference': ['Tech Summit', 'Business Conference', 'Innovation Forum'],
-      'Exhibition': ['Art Exhibition', 'Design Showcase', 'Photography Exhibition'],
-    }
-
-    const options = templates[category] || ['Local Event']
-    const template = options[Math.floor(Math.random() * options.length)]
-    return `${city} ${template}`
   }
 
   /**

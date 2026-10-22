@@ -1,6 +1,9 @@
 // Continuous ML Improvement Signal Tracking
+// Signals are persisted to Supabase (ml_improvement_signals) so they survive
+// serverless cold starts; in-memory arrays are a per-instance fallback for reads.
 import type { UserFeedback } from '../../types/feedback'
 import { logger } from '../../utils'
+import { createAdminClient } from '../../supabase/admin'
 
 export interface UserPersonalizationSignal {
   userId: string
@@ -58,7 +61,8 @@ class SignalTracker {
     if (signal) {
       this.userSignals.push(signal)
       this.trimSignals()
-      
+      this.persist('user', signal)
+
       logger.info('User signal tracked', {
         userId: signal.userId,
         type: signal.signalType,
@@ -73,6 +77,7 @@ class SignalTracker {
   trackGlobalSignal(signal: GlobalImprovementSignal) {
     this.globalSignals.push(signal)
     this.trimSignals()
+    this.persist('global', signal)
 
     if (signal.severity === 'high') {
       logger.warn('High-severity global signal', {
@@ -152,16 +157,70 @@ class SignalTracker {
   }
 
   /**
-   * Get signal aggregation for a time period
+   * Load signals from persisted storage, falling back to in-memory on failure
    */
-  getSignalAggregation(periodHours: number = 24): SignalAggregation {
+  private async loadSignals(scope: 'user' | 'global', since?: string): Promise<any[]> {
+    try {
+      const supabase = createAdminClient()
+      let query = supabase
+        .from('ml_improvement_signals')
+        .select('signal, created_at')
+        .eq('scope', scope)
+        .order('created_at', { ascending: true })
+        .limit(10000)
+
+      if (since) {
+        query = query.gte('created_at', since)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+
+      return (data || []).map((row: any) => row.signal)
+    } catch (error) {
+      logger.warn('Signal tracker: DB read failed, using in-memory fallback', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return scope === 'user' ? this.userSignals : this.globalSignals
+    }
+  }
+
+  /**
+   * Persist a signal to Supabase (best-effort, fire-and-forget)
+   */
+  private persist(scope: 'user' | 'global', signal: object) {
+    try {
+      const supabase = createAdminClient()
+      void Promise.resolve(
+        supabase.from('ml_improvement_signals').insert({
+          scope,
+          signal: signal as any,
+        } as any)
+      ).catch(persistError => {
+        logger.warn('Signal tracker: failed to persist signal', {
+          error: persistError instanceof Error ? persistError.message : String(persistError),
+        })
+      })
+    } catch {
+      // Admin client unavailable (missing env) — memory-only mode
+    }
+  }
+
+  /**
+   * Get signal aggregation for a time period (persisted storage, memory fallback)
+   */
+  async getSignalAggregation(periodHours: number = 24): Promise<SignalAggregation> {
     const cutoff = Date.now() - periodHours * 60 * 60 * 1000
+    const since = new Date(cutoff).toISOString()
+
+    const userSignals = (await this.loadSignals('user', since)) as UserPersonalizationSignal[]
+    const globalSignals = (await this.loadSignals('global', since)) as GlobalImprovementSignal[]
 
     // Filter signals by period
-    const recentUserSignals = this.userSignals.filter(
+    const recentUserSignals = userSignals.filter(
       s => new Date(s.timestamp).getTime() > cutoff
     )
-    const recentGlobalSignals = this.globalSignals.filter(
+    const recentGlobalSignals = globalSignals.filter(
       s => new Date(s.timestamp).getTime() > cutoff
     )
 
@@ -221,16 +280,19 @@ class SignalTracker {
   }
 
   /**
-   * Get improvement signals for retraining
+   * Get improvement signals for retraining (persisted storage, memory fallback)
    */
-  getImprovementSignalsForRetraining(): {
+  async getImprovementSignalsForRetraining(): Promise<{
     userPreferenceUpdates: Array<{ userId: string; preferences: any }>
     globalQualityIssues: GlobalImprovementSignal[]
     featureImportanceHints: Array<{ feature: string; importance: number }>
-  } {
+  }> {
+    const userSignals = (await this.loadSignals('user')) as UserPersonalizationSignal[]
+    const globalSignals = (await this.loadSignals('global')) as GlobalImprovementSignal[]
+
     // Extract user preference updates
     const userPreferenceMap = new Map<string, any>()
-    this.userSignals
+    userSignals
       .filter(s => s.signalType === 'preference' && s.strength > 0.5)
       .forEach(signal => {
         const existing = userPreferenceMap.get(signal.userId) || {}
@@ -245,12 +307,12 @@ class SignalTracker {
     )
 
     // Extract global quality issues
-    const globalQualityIssues = this.globalSignals.filter(
+    const globalQualityIssues = globalSignals.filter(
       s => s.signalType === 'quality' || s.signalType === 'mismatch'
     )
 
     // Extract feature importance hints from patterns
-    const featureImportanceHints = this.extractFeatureImportance()
+    const featureImportanceHints = this.extractFeatureImportance(globalSignals)
 
     return {
       userPreferenceUpdates,
@@ -372,11 +434,13 @@ class SignalTracker {
     return opportunities
   }
 
-  private extractFeatureImportance(): Array<{ feature: string; importance: number }> {
+  private extractFeatureImportance(
+    globalSignals: GlobalImprovementSignal[] = this.globalSignals
+  ): Array<{ feature: string; importance: number }> {
     // Analyze global signals to infer feature importance
     const featureHints = new Map<string, number>()
 
-    this.globalSignals.forEach(signal => {
+    globalSignals.forEach(signal => {
       if (signal.affectedFeatures) {
         signal.affectedFeatures.forEach(feature => {
           const current = featureHints.get(feature) || 0

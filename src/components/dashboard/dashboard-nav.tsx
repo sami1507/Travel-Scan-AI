@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
-import { Bell, LogOut, TrendingUp, User, Bookmark, BarChart2, ShieldCheck, Plane } from "lucide-react"
+import { Bell, LogOut, TrendingUp, User, Bookmark, BarChart2, ShieldCheck, Plane, GitCompare, Database } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +24,8 @@ const secondaryNav = [
   { href: "/dashboard/intelligence", labelKey: "intelligence", icon: BarChart2 },
   { href: "/dashboard/alerts", labelKey: "alerts", icon: Bell },
   { href: "/dashboard/opportunities", labelKey: "opportunities", icon: TrendingUp },
+  { href: "/dashboard/compare", labelKey: "compare", icon: GitCompare },
+  { href: "/dashboard/sources", labelKey: "sources", icon: Database },
 ]
 
 export default function DashboardNav({ user, isAdmin = false }: DashboardNavProps) {

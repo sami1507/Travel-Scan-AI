@@ -758,9 +758,9 @@ export default function AnalysisPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 }}
             >
-              <ConsultantBriefCard 
+              <ConsultantBriefCard
                 analysis={analysis}
-                queryContext={queryContext}
+                queryContext={queryContext ?? undefined}
                 confidence={analysis.confidence}
               />
             </motion.div>

@@ -46,6 +46,8 @@ export class RecommendationEvaluator {
         budget: 'budget',
         travelMonths: [6, 7, 8],
         interests: ['culture', 'food'],
+        travelStyle: null,
+        pace: null,
       },
       expectedBehavior: {
         topDestinationShouldExclude: ['Zurich', 'Geneva', 'Oslo', 'Copenhagen'],
@@ -64,6 +66,8 @@ export class RecommendationEvaluator {
         budget: 'moderate',
         travelMonths: [12, 1, 2],
         interests: ['beach', 'nature'],
+        travelStyle: null,
+        pace: null,
       },
       expectedBehavior: {
         shouldHaveWarnings: true,
@@ -83,6 +87,8 @@ export class RecommendationEvaluator {
         budget: 'moderate',
         travelMonths: [6, 7],
         interests: ['adventure', 'nature'],
+        travelStyle: null,
+        pace: null,
       },
       expectedBehavior: {
         shouldHaveWarnings: true,
@@ -100,6 +106,8 @@ export class RecommendationEvaluator {
         budget: 'moderate',
         travelMonths: [7, 8],
         interests: ['nightlife', 'culture'],
+        travelStyle: null,
+        pace: null,
       },
       expectedBehavior: {
         topDestinationShouldInclude: ['Barcelona', 'Berlin', 'Amsterdam', 'Lisbon'],
@@ -117,6 +125,8 @@ export class RecommendationEvaluator {
         budget: 'budget',
         travelMonths: [7, 8],
         interests: ['beach'],
+        travelStyle: null,
+        pace: null,
       },
       expectedBehavior: {
         shouldHaveWarnings: true,
@@ -134,6 +144,8 @@ export class RecommendationEvaluator {
         budget: 'budget',
         travelMonths: [5, 6],
         interests: ['culture', 'history', 'food'],
+        travelStyle: null,
+        pace: null,
       },
       expectedBehavior: {
         minConfidence: 0.75,
@@ -155,8 +167,8 @@ export class RecommendationEvaluator {
         const analysis = await engine.analyze({
           query: scenario.query,
           budget: scenario.constraints.budget as any,
-          travelMonths: scenario.constraints.travelMonths,
-          interests: scenario.constraints.interests,
+          travelMonths: scenario.constraints.travelMonths ?? undefined,
+          interests: scenario.constraints.interests ?? undefined,
         })
         const result = this.evaluateScenario(scenario, analysis)
         results.push(result)

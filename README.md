@@ -15,7 +15,7 @@ A full-stack, production-ready web application that delivers intelligent travel 
 - **AI-Estimated Pricing**: Tavily web search + GPT-4o mini extracts real-time flight and hotel price ranges when live API data is unavailable
 - **Google Places Enrichment**: Verified real-world restaurants, attractions, and accommodations per destination
 - **Claude Verification** (optional): Anthropic Claude as an async sanity-check layer on top of GPT-4o recommendations
-- **Global Candidate Pool**: 200+ destination candidates scored before ranking
+- **Global Candidate Pool**: ~85 destination candidates scored before ranking (69 curated route candidates plus up to 18 AI-generated candidates)
 - **Events & Seasonality**: Peak/off-peak detection, major events awareness, timing intelligence
 
 ### Personalization & Learning
@@ -214,6 +214,10 @@ In your Supabase project, open the **SQL Editor** and run the migration files fr
 | 11 | `20260512_ai_learning_layer.sql` | AI learning layer tables |
 | 12 | `20260514_fix_nullable_event_id.sql` | Nullable event_id fix |
 | 13 | `20260609_subscription_system.sql` | Stripe subscription tables |
+| 14 | `20260726_ai_verification_log.sql` | Claude verification audit log |
+| 15 | `20260817_atomic_usage_and_plan_rls.sql` | Atomic usage counter + subscription_plans RLS |
+| 16 | `20260817_ml_retraining_state.sql` | Persisted ML retraining state |
+| 17 | `20260817_ops_metrics.sql` | Persisted ops metrics (errors, AI costs, shadow comparisons, signals) |
 
 ### 4. Configure Supabase Auth
 
@@ -242,7 +246,7 @@ Visit `/signup`, create an account, and confirm your email if required. Sign in 
 1. Navigate to **Dashboard → Analysis**
 2. Choose **Chat Mode** (conversational) or **Form Mode** (4-step guided wizard)
 3. Provide departure city, passport country, travel dates/season, interests, and budget
-4. Submit — the engine scores 200+ destinations, ranks the top matches, and enriches them with real data
+4. Submit — the engine scores ~85 destination candidates, ranks the top matches, and enriches them with real data
 
 ### Explore Results
 - **Score breakdowns** for each destination (8 factors)

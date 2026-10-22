@@ -10,7 +10,7 @@ interface PersonalizationIndicatorProps {
     isPersonalized?: boolean
     confidence?: number
     explanations?: string[]
-    feedbackCount?: number
+    feedbackCount?: number | null
   }
 }
 

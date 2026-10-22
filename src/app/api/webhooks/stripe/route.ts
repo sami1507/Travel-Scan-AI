@@ -115,8 +115,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
+    console.error('[webhooks/stripe] handler error', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Webhook handler error' },
+      { error: 'Webhook handler error' },
       { status: 500 }
     )
   }

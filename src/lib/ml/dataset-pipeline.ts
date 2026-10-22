@@ -238,20 +238,103 @@ export class MLDatasetPipeline {
       throw error
     }
 
+    const feedbackRows = (feedbackData || []) as UserFeedback[]
     const examples: TrainingExample[] = []
     const userIds = new Set<string>()
     const outcomeDistribution: Record<string, number> = {}
 
-    // Note: This is a simplified version. In production, you'd need to:
-    // 1. Store analysis results with recommendations
-    // 2. Link feedback to specific recommendations
-    // 3. Reconstruct the full context for each example
-    // For now, we'll create a placeholder structure
+    // Cache per-user features so we only query preferences/history once per user
+    const userFeaturesCache = new Map<string, ReturnType<typeof featureEngineer.extractUserFeatures>>()
 
-    logger.info('ML Dataset: Dataset generation complete (placeholder)', {
+    const getUserFeatures = async (userId: string) => {
+      const cached = userFeaturesCache.get(userId)
+      if (cached) return cached
+
+      const userProfile = await getUserPreferences(userId)
+      const feedbackHistory = await getUserFeedback(userId, 100)
+      const features = featureEngineer.extractUserFeatures(userProfile, feedbackHistory)
+      userFeaturesCache.set(userId, features)
+      return features
+    }
+
+    for (const feedback of feedbackRows) {
+      // Skip rows that aren't tied to a specific recommendation
+      if (!feedback.destination_id) continue
+
+      try {
+        const userFeatures = await getUserFeatures(feedback.user_id)
+
+        // Reconstruct item features from the scores recorded at feedback time
+        const destination = {
+          destinationId: feedback.destination_id,
+          destinationName: feedback.destination_name || feedback.destination_id,
+          destinationType: 'city',
+          totalMatchScore: Number(feedback.total_score) || 0,
+          categoryScores: (feedback.category_scores || {}) as any,
+          hotelValueLevel: 5,
+          dataQuality: 'estimated',
+          sourceLabels: [],
+          whyRecommended: [],
+          confidence: 0.5,
+          estimatedBudgetLevel: 'moderate',
+        } as unknown as RankedDestination
+
+        const itemFeatures = featureEngineer.extractItemFeatures(
+          destination,
+          feedback.recommendation_rank || 1
+        )
+
+        const queryContext = feedback.query_context || { query: '' }
+        const contextFeatures = featureEngineer.extractContextFeatures({
+          query: queryContext.query || '',
+          budget: queryContext.budget,
+          travelMonths: queryContext.travel_months,
+          interests: queryContext.interests,
+        })
+
+        const outcome = this.createOutcome(feedback)
+        const exampleType = this.determineExampleType(feedback, destination)
+        const qualityScore = this.calculateExampleQuality(
+          userFeatures,
+          itemFeatures,
+          contextFeatures,
+          outcome
+        )
+
+        if (qualityScore < minQualityScore) continue
+
+        const example: TrainingExample = {
+          exampleId: `dataset_${feedback.id}`,
+          userId: feedback.user_id,
+          sessionId: feedback.session_id,
+          analysisId: feedback.analysis_id,
+          timestamp: feedback.created_at,
+          userFeatures,
+          itemFeatures,
+          contextFeatures,
+          outcome,
+          dataVersion: this.dataVersion,
+          exampleType,
+          qualityScore,
+        }
+
+        examples.push(example)
+        userIds.add(feedback.user_id)
+        outcomeDistribution[outcome.wasAccepted ? 'accepted' : 'rejected'] =
+          (outcomeDistribution[outcome.wasAccepted ? 'accepted' : 'rejected'] || 0) + 1
+      } catch (exampleError) {
+        logger.error('ML Dataset: Failed to build example from feedback row', exampleError)
+      }
+    }
+
+    logger.info('ML Dataset: Dataset generation complete', {
       exampleCount: examples.length,
       userCount: userIds.size,
     })
+
+    const avgQualityScore = examples.length > 0
+      ? examples.reduce((sum, ex) => sum + ex.qualityScore, 0) / examples.length
+      : 0
 
     const metadata: DatasetMetadata = {
       datasetId: `dataset_${Date.now()}`,
@@ -265,14 +348,14 @@ export class MLDatasetPipeline {
       },
       featureStats: {
         userFeatureCount: Object.keys(featureEngineer.extractUserFeatures(null, [])).length,
-        itemFeatureCount: 0, // Would be calculated from actual examples
-        contextFeatureCount: 0, // Would be calculated from actual examples
+        itemFeatureCount: examples.length > 0 ? Object.keys(examples[0].itemFeatures).length : 0,
+        contextFeatureCount: examples.length > 0 ? Object.keys(examples[0].contextFeatures).length : 0,
       },
       outcomeDistribution,
       qualityMetrics: {
-        avgQualityScore: 0,
-        highQualityCount: 0,
-        idealExampleCount: 0,
+        avgQualityScore,
+        highQualityCount: examples.filter(ex => ex.qualityScore >= 0.7).length,
+        idealExampleCount: examples.filter(ex => ex.outcome.isIdealExample).length,
       },
     }
 

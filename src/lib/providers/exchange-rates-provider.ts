@@ -1,11 +1,14 @@
-// Mock Exchange Rates Provider
+// Static Exchange Rates Provider (estimated data — not a live feed)
 import { BaseProvider } from './base-provider'
 import type { ProviderResponse, SourceConfig, NormalizedRecord } from '../types'
 import { sleep } from '../utils'
 import { exchangeRatesPayloadSchema } from '../schemas/provider-schemas'
 
+// Snapshot date of the static fallback rates — do not bump without updating the rates
+const STATIC_RATES_AS_OF = '2024-06-01T00:00:00.000Z'
+
 export class ExchangeRatesProvider extends BaseProvider {
-  name = 'Mock Exchange Rates Provider'
+  name = 'Static Exchange Rates Provider (estimated)'
   type = 'exchange_rates' as const
 
   async fetch(config: SourceConfig): Promise<ProviderResponse> {
@@ -69,14 +72,14 @@ export class ExchangeRatesProvider extends BaseProvider {
         },
         {
           timestamp: data.timestamp,
-          source: 'mock',
+          source: 'estimated',
         }
       ),
     ]
   }
 
   private generateMockRates(from: string, to: string) {
-    // Base rates (approximate real-world rates)
+    // Static snapshot rates (approximate real-world rates as of STATIC_RATES_AS_OF)
     const baseRates: Record<string, number> = {
       'USD-EUR': 0.92,
       'USD-GBP': 0.79,
@@ -90,15 +93,9 @@ export class ExchangeRatesProvider extends BaseProvider {
 
     const key = `${from}-${to}`
     const reverseKey = `${to}-${from}`
-    
-    let baseRate = baseRates[key] || baseRates[reverseKey] ? 1 / baseRates[reverseKey] : 1.0
-    
-    // Add small random variation (±0.5%)
-    const variation = (Math.random() - 0.5) * 0.01
-    const rate = baseRate * (1 + variation)
-    
-    const change24h = (Math.random() - 0.5) * 0.02 * baseRate
-    const changePercent24h = (change24h / baseRate) * 100
+
+    const baseRate = baseRates[key] ?? (baseRates[reverseKey] ? 1 / baseRates[reverseKey] : 1.0)
+    const rate = baseRate
 
     return {
       from,
@@ -109,9 +106,9 @@ export class ExchangeRatesProvider extends BaseProvider {
       ask: Math.round((rate * 1.001) * 10000) / 10000,
       high_24h: Math.round((rate * 1.005) * 10000) / 10000,
       low_24h: Math.round((rate * 0.995) * 10000) / 10000,
-      change_24h: Math.round(change24h * 10000) / 10000,
-      change_percent_24h: Math.round(changePercent24h * 100) / 100,
-      timestamp: new Date().toISOString(),
+      change_24h: 0,
+      change_percent_24h: 0,
+      timestamp: STATIC_RATES_AS_OF,
     }
   }
 }

@@ -6,8 +6,15 @@
 
 import { NextResponse } from 'next/server'
 import { logInfo, logWarning } from '@/lib/error-logger'
+import { requireAdmin } from '@/lib/auth/admin-guard'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  // Admin-only: this diagnostic burns a Google Places API call
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   const enabled = process.env.ENABLE_GOOGLE_PLACES_ENRICHMENT === 'true'
 

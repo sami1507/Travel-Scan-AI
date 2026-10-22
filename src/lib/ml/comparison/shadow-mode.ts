@@ -1,8 +1,11 @@
 // Shadow Mode and A/B Comparison Infrastructure
+// Comparisons are persisted to Supabase (ml_shadow_comparisons) so stats survive
+// serverless cold starts; in-memory arrays are a per-instance fallback for reads.
 import type { RankedDestination } from '../../analysis/schemas'
 import type { ComparisonResult } from './baseline-ml-comparator'
 import { baselineMLComparator } from './baseline-ml-comparator'
 import { logger } from '../../utils'
+import { createAdminClient } from '../../supabase/admin'
 
 export interface ShadowModeConfig {
   enabled: boolean
@@ -131,9 +134,40 @@ class ShadowModeManager {
   }
 
   /**
-   * Get comparison statistics
+   * Load comparisons from persisted storage, falling back to in-memory on failure
    */
-  getComparisonStats(): {
+  private async loadComparisons(limit: number = 1000): Promise<ShadowModeResult[]> {
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from('ml_shadow_comparisons')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(limit)
+
+      if (error) throw error
+
+      return (data || []).map((row: any) => ({
+        comparisonId: row.comparison_id,
+        timestamp: row.created_at,
+        userId: row.user_id || undefined,
+        query: row.query || '',
+        comparison: row.comparison,
+        servedSystem: row.served_system || 'ml',
+        servedRecommendations: [],
+      }))
+    } catch (error) {
+      logger.warn('Shadow mode: DB read failed, using in-memory fallback', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return this.comparisons
+    }
+  }
+
+  /**
+   * Get comparison statistics (persisted storage, memory fallback)
+   */
+  async getComparisonStats(): Promise<{
     totalComparisons: number
     mlWins: number
     baselineWins: number
@@ -141,8 +175,10 @@ class ShadowModeManager {
     avgScoreDifference: number
     avgRankingOverlap: number
     topRecommendationMatchRate: number
-  } {
-    if (this.comparisons.length === 0) {
+  }> {
+    const comparisons = await this.loadComparisons()
+
+    if (comparisons.length === 0) {
       return {
         totalComparisons: 0,
         mlWins: 0,
@@ -154,27 +190,27 @@ class ShadowModeManager {
       }
     }
 
-    const mlWins = this.comparisons.filter(c => c.comparison.winner === 'ml').length
-    const baselineWins = this.comparisons.filter(c => c.comparison.winner === 'baseline').length
-    const ties = this.comparisons.filter(c => c.comparison.winner === 'tie').length
+    const mlWins = comparisons.filter(c => c.comparison.winner === 'ml').length
+    const baselineWins = comparisons.filter(c => c.comparison.winner === 'baseline').length
+    const ties = comparisons.filter(c => c.comparison.winner === 'tie').length
 
-    const avgScoreDifference = this.comparisons.reduce(
+    const avgScoreDifference = comparisons.reduce(
       (sum, c) => sum + c.comparison.metrics.scoreDifference,
       0
-    ) / this.comparisons.length
+    ) / comparisons.length
 
-    const avgRankingOverlap = this.comparisons.reduce(
+    const avgRankingOverlap = comparisons.reduce(
       (sum, c) => sum + c.comparison.metrics.rankingOverlap,
       0
-    ) / this.comparisons.length
+    ) / comparisons.length
 
-    const topMatches = this.comparisons.filter(
+    const topMatches = comparisons.filter(
       c => c.comparison.metrics.topRecommendationMatch
     ).length
-    const topRecommendationMatchRate = topMatches / this.comparisons.length
+    const topRecommendationMatchRate = topMatches / comparisons.length
 
     return {
-      totalComparisons: this.comparisons.length,
+      totalComparisons: comparisons.length,
       mlWins,
       baselineWins,
       ties,
@@ -185,10 +221,34 @@ class ShadowModeManager {
   }
 
   /**
-   * Get recent comparisons
+   * Get recent comparisons (persisted storage, memory fallback)
    */
-  getRecentComparisons(limit: number = 50): ShadowModeResult[] {
-    return this.comparisons.slice(-limit).reverse()
+  async getRecentComparisons(limit: number = 50): Promise<ShadowModeResult[]> {
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from('ml_shadow_comparisons')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+
+      return (data || []).map((row: any) => ({
+        comparisonId: row.comparison_id,
+        timestamp: row.created_at,
+        userId: row.user_id || undefined,
+        query: row.query || '',
+        comparison: row.comparison,
+        servedSystem: row.served_system || 'ml',
+        servedRecommendations: [],
+      }))
+    } catch (error) {
+      logger.warn('Shadow mode: DB read failed, using in-memory fallback', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return this.comparisons.slice(-limit).reverse()
+    }
   }
 
   /**
@@ -230,6 +290,27 @@ class ShadowModeManager {
     this.comparisons.push(result)
     if (this.comparisons.length > this.MAX_COMPARISONS) {
       this.comparisons.shift()
+    }
+
+    // Persist to Supabase (best-effort, fire-and-forget)
+    try {
+      const supabase = createAdminClient()
+      void Promise.resolve(
+        supabase.from('ml_shadow_comparisons').insert({
+          comparison_id: result.comparisonId,
+          user_id: result.userId,
+          query: result.query,
+          comparison: result.comparison as any,
+          served_system: result.servedSystem,
+          created_at: result.timestamp,
+        } as any)
+      ).catch(persistError => {
+        logger.warn('Shadow mode: failed to persist comparison', {
+          error: persistError instanceof Error ? persistError.message : String(persistError),
+        })
+      })
+    } catch {
+      // Admin client unavailable (missing env) — memory-only mode
     }
   }
 

@@ -36,24 +36,22 @@ export const schemas = {
     feedbackMetadata: z.record(z.any()).optional(),
   }),
 
-  // Rich feedback
+  // Rich feedback submission (matches the actual body sent by rich-feedback-dialog.tsx)
   richFeedback: z.object({
-    feedbackType: z.enum(['positive', 'negative']),
-    selectedReasons: z.array(z.string().max(100)).max(10),
-    comment: z.string().max(2000).optional(),
-    destinationId: z.string().max(255),
-    destinationName: z.string().max(255),
-    destinationRank: z.number().int().min(1).max(100).optional(),
-    totalMatchScore: z.number().min(0).max(100).optional(),
-    scoreBreakdown: z.record(z.number()).optional(),
-    whyRecommended: z.array(z.string().max(500)).max(10).optional(),
-    routeId: z.string().uuid().optional(),
-    routeData: z.record(z.any()).optional(),
+    feedbackData: z.object({
+      feedbackType: z.enum(['positive', 'negative']),
+      selectedReasons: z.array(z.string().max(100)).max(10),
+      comment: z.string().max(2000).optional(),
+      preferenceCorrections: z.record(z.any()).optional(),
+    }),
+    destination: z.object({
+      destinationId: z.string().max(255),
+      destinationName: z.string().max(255),
+    }).passthrough(),
     userConstraints: z.record(z.any()).optional(),
-    personalizationApplied: z.boolean().optional(),
-    preferenceCorrections: z.record(z.any()).optional(),
     queryText: z.string().max(500).optional(),
-    sessionId: z.string().max(100).optional(),
+    destinationRank: z.number().int().min(1).max(100).optional(),
+    routeData: z.record(z.any()).optional(),
   }),
 
   // Profile update
@@ -93,6 +91,59 @@ export const schemas = {
   alertUpdate: z.object({
     isRead: z.boolean().optional(),
     isDismissed: z.boolean().optional(),
+  }),
+
+  // Intelligence agent / report requests (bounded to prevent unbounded-cost AI calls)
+  intelligenceRequest: z.object({
+    recordLimit: z.number().int().min(1).max(500).optional(),
+    changeLimit: z.number().int().min(1).max(1000).optional(),
+    sourceConfigId: z.string().max(255).optional(),
+  }),
+
+  // Chat-mode travel message
+  chatTravel: z.object({
+    messages: z.array(z.object({
+      role: z.enum(['user', 'assistant']),
+      content: z.string().min(1).max(4000),
+    })).min(1).max(50),
+  }),
+
+  // PDF export
+  pdfExport: z.object({
+    analysis: z.record(z.any()),
+    queryContext: z.record(z.any()).optional(),
+  }),
+
+  // User travel profile (preferences used to personalize recommendations)
+  travelProfileUpdate: z.object({
+    preferred_budget_level: z.enum(['budget', 'moderate', 'comfortable', 'luxury']).optional(),
+    budget_flexibility: z.enum(['strict', 'flexible', 'very-flexible']).optional(),
+    nightlife_importance: z.number().min(1).max(10).optional(),
+    nature_importance: z.number().min(1).max(10).optional(),
+    comfort_vs_adventure: z.number().min(1).max(10).optional(),
+    transport_importance: z.number().min(1).max(10).optional(),
+    safety_importance: z.number().min(1).max(10).optional(),
+    hotel_quality_importance: z.number().min(1).max(10).optional(),
+    preferred_trip_style: z.enum(['solo', 'couple', 'family', 'friends', 'business']).optional(),
+    preferred_pace: z.enum(['relaxed', 'moderate', 'fast', 'very-fast']).optional(),
+    preferred_interests: z.array(z.string().max(50)).max(20).optional(),
+    avoid_destinations: z.array(z.string().max(100)).max(50).optional(),
+  }),
+
+  // Generic saved-item update (saved destinations/analyses/routes) — ownership is
+  // enforced by RLS via the caller's own session, this just bounds the payload shape.
+  savedItemUpdate: z.object({
+    id: z.string().uuid(),
+    updates: z.record(z.any()).refine(
+      (obj) => Object.keys(obj).length > 0 && Object.keys(obj).length <= 20,
+      { message: 'updates must be a non-empty object with at most 20 fields' }
+    ),
+  }),
+
+  // Alert mark-as-read / dismiss
+  alertAction: z.object({
+    alertId: z.string().uuid(),
+    action: z.enum(['read', 'dismiss']),
   }),
 }
 

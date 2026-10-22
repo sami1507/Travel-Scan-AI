@@ -137,7 +137,8 @@ export default function MLMonitoringPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">ML Monitoring</h1>
-          <p className="text-muted-foreground">Baseline vs ML comparison, retraining readiness, and continuous improvement</p>
+          <p className="text-muted-foreground">Baseline vs heuristic ranker comparison, retraining readiness, and continuous improvement</p>
+          <Badge variant="outline" className="mt-2">Experimental — ranking uses a static heuristic scorer; no trained ML model is deployed</Badge>
         </div>
         {getHealthBadge(data.mlHealth.status)}
       </div>

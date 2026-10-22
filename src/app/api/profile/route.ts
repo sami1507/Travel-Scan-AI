@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { UserProfileService } from '@/lib/services/user-profile'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,8 +37,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    
-    const profile = await UserProfileService.createProfile(user.id, body)
+    const validation = validateRequest(schemas.travelProfileUpdate, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+
+    const profile = await UserProfileService.createProfile(user.id, validation.data)
     return NextResponse.json({ profile })
   } catch (error) {
     console.error('Create profile error:', error)
@@ -58,8 +63,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    
-    const profile = await UserProfileService.updateProfile(user.id, body)
+    const validation = validateRequest(schemas.travelProfileUpdate, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+
+    const profile = await UserProfileService.updateProfile(user.id, validation.data)
     return NextResponse.json({ profile })
   } catch (error) {
     console.error('Update profile error:', error)

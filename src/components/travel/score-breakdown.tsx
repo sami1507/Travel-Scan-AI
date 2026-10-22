@@ -21,11 +21,11 @@ export function ScoreBreakdown({ scores, compact = false }: ScoreBreakdownProps)
   ]
 
   // Add flight value if available (from provider data)
-  if (scores.flightValue !== undefined) {
-    categories.push({ 
-      key: 'flightValue', 
-      label: 'Flight Value (estimated)', 
-      value: scores.flightValue 
+  if (scores.flightValue !== undefined && scores.flightValue !== null) {
+    categories.push({
+      key: 'flightValue',
+      label: 'Flight Value (estimated)',
+      value: scores.flightValue
     })
   }
 

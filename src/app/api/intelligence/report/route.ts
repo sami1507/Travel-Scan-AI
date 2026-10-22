@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getTravelIntelligenceAgent } from '@/lib/intelligence'
 import { logger } from '@/lib/utils'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
+import { validateRequest, schemas } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,9 +21,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse request body
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.AI_INTELLIGENCE)
+    if (rateLimitResponse) return rateLimitResponse
+
+    // Parse and validate request body (bounds prevent unbounded-cost AI calls)
     const body = await request.json().catch(() => ({}))
-    const { recordLimit, changeLimit, sourceConfigId } = body
+    const validation = validateRequest(schemas.intelligenceRequest, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: (validation as { success: false; error: string }).error }, { status: 400 })
+    }
+    const { recordLimit, changeLimit, sourceConfigId } = validation.data
 
     logger.info('Intelligence report requested', { 
       userId: user.id, 
@@ -48,11 +57,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Intelligence report API error', error)
     
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-    
     return NextResponse.json(
-      { 
-        error: errorMessage,
+      {
+        error: 'Failed to generate intelligence report. Please try again.',
         success: false,
       },
       { status: 500 }
@@ -73,10 +80,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get query parameters
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.AI_INTELLIGENCE)
+    if (rateLimitResponse) return rateLimitResponse
+
+    // Get query parameters (bounded)
     const { searchParams } = new URL(request.url)
-    const recordLimit = parseInt(searchParams.get('recordLimit') || '100')
-    const changeLimit = parseInt(searchParams.get('changeLimit') || '200')
+    const recordLimit = Math.min(Math.max(parseInt(searchParams.get('recordLimit') || '100') || 100, 1), 500)
+    const changeLimit = Math.min(Math.max(parseInt(searchParams.get('changeLimit') || '200') || 200, 1), 1000)
     const sourceConfigId = searchParams.get('sourceConfigId') || undefined
 
     logger.info('Intelligence report requested (GET)', { 
@@ -104,11 +114,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error('Intelligence report API error (GET)', error)
     
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-    
     return NextResponse.json(
-      { 
-        error: errorMessage,
+      {
+        error: 'Failed to generate intelligence report. Please try again.',
         success: false,
       },
       { status: 500 }

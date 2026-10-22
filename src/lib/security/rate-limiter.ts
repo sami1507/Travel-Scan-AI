@@ -25,6 +25,10 @@ export const RATE_LIMITS = {
   FEEDBACK: { maxRequests: 30, windowMs: 60 * 60 * 1000 }, // 30 per hour
   SHARE: { maxRequests: 20, windowMs: 60 * 60 * 1000 }, // 20 per hour
   PUBLIC_SHARE: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 per hour (unauthenticated)
+  CHAT: { maxRequests: 20, windowMs: 60 * 60 * 1000 }, // 20 per hour
+  EXPORT: { maxRequests: 20, windowMs: 60 * 60 * 1000 }, // 20 per hour
+  PLACES_ENRICH: { maxRequests: 30, windowMs: 60 * 60 * 1000 }, // 30 per hour
+  ADMIN: { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
 } as const
 
 export interface RateLimitResult {
@@ -97,6 +101,18 @@ export async function checkRateLimit(
       reset: Math.floor(stored.resetTime / 1000),
     }
   }
+}
+
+/**
+ * Check rate limit and return a ready-to-send 429 response if exceeded, or null if allowed.
+ * Convenience wrapper around checkRateLimit + createRateLimitResponse for route handlers.
+ */
+export async function rateLimit(
+  identifier: string,
+  config: RateLimitConfig
+): Promise<Response | null> {
+  const result = await checkRateLimit(identifier, config)
+  return result.success ? null : createRateLimitResponse(result)
 }
 
 /**

@@ -13,7 +13,7 @@ import {
 import { DuffelFlightsProvider } from '../providers/duffel-flights-provider'
 import { HotelbedsHotelsProvider } from '../providers/hotelbeds-hotels-provider'
 import { enhancedEventsProvider } from '../providers/enhanced-events-provider'
-import { travelAnalysisResponseSchema, type TravelAnalysisResponse } from './schemas'
+import { travelAnalysisResponseSchema, type TravelAnalysisResponse, type RankedDestination } from './schemas'
 import { logger } from '../utils'
 import { getUserFeedback } from '../db/feedback'
 import { getUserPreferences, updateInferredPreferences } from '../db/preferences'
@@ -169,7 +169,7 @@ export class TravelAnalysisEngine {
           }
         }
       } catch (error) {
-        logger.warn('Tavily search failed, continuing without web context', error)
+        logger.warn('Tavily search failed, continuing without web context', { error: error instanceof Error ? error.message : String(error) })
       }
 
       // Step 0a: Load AI learning context (Phase 1)
@@ -192,7 +192,7 @@ export class TravelAnalysisEngine {
           })
         }
       } catch (error) {
-        logger.warn('Failed to load learning context, continuing without it', error)
+        logger.warn('Failed to load learning context, continuing without it', { error: error instanceof Error ? error.message : String(error) })
       }
 
       if (request.userId) {
@@ -391,15 +391,18 @@ export class TravelAnalysisEngine {
 
       // Step 6: Analyze routes with route intelligence
       // Use route candidate pool if knowledge retrieval returned 0
-      let routeAnalysisDestinations = scoredDestinations.slice(0, 10).map(dest => ({
+      let routeAnalysisDestinations: RankedDestination[] = scoredDestinations.slice(0, 10).map(dest => ({
         destinationId: dest.destinationId,
         destinationName: dest.destinationName,
         destinationType: dest.destinationType,
+        destinationSummary: null,
+        diversityLabel: null,
         totalMatchScore: dest.totalScore,
         categoryScores: dest.categoryScores,
         whyRecommended: dest.reasons,
         possibleDownsides: dest.warnings,
         bestMonths: dest.bestMonths || [],
+        seasonality: null,
         estimatedBudgetLevel: userPreferences.budget,
         passportEase: dest.categoryScores.passportEase >= 7 ? 'easy' : 'moderate',
         nightlifeLevel: dest.categoryScores.nightlife,
@@ -410,6 +413,17 @@ export class TravelAnalysisEngine {
         confidence: dest.confidence,
         sourceLabels: ['knowledge-base', 'scoring-engine'],
         dataQuality: 'knowledge-based' as const,
+        tripType: null,
+        suggestedRoute: null,
+        recommendedNights: null,
+        routeRealismScore: null,
+        travelFatigueLevel: null,
+        transportLogic: null,
+        realisticConsultantNotes: null,
+        routeWarnings: null,
+        routeAlternatives: null,
+        itineraryMapPlan: null,
+        travelStrategyTips: null,
       }))
 
       // If knowledge retrieval returned 0 but we have route candidates, use them
@@ -418,6 +432,8 @@ export class TravelAnalysisEngine {
           destinationId: candidate.id,
           destinationName: candidate.country,
           destinationType: 'country' as const,
+          destinationSummary: null,
+          diversityLabel: null,
           totalMatchScore: candidate.estimatedScore,
           categoryScores: {
             budgetFit: candidate.priceTier === 'budget' ? 9 : candidate.priceTier === 'moderate' ? 8 : 7,
@@ -433,6 +449,7 @@ export class TravelAnalysisEngine {
           whyRecommended: [candidate.whyCandidateFits, candidate.routeLogic],
           possibleDownsides: [],
           bestMonths: candidate.bestMonths,
+          seasonality: null,
           estimatedBudgetLevel: (candidate.priceTier === 'budget' ? 'low' : candidate.priceTier === 'premium' ? 'high' : 'moderate') as 'low' | 'moderate' | 'high' | 'luxury',
           passportEase: 'easy' as const,
           nightlifeLevel: 7,
@@ -443,7 +460,17 @@ export class TravelAnalysisEngine {
           confidence: 0.8,
           sourceLabels: ['route-candidate-pool'],
           dataQuality: 'knowledge-based' as const,
+          tripType: null,
           suggestedRoute: candidate.routeCities,
+          recommendedNights: null,
+          routeRealismScore: null,
+          travelFatigueLevel: null,
+          transportLogic: null,
+          realisticConsultantNotes: null,
+          routeWarnings: null,
+          routeAlternatives: null,
+          itineraryMapPlan: null,
+          travelStrategyTips: null,
         }))
         
         logger.info('Route intelligence using route candidate pool', {
@@ -677,6 +704,9 @@ export class TravelAnalysisEngine {
                 confidence: parsed.confidence,
                 sourceLabels: ['openai', 'compact-schema'],
                 dataQuality: 'knowledge-based' as const,
+                seasonality: d.seasonality
+                  ? { ...d.seasonality, shoulderSeason: null, lowSeason: null, whenToAvoid: null }
+                  : null,
                 routeRealismScore: 85,
                 travelFatigueLevel: 'Medium' as const,
                 routeAlternatives: null,
@@ -831,7 +861,7 @@ export class TravelAnalysisEngine {
           isPersonalized: true,
           confidence: personalizedWeights.confidence,
           explanations: personalizationExplanations,
-          feedbackCount: userPreferenceProfile?.feedback_count,
+          feedbackCount: userPreferenceProfile?.feedback_count ?? null,
         }
       } else {
         analysis.personalization = {
@@ -962,7 +992,7 @@ export class TravelAnalysisEngine {
           analysis.rankedDestinations = adjustedDestinations.slice(0, 3)
           analysis.topRecommendations = analysis.rankedDestinations.map(d => d.destinationName)
         } catch (reRankError) {
-          logger.warn('Re-ranking signals failed, keeping ML order', reRankError)
+          logger.warn('Re-ranking signals failed, keeping ML order', { error: reRankError instanceof Error ? reRankError.message : String(reRankError) })
         }
       } catch (mlError) {
         errorTracker.trackMLError(mlError, 'inference', { userId: request.userId })
@@ -1069,8 +1099,8 @@ export class TravelAnalysisEngine {
       logger.info('Travel Analysis Engine: Analysis complete', {
         recommendations: analysis.topRecommendations.length,
         rankedDestinations: analysis.rankedDestinations.length,
-        personalized: analysis.personalization.isPersonalized,
-        personalizationConfidence: analysis.personalization.confidence,
+        personalized: analysis.personalization?.isPersonalized,
+        personalizationConfidence: analysis.personalization?.confidence,
         routeType: routeAnalysis.recommendedRoute.routeType,
         routeScore: routeAnalysis.recommendedRoute.routeScore.totalRouteQuality,
         diversityApplied: diversityResult.diversityApplied,
@@ -1129,7 +1159,7 @@ export class TravelAnalysisEngine {
           analysisWithLearning.personalizationApplied = learningContext?.confidenceScore >= 0.5
         }
       } catch (learningError) {
-        logger.warn('Failed to record learning event, continuing', learningError)
+        logger.warn('Failed to record learning event, continuing', { error: learningError instanceof Error ? learningError.message : String(learningError) })
       }
 
       // Step 11: Finalize analysis with canonical metadata (single source of truth)
@@ -1253,7 +1283,7 @@ export class TravelAnalysisEngine {
         ...finalMetadata,
         analysisId: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         finalized: true,
-        cacheStoredStage: 'finalized',
+        cacheStoredStage: 'finalized' as string | null,
         currentRequestOpenAIUsed: isCacheHit ? false : (analysisWithMeta.openAIUsed || false),
         modelUsed: analysisWithMeta.openAIUsed ? this.model : null,
         durationMs,
@@ -1472,7 +1502,7 @@ export class TravelAnalysisEngine {
             cacheStoredStage: 'finalized',
           })
         } catch (cacheError) {
-          logger.warn('Failed to cache finalized analysis', cacheError)
+          logger.warn('Failed to cache finalized analysis', { error: cacheError instanceof Error ? cacheError.message : String(cacheError) })
           completeMetadata.cacheStatus = 'ERROR'
           completeMetadata.cacheSkippedReason = 'cache_write_failed'
           completeMetadata.cacheStoredStage = null
@@ -1939,12 +1969,19 @@ export class TravelAnalysisEngine {
           }
         }
 
-        // Real weather data (structured seasonal patterns) - first destination only
+        // Weather/currency/visa are gathered once as a representative sample for the
+        // top-ranked destination (not per-destination) — the prompt section they feed
+        // is an illustrative summary, not a per-destination breakdown.
         if (i === 0) {
           data.weather = await this.weatherProvider.getWeather(dest.destinationName)
 
-          // Real currency data (structured exchange rates)
-          data.currency = await this.currencyProvider.getExchangeRate('USD', 'EUR')
+          // Real currency data — convert to the destination's actual local currency,
+          // not a hardcoded EUR (previously wrong for every non-Eurozone destination)
+          const destCountryCode = dest.destinationType === 'country'
+            ? dest.destinationId
+            : this.inferCountryFromCity(dest.destinationName)
+          const destCurrency = this.currencyProvider.getCurrencyForCountry(destCountryCode)
+          data.currency = await this.currencyProvider.getExchangeRate('USD', destCurrency)
 
           // Real visa data (knowledge-based rules)
           if (dest.destinationType === 'country') {
@@ -2254,7 +2291,27 @@ Return the same structured schema with fixes applied.`
           confidence: 0.85,
           sourceLabels: ['openai-repaired'],
           dataQuality: 'estimated',
+          seasonality: d.seasonality
+            ? { ...d.seasonality, shoulderSeason: null, lowSeason: null, whenToAvoid: null }
+            : null,
+          routeRealismScore: null,
+          travelFatigueLevel: null,
+          routeAlternatives: null,
+          itineraryMapPlan: null,
+          travelStrategyTips: null,
         })),
+        scoreBreakdown: 'Scores based on budget fit, weather, transport, and safety',
+        reasons: parsed.rankedDestinations.flatMap(d => d.whyRecommended).slice(0, 5),
+        dataFreshness: {
+          knowledgeBase: 'structured-knowledge',
+          providerData: 'live-providers',
+          lastUpdated: new Date().toISOString(),
+        },
+        sourcesUsed: ['openai-gpt4o', 'knowledge-base', 'compact-schema'],
+        recommendedRoutes: null,
+        nextBestAlternatives: null,
+        personalization: null,
+        seasonMonthStrategy: null,
       }
 
       return {
@@ -3090,6 +3147,16 @@ Return the same structured schema with fixes applied.`
           accessibility: Math.round(routeRealismScore * 0.2),
         },
         possibleDownsides: routeWarnings.length > 0 ? routeWarnings : ['Peak season may have higher prices', 'Book accommodation in advance'],
+        estimatedBudgetLevel: request.budget || 'moderate',
+        passportEase: 'easy',
+        nightlifeLevel: categoryScores.nightlife,
+        natureLevel: categoryScores.nature,
+        transportLevel: categoryScores.transport,
+        hotelValueLevel: categoryScores.hotelValue,
+        safetyLevel: categoryScores.safety,
+        confidence: 0.7,
+        sourceLabels: ['knowledge-base', 'fallback'],
+        dataQuality: 'estimated' as const,
         tripType,
         suggestedRoute: route.cities,
         recommendedNights: adjustedNights,
@@ -3097,10 +3164,10 @@ Return the same structured schema with fixes applied.`
         travelFatigueLevel,
         transportLogic,
         realisticConsultantNotes: consultantNotes,
-        routeWarnings: routeWarnings.length > 0 ? routeWarnings : undefined,
+        routeWarnings: routeWarnings.length > 0 ? routeWarnings : null,
         routeAlternatives: routeWarnings.length > 0 && request.tripStructure === 'multi_country'
           ? `Consider a single-country multi-city route for ${tripLength} days, or extend to ${route.minDays}+ days for this multi-country route`
-          : undefined,
+          : null,
         // Add basic travel strategy tips for fallback
         travelStrategyTips: {
           idealDateScanner: {
@@ -3126,6 +3193,11 @@ Return the same structured schema with fixes applied.`
             riskLevel: 'medium' as const,
             confidence: 0.7,
           },
+          alternativeAirportStrategy: null,
+          smartRouteOptimizer: null,
+          verifiedDealsAndPromotionsDetector: null,
+          negotiationEmail: null,
+          nearbyDestinationStrategy: null,
           flexibilityAndRiskAnalysis: {
             title: 'Trip Flexibility Analysis',
             flexibilityScore: travelFatigueLevel === 'Low' ? 8 : travelFatigueLevel === 'Medium' ? 6 : 4,
@@ -3153,8 +3225,8 @@ Return the same structured schema with fixes applied.`
         budget: request.budget || 'moderate',
         travelMonths: request.travelMonths || [],
         interests: request.interests || [],
-        travelStyle: request.travelStyle,
-        pace: request.pace,
+        travelStyle: request.travelStyle ?? null,
+        pace: request.pace ?? null,
       },
       topRecommendations: rankedDestinations.slice(0, 3).map(d => d.destinationName),
       rankedDestinations,
@@ -3167,7 +3239,7 @@ Return the same structured schema with fixes applied.`
       recommendedRoutes: firstDest ? [{
         routeType: firstDest.suggestedRoute && firstDest.suggestedRoute.length === 3 ? '3-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length > 3 ? 'multi-city' : firstDest.suggestedRoute && firstDest.suggestedRoute.length === 2 ? '2-city' : 'single-destination',
         routeName: `${firstDest.destinationName} Route`,
-        orderedStops: (firstDest.suggestedRoute || [firstDest.destinationName]).map((city, idx) => ({
+        orderedStops: (firstDest.suggestedRoute || [firstDest.destinationName]).map((city: string, idx: number) => ({
           destinationId: `${city.toLowerCase().replace(/\s+/g, '-')}-${idx}`,
           destinationName: city,
           destinationType: 'city' as const,
@@ -3318,7 +3390,7 @@ Return the same structured schema with fixes applied.`
       weatherReality,
       crowdReality,
       priceReality,
-      whenToAvoid: isPeak ? `Avoid ${this.getMonthName(month)} if you dislike crowds and high prices` : undefined,
+      whenToAvoid: isPeak ? `Avoid ${this.getMonthName(month)} if you dislike crowds and high prices` : null,
       honestConsultantNote: honestNote,
     }
   }
@@ -3400,7 +3472,7 @@ Return the same structured schema with fixes applied.`
    * Generate basic itinerary map plan for fallback
    */
   private generateFallbackItinerary(route: any, tripLength: number, fatigueLevel: string): any {
-    const daysPerCity = route.cities.map((city: string, idx: number) => {
+    const daysPerCity: Array<{ city: string; nights: number; startDay: number }> = route.cities.map((city: string, idx: number) => {
       const nights = route.nightsDistribution[city] || Math.floor(tripLength / route.cities.length)
       return { city, nights, startDay: idx === 0 ? 1 : route.cities.slice(0, idx).reduce((sum: number, c: string) => sum + (route.nightsDistribution[c] || 0), 0) + 1 }
     })

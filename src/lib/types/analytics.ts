@@ -69,3 +69,33 @@ export interface QueryPattern {
   avgScore?: number
   saveRate?: number
 }
+
+// Quality metrics returned by /api/admin/quality-metrics (rates are 0-1 fractions)
+export interface QualityMetrics {
+  recommendationQuality: {
+    averageScore: number | null
+    sampleSize: number
+    topDestinations: Array<{ name: string; saves: number; score: number }>
+  }
+  feedback: {
+    saveTripRate: number | null
+    dismissalRate: number | null
+    viewDetailsRate: number | null
+    sampleSize: number
+  }
+  alerts: {
+    readRate: number | null
+    dismissRate: number | null
+    total: number
+  }
+  sharing: {
+    totalShares: number
+    totalViews: number
+    avgViewsPerShare: number | null
+  }
+  personalization: {
+    avgConfidence: number | null
+    totalUsersWithPreferences: number
+    avgFeedbackCount: number
+  }
+}

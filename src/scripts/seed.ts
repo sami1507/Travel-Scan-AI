@@ -1,4 +1,6 @@
 // Seed script for development data
+// Populates the tables the current dashboard actually reads from
+// (saved_analyses, saved_destinations, user_alerts, user_feedback, usage_tracking).
 // Run with: npm run seed
 
 import { createClient } from '@supabase/supabase-js'
@@ -13,13 +15,35 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+function sampleDestination(id: string, name: string, score: number) {
+  return {
+    destinationId: id,
+    destinationName: name,
+    destinationType: 'country' as const,
+    totalMatchScore: score,
+    categoryScores: {
+      budgetFit: score - 5,
+      weather: score + 2,
+      passportStrength: 90,
+      nightlife: score - 10,
+      nature: score + 5,
+      transport: score,
+      hotels: score - 3,
+      safety: 85,
+    },
+    whyRecommended: [
+      `Strong budget fit for a moderate-spend trip to ${name}`,
+      'Favorable weather during the selected travel window',
+    ],
+  }
+}
+
 async function seed() {
   console.log('🌱 Starting database seed...')
 
   try {
-    // Get the first user (or create a test user)
     const { data: users } = await supabase.auth.admin.listUsers()
-    
+
     if (!users || users.users.length === 0) {
       console.log('No users found. Please create a user account first.')
       console.log('Visit http://localhost:3000/signup to create an account.')
@@ -29,194 +53,130 @@ async function seed() {
     const userId = users.users[0].id
     console.log(`Using user: ${users.users[0].email}`)
 
-    // Create sample source configs
-    const sourceConfigs = [
-      {
-        user_id: userId,
-        name: 'NYC to London Flights',
-        source_type: 'flights',
-        status: 'active',
-        polling_interval_minutes: 60,
-        parser_settings: {
-          origin: 'JFK',
-          destination: 'LHR',
-          departure_date: '2024-06-15',
-          passengers: 1,
-        },
-      },
-      {
-        user_id: userId,
-        name: 'London Hotels',
-        source_type: 'hotels',
-        status: 'active',
-        polling_interval_minutes: 120,
-        parser_settings: {
-          city: 'London',
-          check_in: '2024-06-15',
-          check_out: '2024-06-20',
-          guests: 2,
-        },
-      },
-      {
-        user_id: userId,
-        name: 'London Weather',
-        source_type: 'weather',
-        status: 'active',
-        polling_interval_minutes: 30,
-        parser_settings: {
-          city: 'London',
-          country: 'GB',
-        },
-      },
-      {
-        user_id: userId,
-        name: 'USD to GBP Exchange',
-        source_type: 'exchange_rates',
-        status: 'active',
-        polling_interval_minutes: 60,
-        parser_settings: {
-          from: 'USD',
-          to: 'GBP',
-        },
-      },
-      {
-        user_id: userId,
-        name: 'London Events',
-        source_type: 'events',
-        status: 'active',
-        polling_interval_minutes: 240,
-        parser_settings: {
-          city: 'London',
-          start_date: '2024-06-15',
-          end_date: '2024-06-20',
-        },
-      },
+    const destinations = [
+      sampleDestination('ES', 'Spain', 88),
+      sampleDestination('JP', 'Japan', 84),
+      sampleDestination('TH', 'Thailand', 79),
     ]
 
-    console.log('Creating source configs...')
-    const { data: createdSources, error: sourceError } = await supabase
-      .from('source_configs')
-      .insert(sourceConfigs)
+    // Saved analysis (what /dashboard/saved reads)
+    console.log('Creating sample saved analysis...')
+    const { data: savedAnalysis, error: analysisError } = await supabase
+      .from('saved_analyses')
+      .insert({
+        user_id: userId,
+        name: 'Summer trip ideas',
+        query: 'Warm beach destinations for a 10-day trip in July, moderate budget',
+        analysis_result: { topRecommendations: destinations },
+        user_constraints: { budget: 'moderate', tripLength: 10, travelMonths: [7], interests: ['beach', 'food'] },
+        is_favorite: true,
+        tags: ['summer', 'beach'],
+      })
       .select()
+      .single()
 
-    if (sourceError) {
-      console.error('Error creating source configs:', sourceError)
-      return
+    if (analysisError) {
+      console.error('Error creating saved analysis:', analysisError)
+    } else {
+      console.log('✅ Created saved analysis')
     }
 
-    console.log(`✅ Created ${createdSources.length} source configs`)
+    // Saved destinations (what /dashboard/compare reads)
+    console.log('Creating sample saved destinations...')
+    const { error: destError } = await supabase.from('saved_destinations').insert(
+      destinations.map((dest) => ({
+        user_id: userId,
+        destination_id: dest.destinationId,
+        destination_name: dest.destinationName,
+        destination_type: dest.destinationType,
+        destination_data: dest,
+        source_analysis_id: savedAnalysis?.id ?? null,
+        is_favorite: dest.destinationId === 'ES',
+      }))
+    )
 
-    // Create a sample ingestion run
-    if (createdSources.length > 0) {
-      const sampleSource = createdSources[0]
-      
-      console.log('Creating sample ingestion run...')
-      const { data: ingestionRun, error: runError } = await supabase
-        .from('ingestion_runs')
-        .insert({
-          source_config_id: sampleSource.id,
-          status: 'success',
-          started_at: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-          completed_at: new Date(Date.now() - 240000).toISOString(), // 4 minutes ago
-          records_fetched: 25,
-          records_new: 3,
-          records_changed: 2,
-          records_removed: 0,
-          metadata: {
-            duration_ms: 60000,
-            api_calls: 1,
-          },
-        })
-        .select()
-        .single()
+    if (destError) {
+      console.error('Error creating saved destinations:', destError)
+    } else {
+      console.log(`✅ Created ${destinations.length} saved destinations`)
+    }
 
-      if (runError) {
-        console.error('Error creating ingestion run:', runError)
-      } else {
-        console.log('✅ Created sample ingestion run')
+    // User feedback (what admin analytics / quality metrics read)
+    console.log('Creating sample feedback...')
+    const sessionId = `seed-session-${Date.now()}`
+    const { error: feedbackError } = await supabase.from('user_feedback').insert(
+      destinations.map((dest, i) => ({
+        user_id: userId,
+        session_id: sessionId,
+        feedback_type: i === 0 ? 'save-trip' : 'thumbs-up',
+        destination_id: dest.destinationId,
+        destination_name: dest.destinationName,
+        recommendation_rank: i + 1,
+        total_score: dest.totalMatchScore,
+        category_scores: dest.categoryScores,
+        query_context: { budget: 'moderate', travel_months: [7], interests: ['beach', 'food'] },
+      }))
+    )
 
-        // Create a sample scan result
-        console.log('Creating sample scan result...')
-        const { data: scanResult, error: scanError } = await supabase
-          .from('scan_results')
-          .insert({
-            ingestion_run_id: ingestionRun.id,
-            source_config_id: sampleSource.id,
-            total_changes: 5,
-            new_records: 3,
-            modified_records: 2,
-            removed_records: 0,
-            ai_summary: 'Found 3 new flight options with competitive pricing. 2 existing flights have price changes.',
-            insights: [
-              'New direct flight option available at $450',
-              'Morning flight price dropped by $75',
-              'Weekend flights showing higher demand',
-            ],
-            metadata: {
-              average_price: 525,
-              lowest_price: 450,
-              highest_price: 680,
-            },
-          })
-          .select()
-          .single()
+    if (feedbackError) {
+      console.error('Error creating feedback:', feedbackError)
+    } else {
+      console.log(`✅ Created ${destinations.length} feedback events`)
+    }
 
-        if (scanError) {
-          console.error('Error creating scan result:', scanError)
-        } else {
-          console.log('✅ Created sample scan result')
+    // Alerts (what /dashboard/alerts and /dashboard/opportunities read)
+    console.log('Creating sample alerts...')
+    const { error: alertError } = await supabase.from('user_alerts').insert([
+      {
+        user_id: userId,
+        alert_type: 'value_opportunity',
+        title: 'Hotel prices dropped for Spain',
+        message: 'Average hotel prices for your Spain trip are down 12% compared to last week.',
+        trigger_reason: 'Price monitoring detected a drop across saved hotel options',
+        destination_id: 'ES',
+        destination_name: 'Spain',
+        severity: 'medium',
+        is_read: false,
+        is_dismissed: false,
+      },
+      {
+        user_id: userId,
+        alert_type: 'timing_change',
+        title: 'Better travel window for Thailand',
+        message: 'Shifting your trip by two weeks would avoid peak-season crowds and pricing.',
+        trigger_reason: 'Seasonality model detected a lower-cost, lower-crowd window',
+        destination_id: 'TH',
+        destination_name: 'Thailand',
+        severity: 'low',
+        is_read: false,
+        is_dismissed: false,
+      },
+    ])
 
-          // Create sample alerts
-          console.log('Creating sample alerts...')
-          const alerts = [
-            {
-              scan_result_id: scanResult.id,
-              source_config_id: sampleSource.id,
-              user_id: userId,
-              severity: 'high',
-              title: 'Significant Price Drop Detected',
-              description: 'The morning flight to London has dropped by $75 (14%). This is a good opportunity to book.',
-              change_event_ids: [],
-              is_read: false,
-              is_dismissed: false,
-            },
-            {
-              scan_result_id: scanResult.id,
-              source_config_id: sampleSource.id,
-              user_id: userId,
-              severity: 'medium',
-              title: 'New Flight Option Available',
-              description: 'A new direct flight option is now available at $450, which is below your target price.',
-              change_event_ids: [],
-              is_read: false,
-              is_dismissed: false,
-            },
-          ]
+    if (alertError) {
+      console.error('Error creating alerts:', alertError)
+    } else {
+      console.log('✅ Created sample alerts')
+    }
 
-          const { error: alertError } = await supabase
-            .from('alerts')
-            .insert(alerts)
+    // Usage tracking (what the subscription/usage indicator reads)
+    console.log('Creating usage tracking row...')
+    const month = new Date().toISOString().slice(0, 7)
+    const { error: usageError } = await supabase
+      .from('usage_tracking')
+      .upsert(
+        { user_id: userId, month, analyses_count: 1 },
+        { onConflict: 'user_id,month' }
+      )
 
-          if (alertError) {
-            console.error('Error creating alerts:', alertError)
-          } else {
-            console.log('✅ Created sample alerts')
-          }
-        }
-      }
-
-      // Update source config with last run info
-      await supabase
-        .from('source_configs')
-        .update({
-          last_run_at: new Date(Date.now() - 240000).toISOString(),
-          last_success_at: new Date(Date.now() - 240000).toISOString(),
-        })
-        .eq('id', sampleSource.id)
+    if (usageError) {
+      console.error('Error creating usage tracking row:', usageError)
+    } else {
+      console.log('✅ Created usage tracking row')
     }
 
     console.log('\n✨ Seed completed successfully!')
-    console.log('You can now visit http://localhost:3000/dashboard to see the data')
+    console.log('Visit http://localhost:3000/dashboard/saved, /dashboard/alerts, and /dashboard/opportunities to see the data')
   } catch (error) {
     console.error('Seed failed:', error)
     process.exit(1)

@@ -257,9 +257,10 @@ export class RecommendationQualityLayer {
     }
 
     // Penalize overconfidence with low category scores
-    const avgCategoryScore =
-      Object.values(candidate.categoryScores).reduce((sum, score) => sum + (score || 0), 0) /
-      Object.keys(candidate.categoryScores).length
+    const categoryScoreValues = Object.values(candidate.categoryScores ?? {}).map(s => s ?? 0)
+    const avgCategoryScore = categoryScoreValues.length > 0
+      ? categoryScoreValues.reduce((sum, score) => sum + score, 0) / categoryScoreValues.length
+      : 0
     if (candidate.confidence > 0.8 && avgCategoryScore < 6) {
       calibration -= 0.2
     }

@@ -4,12 +4,23 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { TravelReportDocument } from '@/lib/pdf/travel-report'
 import type { QueryContext } from '@/lib/pdf/travel-report'
 import type { TravelAnalysisResponse } from '@/lib/analysis/schemas'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const rateLimitResponse = await rateLimit(user.id, RATE_LIMITS.EXPORT)
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await request.json() as {
       analysis: TravelAnalysisResponse
       queryContext: QueryContext
@@ -34,6 +45,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('[export/pdf]', err)
-    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate PDF report' }, { status: 500 })
   }
 }

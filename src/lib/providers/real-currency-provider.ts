@@ -1,10 +1,17 @@
 // Real Currency Provider using structured exchange rate data
 import type { ICurrencyProvider, CurrencyData } from './interfaces'
+import { logger } from '../utils'
+
+// Snapshot date of the static fallback rates below — do not bump without updating the rates
+const STATIC_RATES_AS_OF = '2024-06-01T00:00:00.000Z'
+const LIVE_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+const liveRateCache = new Map<string, { rates: Record<string, number>; fetchedAt: number }>()
 
 /**
  * Real Currency Provider
- * Uses structured exchange rate data with realistic rates
- * Marks data as 'structured' to distinguish from live API data
+ * Fetches live rates from exchangerate-api.com when EXCHANGERATE_API_KEY is configured.
+ * Otherwise falls back to a static rate snapshot clearly marked as estimated/stale.
  */
 export class RealCurrencyProvider implements ICurrencyProvider {
   // Base exchange rates (relative to USD)
@@ -46,33 +53,83 @@ export class RealCurrencyProvider implements ICurrencyProvider {
 
   /**
    * Get exchange rate between two currencies
+   * Uses live exchangerate-api.com data when configured; otherwise falls back to
+   * a static snapshot marked with its real snapshot date (not "now").
    */
   async getExchangeRate(from: string, to: string): Promise<CurrencyData> {
     const fromUpper = from.toUpperCase()
     const toUpper = to.toUpperCase()
 
-    // Get rates relative to USD
+    const live = await this.getLiveRates(fromUpper)
+    if (live && live.rates[toUpper]) {
+      return {
+        from: fromUpper,
+        to: toUpper,
+        rate: live.rates[toUpper],
+        lastUpdated: new Date(live.fetchedAt).toISOString(),
+        source: 'api',
+        metadata: {
+          dataType: 'live-rates',
+          provider: 'exchangerate-api.com',
+        },
+      }
+    }
+
+    // Static fallback — snapshot rates, clearly labeled as estimated
     const fromRate = this.baseRates[fromUpper] || 1.0
     const toRate = this.baseRates[toUpper] || 1.0
-
-    // Calculate exchange rate
     const rate = toRate / fromRate
-
-    // Add small random variation (±0.5%) to simulate market fluctuation
-    const variation = 1 + (Math.random() - 0.5) * 0.01
-    const adjustedRate = rate * variation
 
     return {
       from: fromUpper,
       to: toUpper,
-      rate: adjustedRate,
-      lastUpdated: new Date().toISOString(),
-      source: 'structured', // Clearly marked as structured data
+      rate,
+      lastUpdated: STATIC_RATES_AS_OF,
+      source: 'structured',
       metadata: {
-        baseRate: rate,
-        variation: variation - 1,
-        dataType: 'structured-rates',
+        dataType: 'estimated-static-rates',
+        ratesAsOf: STATIC_RATES_AS_OF,
       },
+    }
+  }
+
+  /**
+   * Fetch live rates for a base currency from exchangerate-api.com (cached 24h).
+   * Returns null when the API key is not configured or the request fails.
+   */
+  private async getLiveRates(
+    base: string
+  ): Promise<{ rates: Record<string, number>; fetchedAt: number } | null> {
+    const apiKey = process.env.EXCHANGERATE_API_KEY
+    if (!apiKey) return null
+
+    const cached = liveRateCache.get(base)
+    if (cached && Date.now() - cached.fetchedAt < LIVE_CACHE_TTL_MS) {
+      return cached
+    }
+
+    try {
+      const res = await fetch(`https://v6.exchangerate-api.com/v6/${apiKey}/latest/${base}`)
+      if (!res.ok) {
+        logger.warn('Currency Provider: live rate request failed', { base, status: res.status })
+        return null
+      }
+
+      const data = await res.json()
+      if (data.result !== 'success' || !data.conversion_rates) {
+        logger.warn('Currency Provider: unexpected live rate response', { base, result: data.result })
+        return null
+      }
+
+      const entry = { rates: data.conversion_rates as Record<string, number>, fetchedAt: Date.now() }
+      liveRateCache.set(base, entry)
+      return entry
+    } catch (error) {
+      logger.warn('Currency Provider: live rate fetch error, using static fallback', {
+        base,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return null
     }
   }
 

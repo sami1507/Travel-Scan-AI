@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // Security regression net: every API route handler must refuse an unauthenticated caller.
 // Routes are discovered with import.meta.glob, so a NEW route that forgets its auth check
 // fails this test automatically. Intentionally-public handlers are listed explicitly below.

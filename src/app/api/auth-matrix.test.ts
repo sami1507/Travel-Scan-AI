@@ -28,6 +28,7 @@ const PUBLIC_HANDLERS: Record<string, number | number[]> = {
   'language POST': [200, 400], // sets the locale cookie; needs no session
   'webhooks/stripe POST': 400, // authenticated by Stripe signature, not a session
   'share GET': 400, // public share-link lookup: rejects a missing token
+  'health GET': [200, 503], // liveness endpoint for uptime monitors; minimal public output
 }
 
 const METHODS = ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'] as const

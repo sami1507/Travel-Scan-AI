@@ -90,11 +90,11 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
 
-              <Link href="/login">
-                <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" asChild>
+<Link href="/login">
                   Back to sign in
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </div>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-5">
@@ -124,11 +124,11 @@ export default function ResetPasswordPage() {
                 {loading ? "Sending..." : "Send reset link"}
               </Button>
 
-              <Link href="/login">
-                <Button variant="ghost" className="w-full">
+              <Button variant="ghost" className="w-full" asChild>
+<Link href="/login">
                   Back to sign in
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </form>
           )}
         </div>

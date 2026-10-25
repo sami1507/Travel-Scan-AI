@@ -59,24 +59,22 @@ function Navbar() {
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSwitcher variant="landing" />
-            <Link href="/login">
-              <Button
+            <Button
                 variant="ghost"
                 size="sm"
-                className="text-white/80 hover:text-white hover:bg-white/10 font-medium"
-              >
+                className="text-white/80 hover:text-white hover:bg-white/10 font-medium" asChild>
+<Link href="/login">
                 Sign In
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button
+              </Link>
+</Button>
+            <Button
                 size="sm"
                 className="font-semibold text-white border-0 shadow-lg hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
-              >
+                style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} asChild>
+<Link href="/signup">
                 Start Free →
-              </Button>
-            </Link>
+              </Link>
+</Button>
           </div>
         </div>
       </div>
@@ -179,24 +177,22 @@ function HeroSection() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-8"
           >
-            <Link href="/dashboard/analysis">
-              <Button
+            <Button
                 size="lg"
                 className="h-14 px-8 text-base font-bold text-white border-0 shadow-xl hover:opacity-90 transition-all hover:scale-105"
-                style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
-              >
+                style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} asChild>
+<Link href="/dashboard/analysis">
                 Plan My Trip Free →
-              </Button>
-            </Link>
-            <a href="#how-it-works">
-              <Button
+              </Link>
+</Button>
+            <Button
                 size="lg"
                 variant="outline"
-                className="h-14 px-8 text-base font-semibold bg-transparent text-white border-white/25 hover:bg-white/10 hover:text-white hover:border-white/40"
-              >
+                className="h-14 px-8 text-base font-semibold bg-transparent text-white border-white/25 hover:bg-white/10 hover:text-white hover:border-white/40" asChild>
+<a href="#how-it-works">
                 See How It Works ↓
-              </Button>
-            </a>
+              </a>
+</Button>
           </motion.div>
 
           <motion.p
@@ -534,15 +530,14 @@ function DemoSection() {
                 >
                   ✓ AI Verified • Real-time data • Updated today
                 </div>
-                <Link href="/dashboard/analysis">
-                  <Button
+                <Button
                     size="lg"
                     className="h-12 px-8 font-bold text-white border-0 shadow-xl hover:opacity-90 hover:scale-105 transition-all"
-                    style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
-                  >
+                    style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} asChild>
+<Link href="/dashboard/analysis">
                     Try it yourself →
-                  </Button>
-                </Link>
+                  </Link>
+</Button>
               </div>
             </div>
           </div>
@@ -586,14 +581,13 @@ function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="block">
-                <Button
+              <Button
                   variant="outline"
-                  className="w-full bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white hover:border-white/35"
-                >
+                  className="w-full bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white hover:border-white/35" asChild>
+<Link href="/signup" className="block">
                   Start Free
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </div>
           </FadeIn>
 
@@ -626,14 +620,13 @@ function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="block">
-                <Button
+              <Button
                   className="w-full h-11 font-bold text-white border-0 hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
-                >
+                  style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} asChild>
+<Link href="/signup" className="block">
                   Start Pro Trial
-                </Button>
-              </Link>
+                </Link>
+</Button>
               <p className="text-center text-white/35 text-xs mt-2">7 days free</p>
             </div>
           </FadeIn>
@@ -657,14 +650,13 @@ function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="block">
-                <Button
+              <Button
                   variant="outline"
-                  className="w-full bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white hover:border-white/35"
-                >
+                  className="w-full bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white hover:border-white/35" asChild>
+<Link href="/signup" className="block">
                   Go Explorer
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </div>
           </FadeIn>
         </div>
@@ -754,15 +746,14 @@ function FinalCTASection() {
             Your next trip starts<br />with one question.
           </h2>
           <p className="text-xl text-white/55 mb-10">Where do you want to go?</p>
-          <Link href="/dashboard/analysis">
-            <Button
+          <Button
               size="lg"
               className="h-16 px-12 text-lg font-bold text-white border-0 shadow-2xl hover:opacity-90 hover:scale-105 transition-all"
-              style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }}
-            >
+              style={{ background: 'linear-gradient(135deg, hsl(22,100%,62%), hsl(38,92%,50%))' }} asChild>
+<Link href="/dashboard/analysis">
               Start Planning Free →
-            </Button>
-          </Link>
+            </Link>
+</Button>
           <p className="mt-6 text-white/30 text-sm">No credit card. No spam. Cancel anytime.</p>
         </FadeIn>
       </div>
@@ -783,10 +774,10 @@ function FooterSection() {
             </div>
             <p className="text-white/35 text-sm">AI-Powered Travel Intelligence</p>
           </div>
-          <nav className="flex flex-wrap items-center justify-center gap-6 text-white/45 text-sm">
-            <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-0 text-white/45 text-sm">
+            <a href="#how-it-works" className="inline-flex min-h-[44px] items-center px-1 hover:text-white transition-colors">How it Works</a>
+            <a href="#pricing" className="inline-flex min-h-[44px] items-center px-1 hover:text-white transition-colors">Pricing</a>
+            <Link href="/dashboard" className="inline-flex min-h-[44px] items-center px-1 hover:text-white transition-colors">Dashboard</Link>
             <span className="text-white/25">Blog (coming soon)</span>
           </nav>
           <p className="text-white/25 text-sm">Made with ❤ for curious travelers</p>
@@ -800,15 +791,23 @@ function FooterSection() {
 export default function LandingPage() {
   return (
     <div style={{ background: '#0f1729' }}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-black"
+      >
+        Skip to main content
+      </a>
       <Navbar />
-      <HeroSection />
-      <ProblemSection />
-      <HowItWorksSection />
-      <FeaturesSection />
-      <DemoSection />
-      <PricingSection />
-      <TestimonialsSection />
-      <FinalCTASection />
+      <main id="main-content">
+        <HeroSection />
+        <ProblemSection />
+        <HowItWorksSection />
+        <FeaturesSection />
+        <DemoSection />
+        <PricingSection />
+        <TestimonialsSection />
+        <FinalCTASection />
+      </main>
       <FooterSection />
     </div>
   )

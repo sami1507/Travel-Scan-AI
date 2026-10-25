@@ -67,19 +67,18 @@ export default function AdminNav({ user }: AdminNavProps) {
                 const Icon = item.icon
                 const isActive = pathname === item.href
                 return (
-                  <Link key={item.href} href={item.href}>
-                    <Button
+                  <Button key={item.href}
                       variant={isActive ? "secondary" : "ghost"}
                       size="sm"
                       className={cn(
                         "gap-2 h-9 px-3 font-medium transition-all",
                         isActive && "bg-secondary shadow-sm"
-                      )}
-                    >
+                      )} asChild>
+<Link href={item.href}>
                       <Icon className="h-4 w-4" />
                       <span className="text-sm">{item.label}</span>
-                    </Button>
-                  </Link>
+                    </Link>
+</Button>
                 )
               })}
             </nav>

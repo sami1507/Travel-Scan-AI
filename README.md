@@ -28,10 +28,10 @@ A full-stack, production-ready web application that delivers intelligent travel 
 ### Data Providers
 - **Flights**: Duffel API (real-time, optional) → AI-estimated fallback
 - **Hotels**: Hotelbeds API (real-time, optional) → AI-estimated fallback
-- **Weather**: Real weather provider with seasonal intelligence
-- **Currency**: Live exchange rates
-- **Visa**: Real visa requirement lookup by passport + destination
-- **Events**: Enhanced events provider for local happenings
+- **Weather**: Live climate normals from Open-Meteo (observed daily averages for the travel month from the latest complete year — a climatology, not a forecast; no API key) → deterministic seasonal fallback
+- **Currency**: Live rates via exchangerate-api.com when `EXCHANGERATE_API_KEY` is set → static snapshot clearly labelled with its real date
+- **Visa**: Curated tourist-entry rules for 36 passports (incl. a shared EU/EEA/CH rule set); any other pair is returned as an explicitly labelled `assumed` estimate — always confirm with the official source
+- **Events**: Curated recurring major events with computed next-occurrence dates (estimated, no live feed)
 
 ### User Features
 - **Saved Trips**: Bookmark and revisit full analysis results
@@ -373,10 +373,26 @@ npm run build      # Production build
 npm run start      # Start production server
 npm run typecheck  # TypeScript type check (tsc --noEmit)
 npm run lint       # ESLint
+npm test           # Unit + route tests (vitest)
+npx vitest run --coverage   # Coverage report
 npm run seed       # Seed sample data (requires .env.local)
 ```
 
 ---
+
+## ✅ Quality & Testing
+
+CI (`.github/workflows/ci.yml`) runs typecheck, lint and the test suite on every push and PR.
+
+| Suite | What it protects |
+|---|---|
+| `auth-matrix.test.ts` | Every API route rejects anonymous callers (new routes are discovered automatically) |
+| `ranking-quality.test.ts` | Ranking behaves like a consultant would expect: interests move the ranking, best-month beats worst-month, visa/safety/budget monotonicity, determinism |
+| `fallback-recommendations.test.ts` | The AI-outage fallback always returns schema-valid recommendations |
+| Provider tests | Live-vs-fallback behaviour for weather, currency and visa data |
+| Validation / rate-limit / CSP / env / health tests | Input validation, throttling, security headers, configuration reporting |
+
+See [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for health checks, configuration and the deployment checklist, and [`SECURITY.md`](SECURITY.md) for the security model.
 
 ## 🚀 Deployment
 
@@ -422,10 +438,12 @@ npm run seed       # Seed sample data (requires .env.local)
 
 | Measure | Detail |
 |---|---|
-| Row Level Security | Enabled on all 13 Supabase tables |
-| Content Security Policy | Strict CSP headers set in `middleware.ts` |
-| Rate Limiting | Per-user limits via Upstash Redis |
-| Auth Guards | All `/dashboard` routes require valid session |
+| Row Level Security | Enabled on all Supabase tables |
+| Content Security Policy | Per-request nonce + `strict-dynamic` (no `unsafe-inline`/`unsafe-eval` for scripts in production) — `src/lib/security/csp.ts` |
+| Rate Limiting | Per-user limits on every paid-API route; Upstash Redis when configured, in-memory fallback in development |
+| Auth Guards | `/dashboard` pages guarded by middleware; every API route enforces its own auth — verified by an automated test that calls each handler anonymously (`src/app/api/auth-matrix.test.ts`) |
+| Cron | `/api/trigger-all` accepts only `CRON_SECRET` bearer auth or an admin session |
+| Dependencies | `npm audit` fixes applied; remaining advisories are build-time CSS tooling only (see SECURITY.md) |
 | Server-Side Secrets | All API keys are never exposed to the client |
 | Input Validation | Zod schemas on every API route handler |
 | SQL Injection | Prevented via Supabase parameterized client |

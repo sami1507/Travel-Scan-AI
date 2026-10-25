@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
@@ -36,7 +37,7 @@
     "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "csv-parse": "^6.2.1",
+    "csv-parse": "^7.0.3",
     "csv-stringify": "^6.7.0",
     "date-fns": "^4.2.1",
     "framer-motion": "^12.40.0",
@@ -58,6 +59,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitest/coverage-v8": "^4.1.12",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "^15.5.18",

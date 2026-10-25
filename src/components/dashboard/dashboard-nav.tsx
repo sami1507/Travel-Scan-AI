@@ -65,8 +65,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                   const Icon = item.icon
                   const active = isActive(item.href)
                   return (
-                    <Link key={item.href} href={item.href}>
-                      <Button
+                    <Button key={item.href}
                         variant="ghost"
                         size="sm"
                         className={cn(
@@ -74,12 +73,12 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                           active
                             ? "opacity-100 shadow-sm bg-[hsl(199,89%,68%)]/15 text-[hsl(199,60%,35%)]"
                             : "opacity-80 hover:opacity-100 hover:bg-accent"
-                        )}
-                      >
+                        )} asChild>
+<Link href={item.href}>
                         <Icon className="h-4 w-4 shrink-0" />
                         <span className="text-sm">{t(item.labelKey as any)}</span>
-                      </Button>
-                    </Link>
+                      </Link>
+</Button>
                   )
                 })}
 
@@ -91,8 +90,7 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                   const Icon = item.icon
                   const active = isActive(item.href)
                   return (
-                    <Link key={item.href} href={item.href}>
-                      <Button
+                    <Button key={item.href}
                         variant="ghost"
                         size="sm"
                         className={cn(
@@ -100,19 +98,18 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                           active
                             ? "opacity-100 shadow-sm font-medium bg-[hsl(199,89%,68%)]/15 text-[hsl(199,60%,35%)]"
                             : "opacity-60 hover:opacity-80 hover:bg-accent font-normal"
-                        )}
-                      >
+                        )} asChild>
+<Link href={item.href}>
                         <Icon className="h-3.5 w-3.5 shrink-0" />
                         <span className="text-xs">{t(item.labelKey as any)}</span>
-                      </Button>
-                    </Link>
+                      </Link>
+</Button>
                   )
                 })}
 
                 {/* Admin link — only if isAdmin */}
                 {isAdmin && (
-                  <Link href="/dashboard/admin">
-                    <Button
+                  <Button
                       variant="ghost"
                       size="sm"
                       className={cn(
@@ -120,12 +117,12 @@ export default function DashboardNav({ user, isAdmin = false }: DashboardNavProp
                         isActive("/dashboard/admin")
                           ? "opacity-100 shadow-sm font-medium bg-[hsl(199,89%,68%)]/15 text-[hsl(199,60%,35%)]"
                           : "opacity-60 hover:opacity-80 hover:bg-accent font-normal"
-                      )}
-                    >
+                      )} asChild>
+<Link href="/dashboard/admin">
                       <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
                       <span className="text-xs">Admin</span>
-                    </Button>
-                  </Link>
+                    </Link>
+</Button>
                 )}
               </nav>
             </div>

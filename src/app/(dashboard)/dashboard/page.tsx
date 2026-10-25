@@ -126,13 +126,13 @@ export default async function DashboardPage() {
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">Welcome Back</h1>
             <p className="text-lg text-white/90 max-w-2xl">Your intelligent travel companion for smarter, budget-aware recommendations</p>
           </div>
-          <Link href="/dashboard/analysis">
-            <Button size="lg" className="gradient-sunset shadow-xl hover:shadow-2xl transition-all duration-300 w-full md:w-auto border-0 h-12 px-8">
+          <Button size="lg" className="gradient-sunset shadow-xl hover:shadow-2xl transition-all duration-300 w-full md:w-auto border-0 h-12 px-8" asChild>
+<Link href="/dashboard/analysis">
               <Brain className="h-5 w-5 mr-2" />
               <span className="font-semibold">New Analysis</span>
               <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </Link>
+            </Link>
+</Button>
         </div>
       </div>
 
@@ -227,12 +227,12 @@ export default async function DashboardPage() {
                 <CardDescription className="text-sm mt-1">Your latest trip plans</CardDescription>
               </div>
               {totalAnalyses > 0 && (
-                <Link href="/dashboard/saved">
-                  <Button variant="ghost" size="sm" className="h-9 font-medium">
+                <Button variant="ghost" size="sm" className="h-9 font-medium" asChild>
+<Link href="/dashboard/saved">
                     <span className="text-sm">View all</span>
                     <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
+                  </Link>
+</Button>
               )}
             </div>
           </CardHeader>
@@ -291,12 +291,12 @@ export default async function DashboardPage() {
                   </span>
                 </CardDescription>
               </div>
-              <Link href="/dashboard/intelligence">
-                <Button variant="ghost" size="sm" className="h-9 font-medium">
+              <Button variant="ghost" size="sm" className="h-9 font-medium" asChild>
+<Link href="/dashboard/intelligence">
                   <span className="text-sm">More</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+</Button>
             </div>
           </CardHeader>
           <CardContent>

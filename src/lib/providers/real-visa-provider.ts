@@ -151,17 +151,18 @@ export class RealVisaProvider implements IVisaProvider {
         passportCountry: passportCode,
         destinationCountry: destCode,
         visaRequired: rule.required,
-        requirement: rule.required ? (rule.type === 'e-visa' ? 'e-visa' : 'visa-required') : 'visa-free',
+        // An eTA/e-visa is an online authorisation, not an embassy visa
+        requirement: rule.required ? (rule.type === 'e-visa' || rule.type === 'eTA' ? 'e-visa' : 'visa-required') : 'visa-free',
         visaType: rule.type,
         maxStay: rule.maxStay,
         maxStayDays: rule.maxStay,
-        processingTime: rule.required ? '7-14 days' : undefined,
-        cost: rule.required ? (rule.type === 'e-visa' ? 50 : 100) : undefined,
+        processingTime: rule.required ? (rule.type === 'eTA' ? 'Minutes to 3 days (online)' : '7-14 days') : undefined,
+        cost: rule.required ? (rule.type === 'eTA' ? 20 : rule.type === 'e-visa' ? 50 : 100) : undefined,
         notes: rule.notes ? [rule.notes] : [],
         source: 'knowledge-based',
         metadata: {
-          dataType: 'verified-rules',
-          lastVerified: '2024-01-01',
+          dataType: 'curated-rules',
+          note: 'Curated from publicly documented tourist-entry policy; costs are indicative. Rules change, so confirm with the official government source before booking.',
         },
       }
     }
